@@ -1,0 +1,33 @@
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background: linear-gradient(135deg, #2f7cf6, #1857b8);
+  color: #fff;
+}
+
+.caja {
+  text-align: center;
+}
+
+.spinner {
+  width: 34px;
+  height: 34px;
+  margin: 0 auto 16px;
+  border: 3px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: girar 0.7s linear infinite;
+}
+
+@keyframes girar {
+  to { transform: rotate(360deg); }
+}
+
+p {
+  font-size: 0.95rem;
+  margin: 0;
+}

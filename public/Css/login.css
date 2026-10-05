@@ -1,0 +1,403 @@
+:root {
+  --azul-principal: #2f7cf6;
+  --azul-oscuro: #1857b8;
+  --texto-oscuro: #1f2733;
+  --texto-gris: #6b7684;
+  --borde: #e3e7ec;
+  --error: #d64545;
+  --blanco: rgba(255, 255, 255, 0.88);
+  --radio: 18px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color: var(--texto-oscuro);
+  background-image: url("../Img/fondo.png");
+  background-size: cover;
+  background-position: center;
+  min-height: 100vh;
+  display: flex;
+}
+
+.fondo-overlay {
+  position: fixed;
+  inset: 0;
+  backdrop-filter: blur(2px);
+  background: rgba(20, 30, 45, 0.15);
+  z-index: 0;
+}
+
+.login-wrapper {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* Igual que en signup.css: "center" a secas recorta la parte de
+     arriba de la card cuando el contenido no cabe en un viewport
+     corto. "safe center" cae de vuelta a alinear arriba (con scroll
+     normal) en ese caso; los navegadores sin soporte para "safe"
+     simplemente ignoran esta segunda línea y se quedan con el center
+     normal. */
+  justify-content: center;
+  justify-content: safe center;
+  padding: 32px 16px;
+  gap: 20px;
+  overflow-y: auto;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 400px;
+  background: var(--blanco);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-radius: var(--radio);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 20px 60px rgba(15, 30, 60, 0.25);
+  padding: 34px 32px 28px;
+}
+
+.login-header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-bottom: 18px;
+}
+
+.logo {
+  height: 60px;
+  width: auto;
+  object-fit: contain;
+  margin-bottom: 18px;
+}
+
+.login-header h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--texto-oscuro);
+  width: 100%;
+  text-align: center;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+}
+
+.input-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #ffffff;
+  border: 1px solid var(--borde);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-top: 12px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.input-group:focus-within {
+  border-color: var(--azul-principal);
+  box-shadow: 0 0 0 3px rgba(47, 124, 246, 0.15);
+}
+
+.input-group.has-error {
+  border-color: var(--error);
+}
+
+.icon {
+  display: flex;
+  color: var(--texto-gris);
+  flex-shrink: 0;
+}
+
+.icon svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.input-group input {
+  border: none;
+  outline: none;
+  flex: 1;
+  font-size: 0.95rem;
+  background: transparent;
+  color: var(--texto-oscuro);
+  min-width: 0;
+}
+
+.input-group input::placeholder {
+  color: #98a2ae;
+}
+
+.toggle-password {
+  background: none;
+  border: none;
+  color: var(--azul-principal);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px;
+  flex-shrink: 0;
+}
+
+.toggle-password:hover {
+  text-decoration: underline;
+}
+
+.field-error {
+  min-height: 16px;
+  margin: 4px 2px 0;
+  font-size: 0.78rem;
+  color: var(--error);
+}
+
+.form-message {
+  min-height: 0;
+  margin: 6px 2px 0;
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.form-message.error {
+  color: var(--error);
+}
+
+.form-message.success {
+  color: #1c8a4c;
+}
+
+.btn-primary {
+  margin-top: 18px;
+  width: 100%;
+  padding: 13px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--azul-principal), var(--azul-oscuro));
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: filter 0.15s ease, transform 0.05s ease;
+}
+
+.btn-primary:hover {
+  filter: brightness(1.06);
+}
+
+.btn-primary:active {
+  transform: translateY(1px);
+}
+
+.btn-primary:disabled {
+  opacity: 0.75;
+  cursor: not-allowed;
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: girar 0.7s linear infinite;
+}
+
+@keyframes girar {
+  to { transform: rotate(360deg); }
+}
+
+.forgot-link {
+  display: block;
+  text-align: center;
+  margin-top: 16px;
+  color: var(--azul-principal);
+  font-size: 0.88rem;
+  text-decoration: none;
+}
+
+.forgot-link:hover {
+  text-decoration: underline;
+}
+
+.divider {
+  position: relative;
+  text-align: center;
+  margin: 22px 0 14px;
+}
+
+.divider::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  border-top: 1px solid var(--borde);
+}
+
+.divider span {
+  position: relative;
+  background: transparent;
+  padding: 0 12px;
+  font-size: 0.85rem;
+  color: var(--texto-gris);
+  backdrop-filter: none;
+}
+
+.divider span::before,
+.divider span::after {
+  content: none;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+}
+
+.divider span {
+  margin: 0 auto;
+  background: rgba(255,255,255,0.01);
+}
+
+.social-row {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-social {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid var(--borde);
+  background: #ffffff;
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--texto-oscuro);
+  cursor: pointer;
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.btn-social:hover {
+  background: #f7f9fb;
+  box-shadow: 0 2px 8px rgba(20, 30, 45, 0.08);
+}
+
+.social-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.small-note {
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--texto-gris);
+  margin: 14px 0 0;
+}
+
+.small-note a {
+  color: var(--azul-principal);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.small-note a:hover {
+  text-decoration: underline;
+}
+
+.page-footer {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  color: #f1f4f8;
+  font-size: 0.82rem;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+}
+
+.page-footer a {
+  color: #f1f4f8;
+  text-decoration: none;
+}
+
+.page-footer a:hover {
+  text-decoration: underline;
+}
+
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translate(-50%, 20px);
+  background: #1f2733;
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-size: 0.88rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  z-index: 5;
+  max-width: 90vw;
+  text-align: center;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+@media (max-width: 420px) {
+  .login-card {
+    padding: 26px 20px 22px;
+  }
+}
+
+/* Pantallas de poca altura (ventanas de escritorio bajas, celulares
+   en horizontal): igual criterio que signup.css — se comprimen los
+   espacios verticales en vez de dejar la card apretada contra el
+   borde superior sin poder hacer scroll para verla completa. */
+@media (max-height: 700px) {
+  .login-wrapper {
+    padding: 16px;
+  }
+  .login-header {
+    margin-bottom: 10px;
+  }
+  .logo {
+    height: 46px;
+    margin-bottom: 10px;
+  }
+  .input-group {
+    padding: 10px 14px;
+    margin-top: 8px;
+  }
+  .divider {
+    margin: 14px 0 10px;
+  }
+}

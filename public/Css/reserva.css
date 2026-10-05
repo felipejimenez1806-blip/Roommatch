@@ -1,0 +1,588 @@
+.res-page {
+  max-width: 1140px;
+  width: 100%;
+  align-self: center;
+  margin: 0 auto;
+  padding: 20px 40px 60px;
+}
+
+.res-back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #fff;
+  border: 1.5px solid #ececec;
+  color: #444;
+  text-decoration: none;
+  font-size: 16px;
+  margin-bottom: 16px;
+  transition: border-color .2s, color .2s;
+}
+
+.res-back:hover {
+  border-color: #1a9ecf;
+  color: #1a9ecf;
+}
+
+.res-heading {
+  margin-bottom: 24px;
+}
+
+.res-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: #111;
+}
+
+.res-subtitle {
+  font-size: 13px;
+  color: #888;
+  margin-top: 4px;
+}
+
+/* ── LAYOUT ── */
+.res-body {
+  display: flex;
+  align-items: flex-start;
+  gap: 28px;
+}
+
+.res-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.res-sidebar {
+  width: 320px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 24px;
+}
+
+/* ── PASOS ── */
+.res-step {
+  background: #fff;
+  border-radius: 16px;
+  border: 1px solid #ececec;
+  padding: 22px 24px;
+  margin-bottom: 18px;
+}
+
+.res-step-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: #111;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.res-step-number {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #1a9ecf;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* ── RESUMEN DE AMENIDADES (solo lectura, dentro del paso 1) ── */
+.res-amenities-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  margin-bottom: 10px;
+}
+
+.res-amenities-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 20px;
+  margin-bottom: 22px;
+}
+
+.res-amenity-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: #333;
+}
+
+.res-amenity-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #f2f9fc;
+  color: #1a9ecf;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.res-divider {
+  border: none;
+  border-top: 1px dashed #ececec;
+  margin: 4px 0 20px;
+}
+
+/* ── CAMPOS DE FORMULARIO ── */
+.res-field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.res-field {
+  margin-bottom: 16px;
+}
+
+.res-field:last-child {
+  margin-bottom: 0;
+}
+
+.res-field label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: #555;
+  margin-bottom: 6px;
+}
+
+.res-field input,
+.res-field select {
+  width: 100%;
+  padding: 11px 13px;
+  border-radius: 10px;
+  border: 1.5px solid #e4e4e4;
+  font-size: 13px;
+  font-family: inherit;
+  color: #222;
+  background: #fff;
+  box-sizing: border-box;
+  transition: border-color .2s;
+}
+
+.res-field input:focus,
+.res-field select:focus {
+  outline: none;
+  border-color: #1a9ecf;
+}
+
+.res-field input.res-invalid,
+.res-field select.res-invalid {
+  border-color: #e0554f;
+}
+
+/* ── SELECTOR DE HORA (panel de chips por franja del día) ──
+   Reemplaza al <select> nativo de 48 renglones (una lista larguísima
+   sin ningún estilo propio) por un botón + panel propios, consistente
+   con el resto de componentes custom de la app (estrellas, badges). */
+.res-hora-picker {
+  position: relative;
+}
+
+.res-hora-trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 11px 13px;
+  border-radius: 10px;
+  border: 1.5px solid #e4e4e4;
+  font-size: 13px;
+  font-family: inherit;
+  color: #98a2ae;
+  background: #fff;
+  box-sizing: border-box;
+  cursor: pointer;
+  transition: border-color .2s;
+}
+
+.res-hora-trigger.has-value {
+  color: #222;
+}
+
+.res-hora-trigger:focus,
+.res-hora-trigger.is-open {
+  outline: none;
+  border-color: #1a9ecf;
+}
+
+.res-hora-trigger.res-invalid {
+  border-color: #e0554f;
+}
+
+.res-hora-chevron {
+  width: 14px;
+  height: 14px;
+  stroke: #98a2ae;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex-shrink: 0;
+  transition: transform .15s;
+}
+
+.res-hora-trigger.is-open .res-hora-chevron {
+  transform: rotate(180deg);
+}
+
+.res-hora-panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  background: #fff;
+  border: 1px solid #ececec;
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.14);
+  padding: 14px;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.res-hora-group {
+  margin-bottom: 14px;
+}
+.res-hora-group:last-child {
+  margin-bottom: 0;
+}
+
+.res-hora-group-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  margin: 0 0 8px;
+}
+
+.res-hora-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.res-hora-chip {
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: #333;
+  background: #f7f9fb;
+  border: 1.5px solid transparent;
+  border-radius: 8px;
+  padding: 7px 4px;
+  cursor: pointer;
+  transition: background .15s, border-color .15s, color .15s;
+}
+
+.res-hora-chip:hover:not(:disabled) {
+  border-color: #1a9ecf;
+  color: #1a9ecf;
+}
+
+.res-hora-chip.is-selected {
+  background: #1a9ecf;
+  border-color: #1a9ecf;
+  color: #fff;
+}
+
+.res-hora-chip:disabled,
+.res-hora-chip.is-unavailable {
+  background: #f2f2f2;
+  color: #ccc;
+  cursor: not-allowed;
+  text-decoration: line-through;
+}
+
+.res-field-error {
+  font-size: 11px;
+  color: #e0554f;
+  margin-top: 4px;
+  display: none;
+}
+
+.res-field-error.is-visible {
+  display: block;
+}
+
+/* ── REGLAS DE LA CASA (sección sin numerar, como en el mockup) ── */
+.res-rules-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: #111;
+  margin-bottom: 16px;
+}
+
+.res-rules-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 20px;
+  margin-bottom: 8px;
+}
+
+.res-rule-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: #333;
+}
+
+.res-rule-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #f2f9fc;
+  color: #1a9ecf;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.res-rule-item.is-restricted .res-rule-icon {
+  background: #fdf1f0;
+  color: #e0554f;
+}
+
+.res-schedule-row {
+  display: flex;
+  gap: 32px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px dashed #ececec;
+}
+
+.res-schedule-item {
+  font-size: 13px;
+  color: #444;
+}
+
+.res-schedule-item span {
+  display: block;
+  font-size: 11px;
+  color: #999;
+  margin-bottom: 3px;
+}
+
+/* ── TARJETA LATERAL DE RESUMEN ── */
+.res-summary-card {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0,0,0,.09);
+  overflow: hidden;
+}
+
+.res-summary-img {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+  display: block;
+}
+
+.res-summary-body {
+  padding: 18px 20px 20px;
+}
+
+.res-summary-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: #111;
+  margin-bottom: 2px;
+}
+
+.res-summary-rating {
+  color: #f5a623;
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+
+.res-summary-location {
+  font-size: 12.5px;
+  color: #888;
+  margin-bottom: 16px;
+}
+
+.res-summary-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12.5px;
+  color: #555;
+  padding: 8px 0;
+  border-bottom: 1px dashed #ececec;
+}
+
+.res-summary-row span:first-child {
+  color: #999;
+}
+
+.res-summary-row.is-empty span:last-child {
+  color: #bbb;
+  font-style: italic;
+}
+
+.res-price-breakdown {
+  margin-top: 14px;
+}
+
+.res-price-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: #444;
+  padding: 5px 0;
+}
+
+.res-price-row span:first-child {
+  color: #888;
+}
+
+.res-price-total {
+  display: flex;
+  justify-content: space-between;
+  font-size: 16px;
+  font-weight: 800;
+  color: #111;
+  margin-top: 8px;
+  padding-top: 12px;
+  border-top: 1px solid #ececec;
+}
+
+.res-cta {
+  display: block;
+  width: 100%;
+  text-align: center;
+  padding: 13px;
+  border-radius: 24px;
+  border: none;
+  background: #1a9ecf;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .2s;
+  margin-top: 18px;
+  box-sizing: border-box;
+}
+
+.res-cta:hover {
+  background: #1585b0;
+}
+
+.res-cta:disabled {
+  opacity: .6;
+  cursor: not-allowed;
+}
+
+.res-form-error {
+  font-size: 12.5px;
+  color: #e0554f;
+  background: #fdf1f0;
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-top: 14px;
+  display: none;
+}
+
+.res-form-error.is-visible {
+  display: block;
+}
+
+/* ── NO ENCONTRADA ── */
+.res-not-found {
+  text-align: center;
+  padding: 80px 20px;
+  color: #666;
+}
+
+.res-not-found a {
+  color: #1a9ecf;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 860px) {
+  .res-page {
+    padding: 16px 20px 40px;
+  }
+  .res-body {
+    flex-direction: column;
+  }
+  .res-sidebar {
+    width: 100%;
+    position: static;
+  }
+  .res-field-row,
+  .res-amenities-grid,
+  .res-rules-grid {
+    grid-template-columns: 1fr;
+  }
+  .res-schedule-row {
+    gap: 20px;
+  }
+}
+
+@media (max-width: 600px) {
+  .res-step {
+    padding: 18px 16px;
+    margin-bottom: 14px;
+  }
+  .res-step-title {
+    font-size: 14px;
+    margin-bottom: 14px;
+  }
+  .res-title {
+    font-size: 19px;
+  }
+  .res-summary-body {
+    padding: 14px 16px 18px;
+  }
+}
+
+@media (max-width: 400px) {
+  .res-page {
+    padding: 14px 14px 32px;
+  }
+  .res-field input,
+  .res-field select {
+    padding: 10px 12px;
+    font-size: 12.5px;
+  }
+  .res-hora-trigger {
+    padding: 10px 12px;
+    font-size: 12.5px;
+  }
+  .res-hora-panel {
+    max-height: 240px;
+    padding: 12px;
+  }
+  .res-hora-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .res-summary-img {
+    height: 120px;
+  }
+  .res-schedule-row {
+    flex-direction: column;
+    gap: 10px;
+  }
+}

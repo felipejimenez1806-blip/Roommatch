@@ -1,0 +1,79 @@
+/* ── MENÚ DE USUARIO: dropdown (avatar/nombre ahora vienen de nav.css) ── */
+.user-menu {
+  position: relative;
+}
+
+.user-chevron {
+  width: 14px;
+  height: 14px;
+  stroke: #888;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform .2s;
+}
+
+.user-menu.open .user-chevron {
+  transform: rotate(180deg);
+}
+
+.user-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 180px;
+  background: #fff;
+  border: 1px solid #ececec;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.12);
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  transform: translateY(-6px);
+  pointer-events: none;
+  transition: opacity .15s ease, transform .15s ease;
+  z-index: 200;
+}
+
+.user-menu.open .user-dropdown {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.user-dropdown a,
+.user-dropdown button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 9px 12px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: #333;
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.user-dropdown a:hover,
+.user-dropdown button:hover {
+  background: #f2f9fc;
+  color: #1a9ecf;
+}
+
+.user-dropdown #logoutBtn {
+  color: #e03;
+  border-top: 1px solid #ececec;
+  margin-top: 4px;
+  padding-top: 10px;
+}
+
+.user-dropdown #logoutBtn:hover {
+  background: #fdeceb;
+  color: #e03;
+}

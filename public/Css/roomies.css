@@ -1,0 +1,474 @@
+/* ── LAYOUT GENERAL: sidebar de filtros + panel de resultados ── */
+.roomies-page {
+  display: flex;
+  align-items: flex-start;
+  gap: 28px;
+  padding: 24px 40px 48px;
+  max-width: 1400px;
+  width: 100%;
+  align-self: center;
+  margin: 0 auto;
+}
+
+/* ── SIDEBAR DE FILTROS ── */
+.roomies-filters {
+  width: 260px;
+  flex-shrink: 0;
+  background: #fff;
+  border: 1px solid #ececec;
+  border-radius: 14px;
+  padding: 18px 16px 20px;
+  position: sticky;
+  top: 74px;
+  max-height: calc(100vh - 94px);
+  overflow-y: auto;
+}
+
+.roomies-back {
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #444;
+  text-decoration: none;
+  margin-bottom: 14px;
+}
+
+.roomies-back:hover {
+  color: #1a9ecf;
+}
+
+.filter-block {
+  margin-bottom: 18px;
+}
+
+.filter-label,
+.filter-sublabel {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: #555;
+  margin-bottom: 6px;
+}
+
+.filter-sublabel {
+  margin-top: 10px;
+}
+
+.filter-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #222;
+  margin-bottom: 8px;
+}
+
+.filter-section-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  margin-bottom: 10px;
+}
+
+.filter-divider {
+  border: none;
+  border-top: 1px solid #ececec;
+  margin: 18px 0 14px;
+}
+
+#filtroZonaRoomie,
+.roomies-filters select {
+  width: 100%;
+  border: 1.5px solid #ececec;
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: 13px;
+  font-family: inherit;
+  color: #333;
+  background: #fff;
+}
+
+#filtroZonaRoomie:focus,
+.roomies-filters select:focus {
+  outline: none;
+  border-color: #1a9ecf;
+}
+
+.price-range-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.price-range-row input {
+  width: 100%;
+  border: 1.5px solid #ececec;
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: 13px;
+  font-family: inherit;
+  color: #333;
+}
+
+.price-range-row input:focus {
+  outline: none;
+  border-color: #1a9ecf;
+}
+
+.price-range-row span {
+  color: #bbb;
+  font-size: 12px;
+}
+
+.check-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #444;
+  padding: 5px 0;
+  cursor: pointer;
+}
+
+.check-row input {
+  accent-color: #1a9ecf;
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+/* ── ACORDEONES DE FILTROS DETALLADOS ── */
+.filter-group {
+  border-top: 1px solid #ececec;
+  padding: 10px 0;
+}
+
+.filter-group summary {
+  font-size: 13px;
+  font-weight: 700;
+  color: #222;
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.filter-group summary::-webkit-details-marker {
+  display: none;
+}
+
+.filter-group summary::after {
+  content: "+";
+  color: #1a9ecf;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.filter-group[open] summary::after {
+  content: "–";
+}
+
+.filter-group > *:not(summary) {
+  margin-top: 6px;
+}
+
+.btn-limpiar-filtros {
+  width: 100%;
+  margin-top: 16px;
+  padding: 9px;
+  border: 1.5px solid #1a9ecf;
+  border-radius: 20px;
+  background: transparent;
+  color: #1a9ecf;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .2s;
+}
+
+.btn-limpiar-filtros:hover {
+  background: #1a9ecf;
+  color: #fff;
+}
+
+/* ── PANEL DE RESULTADOS ── */
+.roomies-results {
+  flex: 1;
+  min-width: 0;
+}
+
+.roomies-results-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.roomies-results-count {
+  font-size: 14px;
+  font-weight: 700;
+  color: #222;
+}
+
+.roomies-sort {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.roomies-sort label {
+  font-size: 12px;
+  color: #888;
+}
+
+.roomies-sort select {
+  border: 1.5px solid #ececec;
+  border-radius: 20px;
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+  background: #fff;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.roomies-sort select:hover,
+.roomies-sort select:focus {
+  border-color: #1a9ecf;
+  outline: none;
+}
+
+/* ── LISTA DE RESULTADOS (tarjetas horizontales de perfil) ── */
+.roomies-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.roomie-card {
+  display: flex;
+  gap: 16px;
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 1px 6px rgba(0,0,0,.07);
+  padding: 14px;
+  transition: box-shadow .2s, transform .2s;
+}
+
+.roomie-card:hover {
+  box-shadow: 0 6px 20px rgba(0,0,0,.13);
+  transform: translateY(-2px);
+}
+
+.roomie-card-avatar-wrap {
+  position: relative;
+  flex-shrink: 0;
+  width: 110px;
+  height: 110px;
+}
+
+.roomie-card-avatar-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
+  border: 2px solid #f2f9fc;
+}
+
+.roomie-card-badge {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  background: #1a9ecf;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 7px;
+  border-radius: 10px;
+  border: 2px solid #fff;
+}
+
+.roomie-card-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.roomie-card-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #111;
+}
+
+.roomie-card-name span {
+  font-weight: 500;
+  color: #888;
+}
+
+.roomie-card-sub {
+  font-size: 12px;
+  color: #888;
+  margin-top: 1px;
+}
+
+.roomie-card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.roomie-card-tag {
+  font-size: 11px;
+  font-weight: 600;
+  color: #1a9ecf;
+  background: #f2f9fc;
+  border-radius: 12px;
+  padding: 3px 10px;
+}
+
+.roomie-card-footer {
+  margin-top: auto;
+  padding-top: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+}
+
+.roomie-card-price {
+  font-size: 15px;
+  font-weight: 800;
+  color: #111;
+  text-align: right;
+}
+
+.roomie-card-price span {
+  display: block;
+  font-size: 11px;
+  font-weight: 500;
+  color: #999;
+}
+
+.roomie-card-btn {
+  padding: 9px 20px;
+  border: none;
+  border-radius: 20px;
+  background: #1a9ecf;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background .2s;
+}
+
+.roomie-card-btn:hover {
+  background: #1585b0;
+}
+
+/* ── PAGINACIÓN ── */
+.roomies-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-top: 26px;
+}
+
+.roomies-page-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1.5px solid #ececec;
+  background: #fff;
+  color: #444;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .2s;
+}
+
+.roomies-page-btn:hover {
+  border-color: #1a9ecf;
+  color: #1a9ecf;
+}
+
+.roomies-page-btn.active {
+  background: #1a9ecf;
+  border-color: #1a9ecf;
+  color: #fff;
+}
+
+/* ── SIN RESULTADOS ── */
+.roomies-empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: #888;
+  font-size: 14px;
+  background: #fff;
+  border-radius: 14px;
+}
+
+.roomies-empty button {
+  margin-top: 10px;
+  padding: 8px 20px;
+  border: 1.5px solid #1a9ecf;
+  border-radius: 20px;
+  background: transparent;
+  color: #1a9ecf;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 860px) {
+  .roomies-page {
+    flex-direction: column;
+    padding: 20px 20px 40px;
+  }
+  .roomies-filters {
+    width: 100%;
+    position: static;
+    max-height: none;
+  }
+  .roomie-card {
+    flex-direction: column;
+  }
+  .roomie-card-avatar-wrap {
+    width: 84px;
+    height: 84px;
+  }
+  .roomie-card-footer {
+    justify-content: space-between;
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .roomies-page {
+    padding: 16px 14px 32px;
+  }
+  .roomies-filters {
+    padding: 16px 14px 18px;
+  }
+  .roomie-card {
+    padding: 12px;
+  }
+
+  /* Si hay muchas páginas, que las bolitas pasen a una segunda
+     fila en vez de desbordar el ancho de la pantalla. */
+  .roomies-pagination {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+}

@@ -1,0 +1,339 @@
+@import url("../Css/dashboard.css");
+
+/* ============================================================
+   MIS PUBLICACIONES – gestión de publicaciones propias y de
+   las solicitudes de reserva que ha recibido cada una.
+   Reutiliza tokens de dashboard.css (azul #1a9ecf, bordes #ececec,
+   texto #333, radios 12px), igual que perfil.css / crear-publicacion.css.
+   ============================================================ */
+
+.mp-page {
+  max-width: 900px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 36px 24px 60px;
+  min-height: 60vh;
+}
+
+.mp-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #888;
+  text-decoration: none;
+  margin-bottom: 18px;
+}
+.mp-back-link:hover { color: #1a9ecf; }
+
+.mp-title { font-size: 26px; font-weight: 800; color: #1c1c1c; margin: 0 0 4px; }
+.mp-subtitle { font-size: 14px; color: #888; margin: 0 0 28px; }
+
+/* ---------- ENCABEZADO DE SECCIÓN (Publicaciones / Roomie) ---------- */
+.mp-section-heading {
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: #999;
+  margin: 0 0 14px;
+  padding-top: 8px;
+  border-top: 1px solid #f0f0f0;
+}
+.mp-section-heading:first-of-type { border-top: none; padding-top: 0; }
+.mp-section-block { margin-bottom: 34px; }
+.mp-section-block:last-child { margin-bottom: 0; }
+
+/* ---------- TARJETA DE PUBLICACIÓN ---------- */
+.mp-pub-card {
+  border: 1px solid #ececec;
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.mp-pub-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+.mp-pub-img { width: 92px; height: 92px; border-radius: 12px; object-fit: cover; flex-shrink: 0; }
+.mp-pub-img.is-avatar { border-radius: 50%; }
+.mp-pub-body { flex: 1; min-width: 0; }
+.mp-pub-title { font-size: 16px; font-weight: 800; color: #1c1c1c; margin: 0 0 3px; }
+.mp-pub-sub { font-size: 13px; color: #888; margin: 0 0 6px; }
+.mp-pub-price { font-size: 14.5px; font-weight: 800; color: #1a9ecf; }
+.mp-pub-state {
+  display: inline-block;
+  margin-left: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #17874a;
+  background: #e4f7ea;
+  padding: 3px 10px;
+  border-radius: 20px;
+  vertical-align: middle;
+}
+.mp-pub-state.is-rating { color: #1a9ecf; background: #eaf6fc; }
+
+/* Reemplaza a .mp-pub-state para estado_inmueble: se ve igual (píldora
+   de color), pero es un <select> real para poder cambiar el estado sin
+   pasar por el wizard completo ni borrar la publicación. */
+.mp-estado-select {
+  appearance: none;
+  -webkit-appearance: none;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  margin-left: 10px;
+  padding: 4px 24px 4px 10px;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  vertical-align: middle;
+  background-color: #e4f7ea;
+  color: #17874a;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2317874a' stroke-width='3'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 9px;
+}
+.mp-estado-select.is-reservado {
+  background-color: #fff4e0;
+  color: #b4780a;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23b4780a' stroke-width='3'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+}
+.mp-estado-select.is-no_disponible {
+  background-color: #f7f7f8;
+  color: #888;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='3'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+}
+.mp-estado-select.is-ya_encontro {
+  background-color: #fff4e0;
+  color: #b4780a;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23b4780a' stroke-width='3'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+}
+.mp-estado-select.is-pausado {
+  background-color: #f7f7f8;
+  color: #888;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='3'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+}
+
+.mp-pub-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; flex-shrink: 0; }
+.mp-view-link {
+  display: inline-block;
+  min-width: 110px;
+  text-align: center;
+  box-sizing: border-box;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #1a9ecf;
+  text-decoration: none;
+  border: 1.5px solid #1a9ecf;
+  border-radius: 8px;
+  padding: 6px 12px;
+  white-space: nowrap;
+}
+.mp-view-link:hover { background: #f2f9fc; }
+.mp-delete-btn {
+  display: inline-block;
+  min-width: 110px;
+  text-align: center;
+  box-sizing: border-box;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #e03;
+  background: transparent;
+  border: 1.5px solid #f3c9c5;
+  border-radius: 8px;
+  padding: 6px 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: inherit;
+}
+.mp-delete-btn:hover { background: #fdeceb; }
+
+/* ---------- SOLICITUDES DE RESERVA ---------- */
+.mp-requests { margin-top: 18px; border-top: 1px solid #f0f0f0; padding-top: 16px; }
+.mp-requests-title {
+  font-size: 12.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: #999;
+  margin: 0 0 12px;
+}
+.mp-empty-requests { font-size: 13.5px; color: #999; font-style: italic; }
+
+.mp-request-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px;
+  border: 1px solid #f0f0f0;
+  border-radius: 12px;
+  margin-bottom: 10px;
+}
+.mp-request-row:last-child { margin-bottom: 0; }
+
+.mp-request-body { flex: 1; min-width: 0; }
+.mp-request-name { font-size: 13.5px; font-weight: 700; color: #1c1c1c; }
+.mp-request-meta { font-size: 12.5px; color: #888; margin-top: 2px; }
+.mp-request-contact { font-size: 12px; color: #666; margin-top: 4px; }
+.mp-request-contact a { color: #1a9ecf; text-decoration: none; }
+.mp-request-contact a:hover { text-decoration: underline; }
+
+.mp-request-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; flex-shrink: 0; }
+
+.mp-badge {
+  display: inline-block;
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+.mp-badge.is-pendiente { background: #fff4e0; color: #b4780a; }
+.mp-badge.is-aprobada  { background: #e4f7ea; color: #17874a; }
+.mp-badge.is-rechazada { background: #fdeceb; color: #c0261c; }
+
+.mp-request-buttons { display: flex; gap: 6px; }
+.mp-btn-mini {
+  font-family: inherit;
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 5px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 1.5px solid transparent;
+}
+.mp-btn-mini.is-aceptar { color: #17874a; border-color: #bfe8cf; background: #fff; }
+.mp-btn-mini.is-aceptar:hover, .mp-btn-mini.is-aceptar.is-current { background: #e4f7ea; }
+.mp-btn-mini.is-rechazar { color: #c0261c; border-color: #f3c9c5; background: #fff; }
+.mp-btn-mini.is-rechazar:hover, .mp-btn-mini.is-rechazar.is-current { background: #fdeceb; }
+
+/* ---------- EMPTY STATE GENERAL ---------- */
+.mp-empty {
+  border: 1.5px dashed #ececec;
+  border-radius: 14px;
+  padding: 50px 20px;
+  text-align: center;
+  color: #888;
+  font-size: 14px;
+}
+.mp-empty a {
+  display: inline-block;
+  margin-top: 14px;
+  color: #fff;
+  background: #1a9ecf;
+  font-weight: 700;
+  text-decoration: none;
+  padding: 10px 22px;
+  border-radius: 24px;
+}
+.mp-empty a:hover { background: #1589b6; }
+
+/* ---------- MODAL DE CONFIRMACIÓN (eliminar publicación) ---------- */
+.mp-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 20, 20, .45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  padding: 20px;
+}
+.mp-modal {
+  background: #fff;
+  border-radius: 16px;
+  padding: 30px 26px;
+  max-width: 380px;
+  width: 100%;
+  text-align: center;
+}
+.mp-modal-icon {
+  width: 52px; height: 52px; border-radius: 50%;
+  background: #fdeceb; color: #c0261c;
+  font-size: 22px;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 16px;
+}
+.mp-modal-title { font-size: 17px; font-weight: 800; color: #1c1c1c; margin: 0 0 8px; }
+.mp-modal-text { font-size: 13.5px; color: #777; margin: 0 0 22px; line-height: 1.5; }
+.mp-modal-buttons { display: flex; gap: 10px; justify-content: center; }
+.mp-modal-btn-outline, .mp-modal-btn-danger {
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 700;
+  padding: 9px 18px;
+  border-radius: 24px;
+  cursor: pointer;
+  border: none;
+}
+.mp-modal-btn-outline { background: #f2f2f2; color: #555; }
+.mp-modal-btn-outline:hover { background: #e8e8e8; }
+.mp-modal-btn-danger { background: #e03; color: #fff; }
+.mp-modal-btn-danger:hover { background: #c0261c; }
+
+/* ============================================================
+   RESPONSIVE
+   No tenía ningún media query: las filas de publicación y de
+   solicitud (imagen/nombre + botones de acción a la derecha) se
+   apretaban mucho en celular. Se resuelve dejando que las
+   acciones bajen a una fila propia de ancho completo.
+   ============================================================ */
+@media (max-width: 700px) {
+  .mp-page {
+    padding: 24px 16px 44px;
+  }
+
+  .mp-pub-head {
+    flex-wrap: wrap;
+  }
+  .mp-pub-img {
+    width: 68px;
+    height: 68px;
+  }
+  .mp-pub-actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+    width: 100%;
+    justify-content: flex-end;
+    margin-top: 4px;
+  }
+  .mp-view-link, .mp-delete-btn {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .mp-request-row {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+  .mp-request-actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+    width: 100%;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 6px;
+    gap: 8px;
+  }
+  .mp-request-buttons {
+    gap: 8px;
+  }
+  .mp-btn-mini {
+    padding: 7px 14px;
+  }
+}
+
+@media (max-width: 420px) {
+  .mp-pub-card {
+    padding: 16px;
+  }
+  .mp-modal {
+    padding: 24px 20px;
+  }
+}

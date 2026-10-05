@@ -1,0 +1,608 @@
+:root {
+  --azul-principal: #2f7cf6;
+  --azul-oscuro: #1857b8;
+  --texto-oscuro: #1f2733;
+  --texto-gris: #6b7684;
+  --borde: #e3e7ec;
+  --error: #d64545;
+  --blanco: rgba(255, 255, 255, 0.88);
+  --radio: 18px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color: var(--texto-oscuro);
+  background-image: url("../Img/fondo.png");
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  min-height: 100vh;
+  display: flex;
+}
+
+.fondo-overlay {
+  position: fixed;
+  inset: 0;
+  backdrop-filter: blur(2px);
+  background: rgba(20, 30, 45, 0.15);
+  z-index: 0;
+}
+
+.login-wrapper {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* El checklist de contraseña hizo el formulario más alto: en
+     pantallas donde ya no cabe completo, "center" a secas recorta el
+     espacio de arriba en vez de dejar hacer scroll. "safe center" cae
+     de vuelta a alinear arriba (con scroll normal) cuando el contenido
+     no cabe; los navegadores que no soportan "safe" simplemente
+     ignoran esta segunda línea y se quedan con el center normal. */
+  justify-content: center;
+  justify-content: safe center;
+  padding: 40px 16px;
+  gap: 20px;
+  overflow-y: auto;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 440px;
+  background: var(--blanco);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-radius: var(--radio);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 20px 60px rgba(15, 30, 60, 0.25);
+  padding: 34px 32px 28px;
+}
+
+.login-header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-bottom: 18px;
+}
+
+.logo {
+  height: 60px;
+  width: auto;
+  object-fit: contain;
+  margin-bottom: 18px;
+}
+
+.login-header h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--texto-oscuro);
+  width: 100%;
+  text-align: center;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+}
+
+.input-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #ffffff;
+  border: 1px solid var(--borde);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-top: 10px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.input-group:focus-within {
+  border-color: var(--azul-principal);
+  box-shadow: 0 0 0 3px rgba(47, 124, 246, 0.15);
+}
+
+.input-group.has-error {
+  border-color: var(--error);
+}
+
+.icon {
+  display: flex;
+  color: var(--texto-gris);
+  flex-shrink: 0;
+}
+
+.icon svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.input-group input {
+  border: none;
+  outline: none;
+  flex: 1;
+  font-size: 0.95rem;
+  background: transparent;
+  color: var(--texto-oscuro);
+  min-width: 0;
+}
+
+.input-group input::placeholder {
+  color: #98a2ae;
+}
+
+.input-group select {
+  border: none;
+  outline: none;
+  flex: 1;
+  font-size: 0.95rem;
+  background: transparent;
+  color: var(--texto-oscuro);
+  min-width: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7684' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 2px center;
+  background-size: 16px;
+  padding-right: 22px;
+  cursor: pointer;
+}
+
+.input-group select:invalid {
+  color: #98a2ae;
+}
+
+.input-group select option {
+  color: var(--texto-oscuro);
+}
+
+.input-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.input-row.has-error .input-group {
+  border-color: var(--error);
+}
+
+.input-row .input-group {
+  margin-top: 0;
+  flex: 1;
+  min-width: 0;
+}
+
+.select-label-box {
+  justify-content: space-between;
+  color: var(--texto-oscuro);
+  font-size: 0.95rem;
+  cursor: default;
+  user-select: none;
+}
+
+.select-label-box .chevron {
+  display: flex;
+  color: var(--texto-gris);
+  flex-shrink: 0;
+}
+
+.select-label-box .chevron svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.select-box select {
+  padding-right: 20px;
+}
+
+.toggle-password {
+  background: none;
+  border: none;
+  color: var(--azul-principal);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px;
+  flex-shrink: 0;
+}
+
+.toggle-password:hover {
+  text-decoration: underline;
+}
+
+.field-error {
+  margin: 3px 2px 0;
+  font-size: 0.78rem;
+  color: var(--error);
+  line-height: 1.3;
+}
+
+.field-error:empty {
+  margin: 0;
+  line-height: 0;
+}
+
+.password-checklist {
+  list-style: none;
+  margin: 8px 2px 2px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.password-checklist li {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.78rem;
+  color: var(--texto-gris);
+  transition: color 0.15s ease;
+}
+
+.password-checklist li::before {
+  content: "○";
+  font-size: 0.65rem;
+  color: #c3cad3;
+  flex-shrink: 0;
+}
+
+.password-checklist li.is-valid {
+  color: #1c8a4c;
+}
+
+.password-checklist li.is-valid::before {
+  content: "✓";
+  font-weight: 700;
+  color: #1c8a4c;
+}
+
+/* --- Checkbox: Acepto los términos y condiciones ---
+   align-items: flex-start + gap deja el checkbox alineado con la
+   primera línea del texto y permite que el label haga wrap en
+   varias líneas sin desalinearse; no depende de ningún ancho fijo,
+   así que se adapta solo al ancho de la card en cualquier pantalla. */
+.checkbox-group {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin-top: 16px;
+}
+
+.checkbox-group input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  margin-top: 2px;
+  accent-color: var(--azul-principal);
+  cursor: pointer;
+}
+
+.checkbox-group label {
+  font-size: 0.85rem;
+  color: var(--texto-gris);
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+.checkbox-group label a {
+  color: var(--azul-principal);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.checkbox-group label a:hover {
+  text-decoration: underline;
+}
+
+.checkbox-group.has-error label {
+  color: var(--error);
+}
+
+.checkbox-group.has-error input[type="checkbox"] {
+  outline: 2px solid var(--error);
+  outline-offset: 2px;
+}
+
+.form-message {
+  min-height: 0;
+  margin: 6px 2px 0;
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.form-message.error {
+  color: var(--error);
+}
+
+.form-message.success {
+  color: #1c8a4c;
+}
+
+.btn-primary {
+  margin-top: 16px;
+  width: 100%;
+  padding: 13px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--azul-principal), var(--azul-oscuro));
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: filter 0.15s ease, transform 0.05s ease;
+}
+
+.btn-primary:hover {
+  filter: brightness(1.06);
+}
+
+.btn-primary:active {
+  transform: translateY(1px);
+}
+
+.btn-primary:disabled {
+  opacity: 0.75;
+  cursor: not-allowed;
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: girar 0.7s linear infinite;
+}
+
+@keyframes girar {
+  to { transform: rotate(360deg); }
+}
+
+.forgot-link {
+  display: block;
+  text-align: center;
+  margin-top: 16px;
+  color: var(--azul-principal);
+  font-size: 0.88rem;
+  text-decoration: none;
+}
+
+.forgot-link:hover {
+  text-decoration: underline;
+}
+
+.divider {
+  position: relative;
+  text-align: center;
+  margin: 16px 0 12px;
+}
+
+.divider::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  border-top: 1px solid var(--borde);
+}
+
+.divider span {
+  position: relative;
+  background: transparent;
+  padding: 0 12px;
+  font-size: 0.85rem;
+  color: var(--texto-gris);
+  backdrop-filter: none;
+}
+
+.divider span::before,
+.divider span::after {
+  content: none;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+}
+
+.divider span {
+  margin: 0 auto;
+  background: rgba(255,255,255,0.01);
+}
+
+.social-row {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-social {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid var(--borde);
+  background: #ffffff;
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--texto-oscuro);
+  cursor: pointer;
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.btn-social:hover {
+  background: #f7f9fb;
+  box-shadow: 0 2px 8px rgba(20, 30, 45, 0.08);
+}
+
+.social-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.small-note {
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--texto-gris);
+  margin: 14px 0 0;
+}
+
+.small-note a {
+  color: var(--azul-principal);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.small-note a:hover {
+  text-decoration: underline;
+}
+
+.btn-secondary {
+  display: block;
+  width: fit-content;
+  margin: 8px auto 0;
+  padding: 8px 22px;
+  border-radius: 999px;
+  border: 1px solid var(--borde);
+  background: #f3f6fa;
+  color: var(--azul-principal);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+  text-align: center;
+  cursor: pointer;
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.btn-secondary:hover {
+  background: #e9eff8;
+  box-shadow: 0 2px 8px rgba(20, 30, 45, 0.08);
+}
+
+.page-footer {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  color: #f1f4f8;
+  font-size: 0.82rem;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+}
+
+.page-footer a {
+  color: #f1f4f8;
+  text-decoration: none;
+}
+
+.page-footer a:hover {
+  text-decoration: underline;
+}
+
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translate(-50%, 20px);
+  background: #1f2733;
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-size: 0.88rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  z-index: 5;
+  max-width: 90vw;
+  text-align: center;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+@media (max-width: 420px) {
+  .login-card {
+    padding: 26px 20px 22px;
+  }
+}
+
+@media (max-width: 380px) {
+  /* Filas de dos campos lado a lado (ej. nombre/apellido): en un
+     celular angosto no queda espacio útil para escribir, así que
+     se apilan en vez de aplastarse. */
+  .input-row {
+    flex-direction: column;
+    gap: 10px;
+  }
+  .input-row .input-group {
+    width: 100%;
+  }
+}
+
+/* Pantallas de poca altura (ventanas de escritorio bajas, celulares
+   en horizontal): el formulario completo (con el checklist de
+   contraseña) ya no cabe cómodo en un viewport corto, así que se
+   comprimen los espacios verticales en vez de dejar que se vea
+   apretado contra el borde superior. */
+@media (max-height: 700px) {
+  .login-wrapper {
+    padding: 20px 16px;
+  }
+  .login-header {
+    margin-bottom: 10px;
+  }
+  .logo {
+    height: 46px;
+    margin-bottom: 10px;
+  }
+  .input-group {
+    padding: 10px 14px;
+    margin-top: 8px;
+  }
+  .password-checklist {
+    gap: 2px;
+  }
+  .checkbox-group {
+    margin-top: 10px;
+  }
+  .divider {
+    margin: 10px 0 8px;
+  }
+}
+
+.ayuda{
+    text-align: center;
+}

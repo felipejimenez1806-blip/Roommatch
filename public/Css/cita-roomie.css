@@ -1,0 +1,500 @@
+.cr-page {
+  max-width: 1140px;
+  width: 100%;
+  align-self: center;
+  margin: 0 auto;
+  padding: 20px 40px 60px;
+}
+
+.cr-back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #fff;
+  border: 1.5px solid #ececec;
+  color: #444;
+  text-decoration: none;
+  font-size: 16px;
+  margin-bottom: 16px;
+  transition: border-color .2s, color .2s;
+}
+
+.cr-back:hover {
+  border-color: #1a9ecf;
+  color: #1a9ecf;
+}
+
+.cr-heading {
+  margin-bottom: 24px;
+}
+
+.cr-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: #111;
+}
+
+.cr-subtitle {
+  font-size: 13px;
+  color: #888;
+  margin-top: 4px;
+}
+
+/* ── LAYOUT ── */
+.cr-body {
+  display: flex;
+  align-items: flex-start;
+  gap: 28px;
+}
+
+.cr-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.cr-sidebar {
+  width: 320px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 24px;
+}
+
+/* ── PASOS ── */
+.cr-step {
+  background: #fff;
+  border-radius: 16px;
+  border: 1px solid #ececec;
+  padding: 22px 24px;
+  margin-bottom: 18px;
+}
+
+.cr-step-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: #111;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.cr-step-number {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #1a9ecf;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* ── NOTA DE SEGURIDAD ── */
+.cr-safety-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: #f2f9fc;
+  border: 1px solid #d9edf7;
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 12.5px;
+  color: #2a6f8c;
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+
+.cr-safety-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+/* ── CAMPOS DE FORMULARIO ── */
+.cr-field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.cr-field {
+  margin-bottom: 16px;
+}
+
+.cr-field:last-child {
+  margin-bottom: 0;
+}
+
+.cr-field label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: #555;
+  margin-bottom: 6px;
+}
+
+.cr-field input,
+.cr-field select,
+.cr-field textarea {
+  width: 100%;
+  padding: 11px 13px;
+  border-radius: 10px;
+  border: 1.5px solid #e4e4e4;
+  font-size: 13px;
+  font-family: inherit;
+  color: #222;
+  background: #fff;
+  box-sizing: border-box;
+  transition: border-color .2s;
+}
+
+.cr-field textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.cr-field input:focus,
+.cr-field select:focus,
+.cr-field textarea:focus {
+  outline: none;
+  border-color: #1a9ecf;
+}
+
+.cr-field input.cr-invalid,
+.cr-field select.cr-invalid,
+.cr-field textarea.cr-invalid {
+  border-color: #e0554f;
+}
+
+/* ── SELECTOR DE HORA (panel de chips por franja del día) ──
+   Mismo componente que .res-hora-* en reserva.css. */
+.cr-hora-picker {
+  position: relative;
+}
+
+.cr-hora-trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 11px 13px;
+  border-radius: 10px;
+  border: 1.5px solid #e4e4e4;
+  font-size: 13px;
+  font-family: inherit;
+  color: #98a2ae;
+  background: #fff;
+  box-sizing: border-box;
+  cursor: pointer;
+  transition: border-color .2s;
+}
+
+.cr-hora-trigger.has-value {
+  color: #222;
+}
+
+.cr-hora-trigger:focus,
+.cr-hora-trigger.is-open {
+  outline: none;
+  border-color: #1a9ecf;
+}
+
+.cr-hora-trigger.cr-invalid {
+  border-color: #e0554f;
+}
+
+.cr-hora-chevron {
+  width: 14px;
+  height: 14px;
+  stroke: #98a2ae;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex-shrink: 0;
+  transition: transform .15s;
+}
+
+.cr-hora-trigger.is-open .cr-hora-chevron {
+  transform: rotate(180deg);
+}
+
+.cr-hora-panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  background: #fff;
+  border: 1px solid #ececec;
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.14);
+  padding: 14px;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.cr-hora-group {
+  margin-bottom: 14px;
+}
+.cr-hora-group:last-child {
+  margin-bottom: 0;
+}
+
+.cr-hora-group-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  margin: 0 0 8px;
+}
+
+.cr-hora-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.cr-hora-chip {
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: #333;
+  background: #f7f9fb;
+  border: 1.5px solid transparent;
+  border-radius: 8px;
+  padding: 7px 4px;
+  cursor: pointer;
+  transition: background .15s, border-color .15s, color .15s;
+}
+
+.cr-hora-chip:hover:not(:disabled) {
+  border-color: #1a9ecf;
+  color: #1a9ecf;
+}
+
+.cr-hora-chip.is-selected {
+  background: #1a9ecf;
+  border-color: #1a9ecf;
+  color: #fff;
+}
+
+.cr-hora-chip:disabled,
+.cr-hora-chip.is-unavailable {
+  background: #f2f2f2;
+  color: #ccc;
+  cursor: not-allowed;
+  text-decoration: line-through;
+}
+
+.cr-field-error {
+  font-size: 11px;
+  color: #e0554f;
+  margin-top: 4px;
+  display: none;
+}
+
+.cr-field-error.is-visible {
+  display: block;
+}
+
+.cr-field-hint {
+  font-size: 11px;
+  color: #999;
+  margin-top: 4px;
+}
+
+/* ── TARJETA LATERAL DE RESUMEN ── */
+.cr-summary-card {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0,0,0,.09);
+  overflow: hidden;
+}
+
+.cr-summary-img-wrap {
+  padding: 20px 20px 0;
+  display: flex;
+  justify-content: center;
+}
+
+.cr-summary-img {
+  width: 96px;
+  height: 96px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 3px solid #f2f9fc;
+  display: block;
+}
+
+.cr-summary-body {
+  padding: 14px 20px 20px;
+  text-align: center;
+}
+
+.cr-summary-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: #111;
+  margin-bottom: 2px;
+}
+
+.cr-summary-rating {
+  color: #1a9ecf;
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.cr-summary-location {
+  font-size: 12.5px;
+  color: #888;
+  margin-bottom: 14px;
+}
+
+.cr-summary-row {
+  display: flex;
+  justify-content: space-between;
+  text-align: left;
+  font-size: 12.5px;
+  color: #555;
+  padding: 8px 0;
+  border-bottom: 1px dashed #ececec;
+}
+
+.cr-summary-row span:first-child {
+  color: #999;
+}
+
+.cr-summary-row.is-empty span:last-child {
+  color: #bbb;
+  font-style: italic;
+}
+
+.cr-cta {
+  display: block;
+  width: 100%;
+  text-align: center;
+  padding: 13px;
+  border-radius: 24px;
+  border: none;
+  background: #1a9ecf;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .2s;
+  margin-top: 18px;
+  box-sizing: border-box;
+}
+
+.cr-cta:hover {
+  background: #1585b0;
+}
+
+.cr-form-error {
+  font-size: 12.5px;
+  color: #e0554f;
+  background: #fdf1f0;
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-top: 14px;
+  display: none;
+  text-align: left;
+}
+
+.cr-form-error.is-visible {
+  display: block;
+}
+
+/* ── NO ENCONTRADO ── */
+.cr-not-found {
+  text-align: center;
+  padding: 80px 20px;
+  color: #666;
+}
+
+.cr-not-found a {
+  color: #1a9ecf;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+/* ── RESPONSIVE ── */
+
+/* Tablets y celulares en horizontal: el sidebar de resumen pasa a
+   ocupar el ancho completo, debajo del formulario en vez de al lado. */
+@media (max-width: 860px) {
+  .cr-page {
+    padding: 16px 20px 40px;
+  }
+  .cr-body {
+    flex-direction: column;
+  }
+  .cr-sidebar {
+    width: 100%;
+    position: static;
+  }
+  .cr-field-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Celulares (≤600px): reduce paddings internos de los pasos y separa
+   un poco menos entre bloques para aprovechar el ancho disponible. */
+@media (max-width: 600px) {
+  .cr-step {
+    padding: 18px 16px;
+    margin-bottom: 14px;
+  }
+  .cr-step-title {
+    font-size: 14px;
+    margin-bottom: 14px;
+  }
+  .cr-title {
+    font-size: 19px;
+  }
+  .cr-summary-body {
+    padding: 14px 16px 18px;
+  }
+}
+
+/* Celulares chicos (≤400px): la fila fecha/hora ya es 1 columna desde
+   860px, aquí solo se ajustan tamaños de texto e inputs para que no
+   se vean apretados contra el borde. */
+@media (max-width: 400px) {
+  .cr-page {
+    padding: 14px 14px 32px;
+  }
+  .cr-field input,
+  .cr-field select,
+  .cr-field textarea {
+    padding: 10px 12px;
+    font-size: 12.5px;
+  }
+  .cr-hora-trigger {
+    padding: 10px 12px;
+    font-size: 12.5px;
+  }
+  .cr-hora-panel {
+    max-height: 240px;
+    padding: 12px;
+  }
+  .cr-hora-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .cr-safety-note {
+    padding: 10px 12px;
+    font-size: 12px;
+  }
+  .cr-summary-img {
+    width: 80px;
+    height: 80px;
+  }
+}

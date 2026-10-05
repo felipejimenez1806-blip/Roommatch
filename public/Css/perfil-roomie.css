@@ -1,0 +1,513 @@
+.rp-page {
+  max-width: 1140px;
+  width: 100%;
+  align-self: center;
+  margin: 0 auto;
+  padding: 20px 40px 48px;
+}
+
+.rp-back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #fff;
+  border: 1.5px solid #ececec;
+  color: #444;
+  text-decoration: none;
+  font-size: 16px;
+  margin-bottom: 16px;
+  transition: border-color .2s, color .2s;
+}
+
+.rp-back:hover {
+  border-color: #1a9ecf;
+  color: #1a9ecf;
+}
+
+/* ── HÉROE: avatar + datos principales ── */
+.rp-hero {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 1px 6px rgba(0,0,0,.07);
+  padding: 24px;
+  margin-bottom: 22px;
+  flex-wrap: wrap;
+}
+
+.rp-avatar-wrap {
+  position: relative;
+  flex-shrink: 0;
+  width: 130px;
+  height: 130px;
+}
+
+.rp-avatar-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
+  border: 3px solid #f2f9fc;
+}
+
+.rp-hero-info {
+  flex: 1;
+  min-width: 220px;
+}
+
+.rp-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: #111;
+}
+
+.rp-title span {
+  font-weight: 500;
+  color: #888;
+}
+
+.rp-subtitle {
+  font-size: 13px;
+  color: #888;
+  margin-top: 4px;
+}
+
+.rp-unavailable-badge {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #b4780a;
+  background: #fff4e0;
+  padding: 4px 11px;
+  border-radius: 20px;
+}
+
+.rp-rating-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.rp-rating-text {
+  text-align: right;
+}
+
+.rp-rating-word {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1a9ecf;
+}
+
+.rp-rating-count {
+  font-size: 11px;
+  color: #999;
+}
+
+.rp-rating-badge {
+  background: #1a9ecf;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+  padding: 6px 11px;
+  border-radius: 8px;
+}
+
+/* ── LAYOUT: pestañas + tarjeta lateral ── */
+.rp-body {
+  display: flex;
+  align-items: flex-start;
+  gap: 28px;
+}
+
+.rp-main {
+  flex: 1;
+  min-width: 0;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 1px 6px rgba(0,0,0,.07);
+  padding: 22px 24px;
+}
+
+/* ── PESTAÑAS ── */
+.rp-tabs {
+  display: flex;
+  gap: 24px;
+  border-bottom: 1px solid #ececec;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.rp-tab-btn {
+  background: none;
+  border: none;
+  padding: 10px 2px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #888;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  font-family: inherit;
+  transition: color .2s, border-color .2s;
+}
+
+.rp-tab-btn:hover {
+  color: #1a9ecf;
+}
+
+.rp-tab-btn.active {
+  color: #1a9ecf;
+  border-bottom-color: #1a9ecf;
+}
+
+.rp-tab-panel {
+  display: none;
+}
+
+.rp-tab-panel.active {
+  display: block;
+}
+
+/* ── SOBRE MÍ ── */
+.rp-description {
+  font-size: 14px;
+  color: #444;
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+
+.rp-overview-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: #111;
+  margin-bottom: 14px;
+}
+
+.rp-overview-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 20px;
+  margin-bottom: 8px;
+}
+
+.rp-overview-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: #333;
+}
+
+.rp-overview-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #f2f9fc;
+  color: #1a9ecf;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+/* ── GRUPOS DE CARACTERÍSTICAS ── */
+.rp-feature-group {
+  margin-bottom: 18px;
+}
+
+.rp-feature-group:last-child {
+  margin-bottom: 0;
+}
+
+.rp-feature-group-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  margin-bottom: 8px;
+}
+
+.rp-feature-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.rp-feature-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #333;
+  background: #f2f9fc;
+  border-radius: 10px;
+  padding: 6px 12px;
+}
+
+.rp-feature-item.is-no {
+  background: #f7f7f8;
+  color: #aaa;
+}
+
+.rp-feature-check {
+  color: #1a9ecf;
+  font-weight: 700;
+}
+
+.rp-feature-item.is-no .rp-feature-check {
+  color: #ccc;
+}
+
+.rp-info-row {
+  font-size: 13px;
+  color: #444;
+  padding: 6px 0;
+  border-bottom: 1px dashed #ececec;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.rp-info-row span:first-child {
+  color: #888;
+}
+
+/* ── RESEÑAS ── */
+.rp-reviews-summary {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.rp-reviews-score {
+  font-size: 30px;
+  font-weight: 800;
+  color: #111;
+}
+
+.rp-reviews-score span {
+  font-size: 14px;
+  font-weight: 500;
+  color: #999;
+}
+
+.rp-reviews-count {
+  font-size: 13px;
+  color: #888;
+}
+
+.rp-review-card {
+  border-top: 1px solid #ececec;
+  padding: 14px 0;
+}
+
+.rp-review-card:first-child {
+  border-top: none;
+}
+
+.rp-review-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.rp-review-author {
+  font-size: 13px;
+  font-weight: 700;
+  color: #222;
+}
+
+.rp-review-date {
+  font-size: 11px;
+  color: #aaa;
+}
+
+.rp-review-stars {
+  color: #f5a623;
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+
+.rp-review-score {
+  font-size: 12px;
+  font-weight: 700;
+  color: #888;
+  margin-left: 4px;
+}
+
+.rp-review-text {
+  font-size: 13px;
+  color: #444;
+  line-height: 1.5;
+}
+
+.rp-no-reviews {
+  font-size: 13px;
+  color: #999;
+  padding: 10px 0;
+}
+
+/* ── TARJETA LATERAL DE CONTACTO ── */
+.rp-sidebar {
+  width: 290px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 74px;
+}
+
+.rp-contact-card {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 4px 20px rgba(0,0,0,.09);
+  padding: 20px;
+}
+
+.rp-price {
+  font-size: 24px;
+  font-weight: 800;
+  color: #111;
+}
+
+.rp-price span {
+  font-size: 13px;
+  font-weight: 500;
+  color: #999;
+}
+
+.rp-price-note {
+  font-size: 12px;
+  color: #999;
+  margin-top: 2px;
+  margin-bottom: 16px;
+}
+
+.rp-cta {
+  display: block;
+  width: 100%;
+  text-align: center;
+  padding: 12px;
+  border-radius: 24px;
+  border: none;
+  background: #1a9ecf;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background .2s;
+  box-sizing: border-box;
+}
+
+.rp-cta:hover {
+  background: #1585b0;
+}
+
+.rp-cta.is-disabled {
+  background: #d8d8d8;
+  color: #888;
+  cursor: not-allowed;
+}
+.rp-cta.is-disabled:hover {
+  background: #d8d8d8;
+}
+
+.rp-cta-secondary {
+  display: block;
+  width: 100%;
+  text-align: center;
+  padding: 11px;
+  border-radius: 24px;
+  border: 1.5px solid #1a9ecf;
+  background: transparent;
+  color: #1a9ecf;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all .2s;
+  margin-top: 10px;
+  box-sizing: border-box;
+}
+
+.rp-cta-secondary:hover,
+.rp-cta-secondary.is-fav-active {
+  background: #1a9ecf;
+  color: #fff;
+}
+
+.rp-login-note {
+  font-size: 11px;
+  color: #aaa;
+  text-align: center;
+  margin-top: 10px;
+}
+
+/* ── NO ENCONTRADO ── */
+.rp-not-found {
+  text-align: center;
+  padding: 80px 20px;
+  color: #666;
+}
+
+.rp-not-found a {
+  color: #1a9ecf;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 860px) {
+  .rp-page {
+    padding: 16px 20px 40px;
+  }
+  .rp-hero {
+    flex-direction: column;
+    text-align: center;
+  }
+  .rp-rating-chip {
+    margin-left: 0;
+  }
+  .rp-body {
+    flex-direction: column;
+  }
+  .rp-sidebar {
+    width: 100%;
+    position: static;
+  }
+  .rp-overview-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .rp-page {
+    padding: 14px 16px 32px;
+  }
+  .rp-avatar-wrap {
+    width: 100px;
+    height: 100px;
+  }
+  .rp-title {
+    font-size: 19px;
+  }
+  .rp-main {
+    padding: 18px 16px;
+  }
+  .rp-tabs {
+    gap: 16px;
+  }
+  .rp-contact-card {
+    padding: 16px;
+  }
+}

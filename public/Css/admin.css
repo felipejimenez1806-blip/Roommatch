@@ -1,0 +1,512 @@
+@import url("../Css/perfil.css");
+
+/* ============================================================
+   PANEL DE ADMINISTRACIÓN
+   Reutiliza navbar, sidebar (.prf-*), subtabs, badges y estados
+   vacíos de perfil.css (que a su vez hereda de dashboard.css).
+   Aquí solo se agrega lo que el resto del sitio no tiene:
+   tarjetas de estadísticas, tabla de usuarios, grid de
+   publicaciones, tarjetas de reportes, la gráfica y el modal.
+   ============================================================ */
+
+/* ---------- LAYOUT: más ancho que perfil.css ----------
+   perfil.css define .prf-page con max-width:1100px, sidebar de
+   240px y 40px de gap + 40px de padding-left en el contenido —
+   pensado para una página de ajustes de cuenta, no para una tabla
+   de datos. Con esos valores, el área real para la tabla de
+   Usuarios (que necesita min 640px, ver .adm-table más abajo)
+   queda por debajo de eso en cualquier viewport bajo ~1170px de
+   ancho, forzando el scroll horizontal.
+   Esta regla vive en admin.css (no en perfil.css) a propósito:
+   solo se carga en las páginas de admin, así que /perfil no se ve
+   afectado — se puede pisar .prf-page/.prf-sidebar/.prf-content
+   con total seguridad porque la cascada carga este archivo
+   después del @import de arriba. */
+.prf-page {
+  max-width: 1360px;
+  gap: 28px;
+}
+.prf-sidebar {
+  width: 200px;
+}
+.prf-content {
+  padding-left: 28px;
+}
+
+/* ---------- BADGE de reportes pendientes en el sidebar ---------- */
+.adm-nav-badge {
+  margin-left: auto;
+  background: #e03;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.adm-nav-badge[hidden] {
+  display: none;
+}
+
+/* ---------- STATS (RESUMEN) ---------- */
+.adm-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+  margin-bottom: 28px;
+}
+
+.adm-stat-card {
+  background: #fff;
+  border: 1px solid #ececec;
+  border-radius: 14px;
+  padding: 18px 20px;
+}
+.adm-stat-value { font-size: 26px; font-weight: 800; color: #1c1c1c; line-height: 1; }
+.adm-stat-label { font-size: 12.5px; color: #888; margin-top: 8px; }
+.adm-stat-card.is-alert .adm-stat-value { color: #e03; }
+
+/* ---------- GRÁFICA DE REPORTES ---------- */
+.adm-chart-card {
+  background: #fff;
+  border: 1px solid #ececec;
+  border-radius: 14px;
+  padding: 22px 24px 18px;
+}
+.adm-chart-title { font-size: 15px; font-weight: 800; color: #1c1c1c; margin: 0 0 3px; }
+.adm-chart-sub { font-size: 12.5px; color: #888; margin: 0 0 16px; }
+
+.adm-chart-legend { display: flex; gap: 16px; margin-bottom: 10px; }
+.adm-chart-legend span { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #666; font-weight: 600; }
+.adm-chart-legend i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+
+.adm-chart-svg { width: 100%; height: auto; display: block; }
+.adm-chart-empty { font-size: 13px; color: #999; padding: 20px 0; text-align: center; }
+
+/* ---------- TOOLBAR (búsqueda + filtros) ---------- */
+.adm-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.adm-search {
+  flex: 1;
+  min-width: 220px;
+  font-family: inherit;
+  font-size: 13.5px;
+  padding: 9px 14px;
+  border: 1.5px solid #ececec;
+  border-radius: 24px;
+  outline: none;
+  color: #333;
+}
+.adm-search:focus { border-color: #1a9ecf; }
+
+/* ---------- TABLA DE USUARIOS ---------- */
+.adm-table-wrap {
+  background: #fff;
+  border: 1px solid #ececec;
+  border-radius: 14px;
+  overflow: hidden;
+  overflow-x: auto;
+}
+
+.adm-table { width: 100%; border-collapse: collapse; min-width: 640px; }
+.adm-table th {
+  text-align: left;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+  color: #999;
+  padding: 13px 16px;
+  border-bottom: 1px solid #ececec;
+  background: #fafcfd;
+}
+.adm-table td {
+  padding: 13px 16px;
+  border-bottom: 1px solid #f2f2f2;
+  font-size: 13.5px;
+  color: #333;
+  vertical-align: middle;
+}
+.adm-table tbody tr:last-child td { border-bottom: none; }
+.adm-table tbody tr:hover { background: #fafcfd; }
+
+.adm-user-cell { display: flex; align-items: center; gap: 10px; }
+.adm-user-avatar {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: #1a9ecf; color: #fff; font-size: 13px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  text-transform: uppercase; flex-shrink: 0; overflow: hidden;
+}
+.adm-user-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.adm-user-name { font-weight: 700; color: #1c1c1c; }
+
+.adm-tipo-badge {
+  display: inline-block;
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: #f2f2f2;
+  color: #555;
+}
+.adm-tipo-badge.is-oferente { background: #eaf6fc; color: #1a9ecf; }
+.adm-tipo-badge.is-buscador { background: #f3ecfb; color: #7a3fc0; }
+.adm-tipo-badge.is-admin { background: #fff4e0; color: #b4780a; }
+
+/* Extiende .prf-badge (definido en perfil.css) con los estados que
+   usa este panel además de pendiente/aprobada/rechazada. */
+.prf-badge.is-activo { background: #e4f7ea; color: #17874a; }
+.prf-badge.is-bloqueado { background: #fdeceb; color: #c0261c; }
+.prf-badge.is-resuelto { background: #e4f7ea; color: #17874a; }
+.prf-badge.is-descartado { background: #f2f2f2; color: #777; }
+
+.adm-row-btn {
+  border: 1.5px solid #ececec;
+  background: #fff;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  padding: 6px 13px;
+  border-radius: 18px;
+  cursor: pointer;
+  white-space: nowrap;
+  color: #555;
+  transition: background .15s, border-color .15s, color .15s;
+}
+.adm-row-btn:hover { border-color: #1a9ecf; color: #1a9ecf; }
+.adm-row-btn.is-danger { color: #e03; }
+.adm-row-btn.is-danger:hover { background: #fdeceb; border-color: #f3c9c5; }
+.adm-row-btn.is-primary { background: #1a9ecf; border-color: #1a9ecf; color: #fff; }
+.adm-row-btn.is-primary:hover { background: #1589b6; }
+
+/* ---------- PUBLICACIONES (grid) ---------- */
+.adm-pubs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 18px;
+}
+
+.adm-pub-card {
+  background: #fff;
+  border: 1px solid #ececec;
+  border-radius: 14px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.adm-pub-img { width: 100%; height: 140px; object-fit: cover; display: block; background: #f2f2f2; }
+.adm-pub-body { padding: 14px 16px; display: flex; flex-direction: column; gap: 4px; flex: 1; }
+.adm-pub-title { font-size: 14px; font-weight: 700; color: #1c1c1c; }
+.adm-pub-sub { font-size: 12.5px; color: #888; }
+.adm-pub-price { font-size: 14px; font-weight: 800; color: #1a9ecf; margin-top: 2px; }
+.adm-pub-owner { font-size: 12px; color: #999; margin-top: 2px; }
+.adm-pub-actions { display: flex; gap: 8px; margin-top: 12px; }
+.adm-pub-actions .adm-row-btn { flex: 1; text-align: center; }
+
+/* ---------- REPORTES ---------- */
+.adm-reportes-list { display: flex; flex-direction: column; gap: 14px; }
+
+.adm-reporte-card {
+  background: #fff;
+  border: 1px solid #ececec;
+  border-radius: 14px;
+  padding: 16px 18px;
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.adm-reporte-icon {
+  width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
+  background: #fdeceb; color: #e03;
+  display: flex; align-items: center; justify-content: center;
+}
+.adm-reporte-icon svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+.adm-reporte-body { flex: 1; min-width: 0; }
+.adm-reporte-top { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 4px; }
+.adm-reporte-motivo { font-size: 14px; font-weight: 700; color: #1c1c1c; }
+.adm-reporte-tipo {
+  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em;
+  padding: 3px 9px; border-radius: 20px; background: #f2f2f2; color: #666;
+}
+.adm-reporte-desc { font-size: 13.5px; color: #555; margin: 4px 0 8px; line-height: 1.5; }
+.adm-reporte-meta { font-size: 12px; color: #999; }
+
+.adm-reporte-side { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; flex-shrink: 0; }
+.adm-reporte-actions { display: flex; gap: 8px; }
+.adm-reporte-none { font-size: 12px; color: #aaa; white-space: nowrap; }
+
+/* ---------- MODAL ---------- */
+.adm-modal-overlay {
+  position: fixed; inset: 0; z-index: 500;
+  background: rgba(20, 20, 20, .45);
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+}
+.adm-modal-overlay[hidden] {
+  display: none;
+}
+.adm-modal {
+  background: #fff;
+  border-radius: 18px;
+  max-width: 560px;
+  width: 100%;
+  max-height: 86vh;
+  overflow-y: auto;
+  padding: 28px;
+  box-sizing: border-box;
+}
+.adm-modal-title { font-size: 18px; font-weight: 800; color: #1c1c1c; margin: 0 0 4px; }
+.adm-modal-sub { font-size: 13px; color: #888; margin: 0 0 18px; }
+.adm-modal-close {
+  float: right;
+  border: none; background: #f2f2f2; color: #555;
+  width: 30px; height: 30px; border-radius: 50%;
+  font-size: 15px; cursor: pointer; line-height: 1;
+}
+.adm-modal-close:hover { background: #e8e8e8; }
+
+.adm-modal-img { width: 100%; height: 200px; object-fit: cover; border-radius: 12px; margin-bottom: 16px; }
+.adm-modal-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 18px;
+  font-size: 13.5px;
+  margin-bottom: 18px;
+}
+.adm-modal-grid dt { color: #999; font-weight: 600; }
+.adm-modal-grid dd { margin: 0 0 8px; color: #333; }
+
+.adm-modal-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  font-family: inherit;
+  font-size: 13.5px;
+  padding: 10px 12px;
+  border: 1.5px solid #ececec;
+  border-radius: 10px;
+  resize: vertical;
+  min-height: 70px;
+  margin-bottom: 14px;
+}
+.adm-modal-textarea:focus { outline: none; border-color: #1a9ecf; }
+
+.adm-modal-buttons { display: flex; gap: 10px; justify-content: flex-end; }
+.adm-modal-buttons .adm-row-btn { padding: 9px 18px; font-size: 13.5px; }
+
+/* ---------- TOAST ---------- */
+.adm-toast {
+  position: fixed;
+  bottom: 26px;
+  left: 50%;
+  transform: translate(-50%, 16px);
+  background: #1c1c1c;
+  color: #fff;
+  font-size: 13.5px;
+  font-weight: 600;
+  padding: 12px 22px;
+  border-radius: 24px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s ease, transform .2s ease;
+  z-index: 600;
+}
+.adm-toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+/* ============================================================
+   RESPONSIVE
+   El sidebar/navbar (.prf-*) ya se resuelve desde perfil.css.
+   Aquí solo se ajusta lo propio de este panel: stats, gráfica,
+   toolbar, tabla → tarjetas, publicaciones, reportes y modal.
+   ============================================================ */
+
+/* ---------- TABLET (≤900px): la tabla ya no cabe cómoda,
+   toolbar se puede apretar un poco ---------- */
+@media (max-width: 900px) {
+  .adm-stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+  }
+  .adm-chart-card {
+    padding: 18px 16px 14px;
+  }
+}
+
+/* ---------- CELULARES Y TABLET VERTICAL (≤700px) ---------- */
+@media (max-width: 700px) {
+
+  /* Toolbar: buscador y filtros se apilan a ancho completo */
+  .adm-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .adm-search {
+    width: 100%;
+  }
+
+  /* Subtabs con scroll horizontal en vez de encimarse */
+  #admUsuariosFiltros.prf-subtabs,
+  #admReportesFiltros.prf-subtabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 2px;
+  }
+  #admUsuariosFiltros.prf-subtabs .prf-subtab,
+  #admReportesFiltros.prf-subtabs .prf-subtab {
+    flex-shrink: 0;
+  }
+
+  /* ---------- TABLA DE USUARIOS → TARJETAS ----------
+     El thead se oculta y cada <tr> se convierte en una tarjeta.
+     Cada <td> necesita data-label="..." (ya agregado en admin.js)
+     para poder mostrar la etiqueta vía content: attr(data-label). */
+  .adm-table-wrap {
+    background: transparent;
+    border: none;
+    overflow: visible;
+  }
+  .adm-table {
+    min-width: 0;
+    width: 100%;
+  }
+  .adm-table thead {
+    display: none;
+  }
+  .adm-table tbody {
+    display: block;
+  }
+  .adm-table tr {
+    display: block;
+    background: #fff;
+    border: 1px solid #ececec;
+    border-radius: 14px;
+    padding: 4px 16px;
+    margin-bottom: 12px;
+  }
+  .adm-table tbody tr:last-child {
+    margin-bottom: 0;
+  }
+  .adm-table td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 11px 0;
+    border-bottom: 1px solid #f2f2f2;
+    font-size: 13px;
+    text-align: right;
+  }
+  .adm-table td::before {
+    content: attr(data-label);
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    color: #999;
+    flex-shrink: 0;
+    text-align: left;
+  }
+
+  /* Primera celda (Usuario): funciona como encabezado de la tarjeta,
+     sin etiqueta y alineada a la izquierda. */
+  .adm-table td:first-child {
+    padding: 14px 0 11px;
+    justify-content: flex-start;
+  }
+  .adm-table td:first-child::before {
+    content: none;
+  }
+  .adm-table td:first-child .adm-user-cell {
+    width: 100%;
+  }
+
+  /* Última celda (acción): sin etiqueta, botón a ancho completo. */
+  .adm-table td:last-child {
+    border-bottom: none;
+    padding: 12px 0 6px;
+  }
+  .adm-table td:last-child::before {
+    content: none;
+  }
+  .adm-table td:last-child .adm-row-btn,
+  .adm-table td:last-child .adm-reporte-none {
+    width: 100%;
+    text-align: center;
+  }
+
+  /* ---------- REPORTES: columna en vez de fila ---------- */
+  .adm-reporte-card {
+    flex-direction: column;
+    padding: 16px;
+  }
+  .adm-reporte-icon {
+    margin-bottom: 2px;
+  }
+  .adm-reporte-side {
+    align-items: stretch;
+    width: 100%;
+  }
+  .adm-reporte-actions {
+    width: 100%;
+  }
+  .adm-reporte-actions .adm-row-btn {
+    flex: 1;
+  }
+  .adm-reporte-none {
+    text-align: left;
+  }
+
+  /* ---------- PUBLICACIONES: una columna ---------- */
+  .adm-pubs-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- CELULARES CHICOS (≤480px) ---------- */
+@media (max-width: 480px) {
+  .adm-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  .adm-stat-card {
+    padding: 14px 16px;
+  }
+  .adm-stat-value {
+    font-size: 22px;
+  }
+
+  .adm-modal {
+    padding: 20px;
+    border-radius: 14px;
+    max-height: 90vh;
+  }
+  .adm-modal-grid {
+    grid-template-columns: 1fr;
+    gap: 2px 0;
+  }
+  .adm-modal-img {
+    height: 160px;
+  }
+
+  .adm-toast {
+    left: 16px;
+    right: 16px;
+    transform: translateY(16px);
+    text-align: center;
+  }
+  .adm-toast.show {
+    transform: translateY(0);
+  }
+}

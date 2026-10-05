@@ -1,0 +1,143 @@
+/* ============================================================
+   AYUDA — centro de ayuda (búsqueda + categorías + acordeón FAQ)
+   Reutiliza tokens de index.css (color #1a9ecf, radios, sombras,
+   .search-wrap/.search-bar/.section/.section-title/.btn-custom).
+   ============================================================ */
+
+/* ── ENCABEZADO ── */
+.help-hero {
+  margin: 20px 40px 0;
+  padding: 36px 40px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #1a9ecf 0%, #0f6f96 100%);
+  color: #fff;
+  text-align: center;
+}
+.help-hero h1 { font-size: 28px; font-weight: 800; margin-bottom: 6px; }
+.help-hero p { font-size: 14px; opacity: .9; margin-bottom: 22px; }
+.help-search-wrap { margin: 0 auto; max-width: 560px; }
+.help-hero .search-bar { box-shadow: 0 4px 24px rgba(0,0,0,.18); }
+
+/* ── CHIPS DE CATEGORÍA ── */
+.help-cats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.help-cat-chip {
+  padding: 9px 18px;
+  border-radius: 20px;
+  border: 1.5px solid #ececec;
+  background: #fff;
+  color: #444;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: border-color .2s, color .2s, background .2s;
+}
+.help-cat-chip:hover,
+.help-cat-chip.active {
+  border-color: #1a9ecf;
+  color: #1a9ecf;
+  background: #f2f9fc;
+}
+
+/* ── GRUPOS / ACORDEÓN ── */
+.help-group { margin-bottom: 28px; scroll-margin-top: 74px; }
+.help-group-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1a9ecf;
+  margin-bottom: 10px;
+}
+
+.help-item {
+  background: #fff;
+  border: 1px solid #ececec;
+  border-radius: 12px;
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+
+.help-question {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border: none;
+  background: transparent;
+  text-align: left;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #222;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.help-chevron {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  stroke: #888;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform .2s;
+}
+.help-item.open .help-chevron { transform: rotate(180deg); }
+
+.help-answer {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height .2s ease;
+}
+.help-item.open .help-answer { max-height: 240px; }
+.help-answer p {
+  padding: 0 16px 14px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: #666;
+}
+
+.help-item.help-hidden { display: none; }
+
+.help-no-results {
+  text-align: center;
+  padding: 30px 20px;
+  color: #888;
+  font-size: 14px;
+}
+
+/* ── CTA CONTACTO ── */
+.help-cta-wrap {
+  padding: 8px 40px 40px;
+}
+.help-cta {
+  background: #f2f9fc;
+  border: 1.5px solid #d9eef6;
+  border-radius: 16px;
+  padding: 22px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.help-cta-title { font-size: 15px; font-weight: 700; color: #111; }
+.help-cta-text { font-size: 13px; color: #666; margin-top: 2px; }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 860px) {
+  .help-hero { margin: 16px 20px 0; padding: 28px 20px; }
+  .help-hero h1 { font-size: 22px; }
+  .help-cta-wrap { padding: 8px 20px 32px; }
+  .help-cta { padding: 18px 20px; }
+}
+
+@media (max-width: 480px) {
+  .help-cta { flex-direction: column; align-items: flex-start; }
+  .help-cta .btn-custom { width: 100%; text-align: center; }
+}

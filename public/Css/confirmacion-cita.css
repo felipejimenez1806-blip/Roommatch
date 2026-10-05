@@ -1,0 +1,43 @@
+@import url("confirmacion.css");
+
+/* ============================================================
+   CONFIRMACIÓN DE CITA (roomie) – usa la misma base visual que
+   confirmacion.css (tarjeta izquierda + detalle a la derecha),
+   solo se ajusta la imagen a un avatar circular en vez de una
+   foto rectangular de espacio.
+   ============================================================ */
+
+.conf-card-img.is-avatar {
+  width: 96px;
+  height: 96px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 3px solid #f2f9fc;
+  margin: 4px auto 16px;
+  display: block;
+}
+
+.conf-card.has-avatar .conf-card-body {
+  text-align: center;
+}
+
+.conf-card.has-avatar .conf-card-row {
+  text-align: left;
+}
+
+/* NOTA: el modal .cc-* (overlay, confirmación, aviso de éxito) YA viene
+   incluido —con sus ajustes responsive— desde confirmacion.css vía el
+   @import de arriba. Antes estaba duplicado completo en este archivo:
+   como esas reglas duplicadas no tenían media query y quedaban después
+   en la cascada, anulaban en silencio los breakpoints de móvil del
+   modal (se veía bien en confirmacion.html pero no aquí). Se elimina
+   el duplicado para que ambas páginas compartan el mismo modal, ya
+   responsive, sin mantener dos copias sincronizadas a mano. */
+
+/* ---------- RESPONSIVE (propio de esta página) ---------- */
+@media (max-width: 400px) {
+  .conf-card-img.is-avatar {
+    width: 80px;
+    height: 80px;
+  }
+}

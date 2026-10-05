@@ -1,0 +1,517 @@
+@import url("../Css/dashboard.css");
+
+/* ============================================================
+   CREAR PUBLICACIÓN – wizard por pasos
+   Reutiliza tokens de dashboard.css (azul #1a9ecf, bordes #ececec,
+   texto #333, radios 12px), igual que perfil.css.
+   ============================================================ */
+
+.cp-page {
+  max-width: 760px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 36px 24px 60px;
+  min-height: 60vh;
+}
+
+/* ---------- SELECTOR INICIAL (paso 0) ---------- */
+.cp-intro-title {
+  font-size: 26px;
+  font-weight: 800;
+  color: #1c1c1c;
+  margin: 0 0 6px;
+  text-align: center;
+}
+.cp-intro-subtitle {
+  font-size: 14px;
+  color: #888;
+  margin: 0 0 32px;
+  text-align: center;
+}
+
+.cp-choice-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+@media (max-width: 640px) { .cp-choice-grid { grid-template-columns: 1fr; } }
+
+.cp-choice-card {
+  border: 1.5px solid #ececec;
+  border-radius: 16px;
+  padding: 28px 22px;
+  text-align: left;
+  background: #fff;
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color .15s, box-shadow .15s, transform .1s;
+}
+.cp-choice-card:hover { border-color: #1a9ecf; box-shadow: 0 4px 14px rgba(26,158,207,.12); transform: translateY(-2px); }
+.cp-choice-card.is-disabled { cursor: not-allowed; opacity: .55; }
+.cp-choice-card.is-disabled:hover { border-color: #ececec; box-shadow: none; transform: none; }
+
+.cp-choice-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  background: #eaf6fc;
+  color: #1a9ecf;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+.cp-choice-icon svg { width: 24px; height: 24px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+.cp-choice-title { font-size: 16px; font-weight: 800; color: #1c1c1c; margin: 0 0 4px; }
+.cp-choice-desc { font-size: 13px; color: #888; margin: 0; line-height: 1.5; }
+.cp-choice-tag {
+  display: inline-block;
+  margin-top: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #b4780a;
+  background: #fff4e0;
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+
+/* ---------- PROGRESO ---------- */
+.cp-progress {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 32px;
+}
+.cp-progress-step {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.cp-progress-dot {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #ececec;
+  color: #999;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background .2s, color .2s;
+}
+.cp-progress-step.is-active .cp-progress-dot,
+.cp-progress-step.is-done .cp-progress-dot { background: #1a9ecf; color: #fff; }
+.cp-progress-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #999;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+}
+.cp-progress-step.is-active .cp-progress-label { color: #1a9ecf; }
+.cp-progress-bar {
+  position: relative;
+  height: 3px;
+  background: #ececec;
+  border-radius: 2px;
+  margin: 0 -2px 30px;
+}
+.cp-progress-bar-fill {
+  position: absolute;
+  inset: 0;
+  background: #1a9ecf;
+  border-radius: 2px;
+  transition: width .25s ease;
+}
+
+/* ---------- CONTENIDO DE PASO ---------- */
+.cp-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #888;
+  text-decoration: none;
+  margin-bottom: 18px;
+}
+.cp-back-link:hover { color: #1a9ecf; }
+.cp-back-link svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 2.2; }
+
+.cp-step-title { font-size: 22px; font-weight: 800; color: #1c1c1c; margin: 0 0 4px; }
+.cp-step-subtitle { font-size: 13.5px; color: #888; margin: 0 0 26px; }
+
+.cp-group { margin-bottom: 26px; }
+.cp-group-title {
+  font-size: 12.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: #999;
+  margin: 0 0 12px;
+}
+
+.cp-field { margin-bottom: 16px; }
+.cp-field label { display: block; font-size: 13px; font-weight: 700; color: #333; margin-bottom: 6px; }
+.cp-field select,
+.cp-field input[type="text"],
+.cp-field input[type="number"],
+.cp-field input[type="date"],
+.cp-field input[type="tel"],
+.cp-field input[type="email"],
+.cp-field textarea {
+  width: 100%;
+  font-family: inherit;
+  font-size: 14px;
+  padding: 10px 12px;
+  border: 1.5px solid #ececec;
+  border-radius: 10px;
+  outline: none;
+  color: #333;
+  box-sizing: border-box;
+}
+.cp-field select:focus,
+.cp-field input:focus,
+.cp-field textarea:focus { border-color: #1a9ecf; }
+.cp-field textarea { resize: vertical; min-height: 90px; }
+.cp-field-hint { font-size: 11.5px; color: #999; margin-top: 4px; }
+.cp-field-error {
+  font-size: 12px;
+  color: #e03;
+  margin-top: 5px;
+  display: none;
+}
+.cp-field-error.is-visible { display: block; }
+.cp-field.has-error select,
+.cp-field.has-error input,
+.cp-field.has-error textarea { border-color: #e03; }
+
+.cp-field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 560px) { .cp-field-row { grid-template-columns: 1fr; } }
+
+/* ---------- DROPDOWN PERSONALIZADO (reemplaza <select> nativo) ---------- */
+.cp-select {
+  position: relative;
+}
+.cp-select-trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-family: inherit;
+  font-size: 14px;
+  padding: 10px 12px;
+  border: 1.5px solid #ececec;
+  border-radius: 10px;
+  background: #fff;
+  color: #333;
+  cursor: pointer;
+  box-sizing: border-box;
+  text-align: left;
+  transition: border-color .15s, box-shadow .15s;
+}
+.cp-select-trigger:hover { border-color: #bfe4f2; }
+.cp-select-trigger:focus-visible { outline: none; border-color: #1a9ecf; box-shadow: 0 0 0 3px rgba(26,158,207,.14); }
+.cp-select.is-open .cp-select-trigger { border-color: #1a9ecf; box-shadow: 0 0 0 3px rgba(26,158,207,.14); }
+
+.cp-select-value { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cp-select-value.is-placeholder { color: #999; }
+
+.cp-select-chevron {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  stroke: #999;
+  fill: none;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform .18s ease, stroke .15s;
+}
+.cp-select.is-open .cp-select-chevron { transform: rotate(180deg); stroke: #1a9ecf; }
+
+.cp-select-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  z-index: 30;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  max-height: 264px;
+  overflow-y: auto;
+  background: #fff;
+  border: 1.5px solid #ececec;
+  border-radius: 12px;
+  box-shadow: 0 14px 32px rgba(20,20,20,.14);
+  animation: cpSelectPop .14s ease;
+}
+@keyframes cpSelectPop {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.cp-select-menu::-webkit-scrollbar { width: 8px; }
+.cp-select-menu::-webkit-scrollbar-track { background: transparent; }
+.cp-select-menu::-webkit-scrollbar-thumb { background: #dceef5; border-radius: 8px; }
+.cp-select-menu::-webkit-scrollbar-thumb:hover { background: #a9dced; }
+
+.cp-select-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: 8px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #333;
+  cursor: pointer;
+  transition: background .12s, color .12s;
+}
+.cp-select-option--placeholder { color: #999; font-weight: 500; }
+.cp-select-option:hover,
+.cp-select-option:focus-visible { background: #eaf6fc; color: #1a9ecf; outline: none; }
+.cp-select-option.is-selected { background: #eaf6fc; color: #1a9ecf; }
+.cp-select-option.is-selected.cp-select-option--placeholder { background: transparent; color: #999; }
+
+.cp-select-check {
+  flex-shrink: 0;
+  width: 15px;
+  height: 15px;
+  stroke: #1a9ecf;
+  fill: none;
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  visibility: hidden;
+}
+.cp-select-option.is-selected .cp-select-check { visibility: visible; }
+
+.cp-field.has-error .cp-select-trigger { border-color: #e03; }
+
+.cp-toggle-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px 24px;
+}
+@media (max-width: 560px) { .cp-toggle-grid { grid-template-columns: 1fr; } }
+
+.cp-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px 0;
+}
+.cp-toggle-label { font-size: 13.5px; color: #333; }
+
+.cp-switch { position: relative; width: 40px; height: 22px; flex-shrink: 0; }
+.cp-switch input { opacity: 0; width: 0; height: 0; }
+.cp-switch-track { position: absolute; inset: 0; background: #ddd; border-radius: 999px; cursor: pointer; transition: background .2s; }
+.cp-switch-track::before { content: ""; position: absolute; width: 16px; height: 16px; left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: transform .2s; }
+.cp-switch input:checked + .cp-switch-track { background: #1a9ecf; }
+.cp-switch input:checked + .cp-switch-track::before { transform: translateX(18px); }
+
+/* ---------- FOTOS ---------- */
+.cp-photos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 14px;
+  margin-bottom: 16px;
+}
+.cp-photo-slot {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #f6f6f6;
+  border: 1.5px solid #ececec;
+}
+.cp-photo-slot img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.cp-photo-cover-tag {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #fff;
+  background: rgba(26,158,207,.92);
+  padding: 3px 8px;
+  border-radius: 20px;
+}
+.cp-photo-remove {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255,255,255,.92);
+  color: #e03;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.cp-photo-add {
+  aspect-ratio: 1 / 1;
+  border-radius: 12px;
+  border: 1.5px dashed #ccc;
+  background: #fafafa;
+  color: #888;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+}
+.cp-photo-add:hover { border-color: #1a9ecf; color: #1a9ecf; }
+.cp-photo-add svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+/* ---------- RESUMEN (paso final) ---------- */
+.cp-summary-card {
+  border: 1px solid #ececec;
+  border-radius: 14px;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+.cp-summary-img { width: 100%; height: 200px; object-fit: cover; display: block; background: #f2f2f2; }
+.cp-summary-body { padding: 16px 18px; }
+.cp-summary-title { font-size: 16px; font-weight: 800; color: #1c1c1c; margin: 0 0 4px; }
+.cp-summary-sub { font-size: 13px; color: #888; margin: 0 0 10px; }
+.cp-summary-price { font-size: 17px; font-weight: 800; color: #1a9ecf; }
+.cp-summary-list { margin: 14px 0 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 8px; }
+.cp-summary-list li {
+  font-size: 12px;
+  font-weight: 600;
+  color: #555;
+  background: #f5f5f5;
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+/* ---------- NAVEGACIÓN DE PASOS ---------- */
+.cp-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 30px;
+  padding-top: 22px;
+  border-top: 1px solid #ececec;
+}
+.cp-btn {
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 11px 24px;
+  border-radius: 24px;
+  cursor: pointer;
+  border: none;
+}
+.cp-btn-ghost { background: transparent; color: #555; border: 1.5px solid #ececec; }
+.cp-btn-ghost:hover { border-color: #1a9ecf; color: #1a9ecf; }
+.cp-btn-primary { background: #1a9ecf; color: #fff; }
+.cp-btn-primary:hover { background: #1589b6; }
+.cp-btn-primary:disabled { background: #b8dded; cursor: not-allowed; }
+
+.cp-success {
+  text-align: center;
+  padding: 60px 20px;
+}
+.cp-success-icon {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  background: #e4f7ea;
+  color: #17874a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+}
+.cp-success-icon svg { width: 32px; height: 32px; stroke: currentColor; fill: none; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.cp-success h1 { font-size: 22px; font-weight: 800; color: #1c1c1c; margin: 0 0 8px; }
+.cp-success p { font-size: 14px; color: #888; margin: 0 0 26px; }
+
+/* ============================================================
+   RESPONSIVE
+   El wizard ya traía 3 breakpoints puntuales (choice-grid en
+   640px, field-row y toggle-grid en 560px). Lo que faltaba era
+   el indicador de progreso: en crear-publicacion.js los labels
+   son cortos ("Básico", "Fotos"), pero crear-perfil-roomie.js
+   reutiliza esta misma clase con labels largos ("Estilo de
+   vida", "Convivencia") — el diseño de abajo tiene que aguantar
+   ambos casos porque este archivo se importa desde los dos.
+   ============================================================ */
+
+@media (max-width: 600px) {
+  .cp-page {
+    padding: 24px 16px 44px;
+  }
+  .cp-intro-title {
+    font-size: 21px;
+  }
+  .cp-step-title {
+    font-size: 19px;
+  }
+  .cp-step-subtitle {
+    margin-bottom: 20px;
+  }
+}
+
+/* Indicador de progreso: en pantallas angostas los 5 puntos no
+   caben con etiquetas de una sola línea, así que se reducen y se
+   deja que el texto pase a dos líneas en vez de desbordarse. */
+@media (max-width: 480px) {
+  .cp-progress {
+    gap: 2px;
+  }
+  .cp-progress-dot {
+    width: 22px;
+    height: 22px;
+    font-size: 11px;
+  }
+  .cp-progress-label {
+    font-size: 8.5px;
+    letter-spacing: 0;
+    line-height: 1.2;
+    max-width: 62px;
+  }
+  .cp-progress-bar {
+    margin: 0 -2px 22px;
+  }
+
+  .cp-nav {
+    gap: 10px;
+  }
+  .cp-nav .cp-btn {
+    flex: 1;
+    padding: 11px 12px;
+    font-size: 13px;
+    text-align: center;
+  }
+
+  .cp-summary-img {
+    height: 160px;
+  }
+  .cp-summary-body {
+    padding: 14px 16px;
+  }
+
+  .cp-select-menu {
+    max-height: 220px;
+  }
+}

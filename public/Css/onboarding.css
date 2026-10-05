@@ -1,0 +1,607 @@
+:root {
+  --azul-principal: #2f7cf6;
+  --azul-oscuro: #1857b8;
+  --texto-oscuro: #1f2733;
+  --texto-gris: #6b7684;
+  --borde: #e3e7ec;
+  --error: #d64545;
+  --exito: #1c8a4c;
+  --blanco: rgba(255, 255, 255, 0.92);
+  --radio: 20px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color: var(--texto-oscuro);
+  background-image: url("../Img/fondo.png");
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  min-height: 100vh;
+  display: flex;
+}
+
+.fondo-overlay {
+  position: fixed;
+  inset: 0;
+  backdrop-filter: blur(2px);
+  background: rgba(20, 30, 45, 0.15);
+  z-index: 0;
+}
+
+.onboarding-wrapper {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  justify-content: safe center;
+  padding: 40px 16px;
+  gap: 20px;
+  overflow-y: auto;
+}
+
+/* -------------------- Card principal -------------------- */
+.onboarding-card {
+  width: 100%;
+  max-width: 480px;
+  background: var(--blanco);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-radius: var(--radio);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 20px 60px rgba(15, 30, 60, 0.25);
+  padding: 32px 32px 28px;
+  display: flex;
+  flex-direction: column;
+}
+
+.onboarding-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.logo {
+  height: 52px;
+  width: auto;
+  object-fit: contain;
+  margin-bottom: 14px;
+}
+
+.onboarding-header h1 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin: 0 0 4px;
+  text-align: center;
+}
+
+.onboarding-header p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--texto-gris);
+  text-align: center;
+}
+
+/* -------------------- Stepper -------------------- */
+.stepper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 22px 0 26px;
+  padding: 0;
+  list-style: none;
+}
+
+.stepper li {
+  display: flex;
+  align-items: center;
+}
+
+.stepper .step-dot {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid var(--borde);
+  background: #fff;
+  color: var(--texto-gris);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.stepper .step-line {
+  width: 40px;
+  height: 2px;
+  background: var(--borde);
+  margin: 0 4px;
+  transition: background 0.2s ease;
+}
+
+.stepper li.is-active .step-dot {
+  border-color: var(--azul-principal);
+  background: var(--azul-principal);
+  color: #fff;
+  box-shadow: 0 0 0 4px rgba(47, 124, 246, 0.15);
+}
+
+.stepper li.is-done .step-dot {
+  border-color: var(--exito);
+  background: var(--exito);
+  color: #fff;
+}
+
+.stepper li.is-done + li .step-line,
+.stepper li.is-done .step-line {
+  background: var(--exito);
+}
+
+/* -------------------- Paneles de paso -------------------- */
+.step-panels {
+  position: relative;
+  overflow: hidden;
+}
+
+.step-panel {
+  display: none;
+  flex-direction: column;
+  animation: aparecer 0.25s ease;
+}
+
+.step-panel.is-active {
+  display: flex;
+}
+
+@keyframes aparecer {
+  from { opacity: 0; transform: translateX(12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.step-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: rgba(47, 124, 246, 0.1);
+  color: var(--azul-principal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 14px;
+}
+
+.step-icon svg {
+  width: 26px;
+  height: 26px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.step-panel h2 {
+  font-size: 1.1rem;
+  text-align: center;
+  margin: 0 0 4px;
+}
+
+.step-panel .step-hint {
+  font-size: 0.85rem;
+  color: var(--texto-gris);
+  text-align: center;
+  margin: 0 0 20px;
+}
+
+/* -------------------- Opciones tipo tarjeta (tipo_usuario) -------------------- */
+.option-cards {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.option-card {
+  flex: 1;
+  border: 1.5px solid var(--borde);
+  border-radius: 14px;
+  background: #fff;
+  padding: 18px 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.05s ease;
+  text-align: center;
+}
+
+.option-card:hover {
+  box-shadow: 0 4px 14px rgba(20, 30, 45, 0.08);
+}
+
+.option-card:active {
+  transform: translateY(1px);
+}
+
+.option-card.is-selected {
+  border-color: var(--azul-principal);
+  box-shadow: 0 0 0 3px rgba(47, 124, 246, 0.15);
+}
+
+.option-card .option-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #f3f6fa;
+  color: var(--azul-principal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.option-card .option-icon svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+}
+
+.option-card span {
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+/* -------------------- Inputs / selects genéricos -------------------- */
+.input-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #ffffff;
+  border: 1px solid var(--borde);
+  border-radius: 12px;
+  padding: 12px 14px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.input-group:focus-within {
+  border-color: var(--azul-principal);
+  box-shadow: 0 0 0 3px rgba(47, 124, 246, 0.15);
+}
+
+.input-group.has-error {
+  border-color: var(--error);
+}
+
+.input-group .icon {
+  display: flex;
+  color: var(--texto-gris);
+  flex-shrink: 0;
+}
+
+.input-group .icon svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.input-group input,
+.input-group select {
+  border: none;
+  outline: none;
+  flex: 1;
+  font-size: 0.95rem;
+  background: transparent;
+  color: var(--texto-oscuro);
+  min-width: 0;
+}
+
+.input-group select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7684' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 2px center;
+  background-size: 16px;
+  padding-right: 22px;
+  cursor: pointer;
+}
+
+.input-group select:invalid {
+  color: #98a2ae;
+}
+
+.field-error {
+  margin: 6px 2px 0;
+  font-size: 0.78rem;
+  color: var(--error);
+  line-height: 1.3;
+  min-height: 0;
+}
+
+.field-error:empty {
+  margin: 0;
+}
+
+/* -------------------- Dropdown personalizado (género) -------------------- */
+.onb-select {
+  position: relative;
+}
+
+.onb-select-trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #ffffff;
+  border: 1px solid var(--borde);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.onb-select-trigger:hover {
+  border-color: #c7cfda;
+}
+
+.onb-select-trigger.is-open {
+  border-color: var(--azul-principal);
+  box-shadow: 0 0 0 3px rgba(47, 124, 246, 0.15);
+}
+
+.onb-select-value {
+  flex: 1;
+  font-size: 0.95rem;
+  color: var(--texto-oscuro);
+}
+
+.onb-select-value.is-placeholder {
+  color: #98a2ae;
+}
+
+.onb-select-chevron {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  fill: none;
+  stroke: var(--texto-gris);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 0.15s ease;
+}
+
+.onb-select-trigger.is-open .onb-select-chevron {
+  transform: rotate(180deg);
+}
+
+.onb-select-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  background: #fff;
+  border: 1px solid var(--borde);
+  border-radius: 12px;
+  box-shadow: 0 12px 30px rgba(15, 30, 60, 0.15);
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.onb-select-option {
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: var(--texto-oscuro);
+  cursor: pointer;
+}
+
+.onb-select-option:hover {
+  background: #f3f6fa;
+}
+
+.onb-select-option.is-selected {
+  background: rgba(47, 124, 246, 0.1);
+  color: var(--azul-oscuro);
+  font-weight: 600;
+}
+
+/* -------------------- Resumen (paso final) -------------------- */
+.summary-list {
+  list-style: none;
+  margin: 18px 0 4px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.summary-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #fff;
+  border: 1px solid var(--borde);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 0.9rem;
+}
+
+.summary-list .summary-label {
+  color: var(--texto-gris);
+}
+
+.summary-list .summary-value {
+  font-weight: 600;
+}
+
+.summary-list .summary-edit {
+  background: none;
+  border: none;
+  color: var(--azul-principal);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-left: 10px;
+}
+
+.summary-list .summary-edit:hover {
+  text-decoration: underline;
+}
+
+/* -------------------- Navegación de pasos -------------------- */
+.form-message {
+  min-height: 0;
+  margin: 14px 2px 0;
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.form-message.error { color: var(--error); }
+.form-message.success { color: var(--exito); }
+
+.step-nav {
+  display: flex;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.btn-primary,
+.btn-outline {
+  flex: 1;
+  padding: 13px;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: filter 0.15s ease, transform 0.05s ease, background 0.15s ease;
+}
+
+.btn-primary {
+  border: none;
+  background: linear-gradient(135deg, var(--azul-principal), var(--azul-oscuro));
+  color: #fff;
+}
+
+.btn-primary:hover { filter: brightness(1.06); }
+.btn-primary:active { transform: translateY(1px); }
+.btn-primary:disabled { opacity: 0.75; cursor: not-allowed; }
+
+.btn-outline {
+  border: 1px solid var(--borde);
+  background: #fff;
+  color: var(--texto-oscuro);
+}
+
+.btn-outline:hover { background: #f7f9fb; }
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: girar 0.7s linear infinite;
+}
+
+@keyframes girar {
+  to { transform: rotate(360deg); }
+}
+
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translate(-50%, 20px);
+  background: #1f2733;
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-size: 0.88rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  z-index: 5;
+  max-width: 90vw;
+  text-align: center;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+@media (max-width: 420px) {
+  .onboarding-card { padding: 26px 20px 22px; }
+  .stepper .step-line { width: 24px; }
+}
+
+@media (max-width: 380px) {
+  /* Las dos tarjetas de "¿Qué buscas?" lado a lado no dejan espacio
+     útil para leer el texto en un celular angosto, así que se apilan
+     en vez de aplastarse (mismo criterio que .input-row en signup). */
+  .option-cards {
+    flex-direction: column;
+  }
+}
+
+/* Pantallas de poca altura (ventanas de escritorio bajas, celulares
+   en horizontal): el wizard completo ya no cabe cómodo en un viewport
+   corto, así que se comprimen los espacios verticales en vez de dejar
+   que se vea apretado contra el borde superior (mismo criterio que
+   signup.css). */
+@media (max-height: 700px) {
+  .onboarding-wrapper {
+    padding: 20px 16px;
+  }
+  .onboarding-header {
+    margin-bottom: 4px;
+  }
+  .logo {
+    height: 42px;
+    margin-bottom: 10px;
+  }
+  .stepper {
+    margin: 16px 0 18px;
+  }
+  .step-icon {
+    width: 44px;
+    height: 44px;
+    margin-bottom: 10px;
+  }
+  .step-panel .step-hint {
+    margin-bottom: 14px;
+  }
+}
