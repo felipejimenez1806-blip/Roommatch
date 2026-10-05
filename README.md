@@ -1,58 +1,118 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# RoomMatch
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Plataforma web en español para conectar personas que buscan un lugar donde vivir con quienes tienen un espacio disponible, y para emparejar personas que buscan **compañero de vivienda (roomie)**. Pensada para Colombia (zonas de Bogotá).
 
-## About Laravel
+> Proyecto académico desarrollado en equipo en el **SENA** (Tecnólogo en Análisis y Desarrollo de Software).
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+![Página de inicio](docs/img/inicio.jpg)
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## ¿Qué permite hacer?
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+**Para los usuarios (clientes)**
+- Registrarse e iniciar sesión (correo y contraseña, o con Google y Facebook).
+- Recuperar la contraseña con un código de 6 dígitos enviado por correo.
+- Publicar un espacio (habitación, apartamento, casa o estudio) con un asistente de 5 pasos y fotos.
+- Buscar espacios con filtros y ver el detalle de cada uno.
+- Solicitar una visita (reserva) sobre un espacio.
+- Crear un perfil de roomie (asistente de 5 pasos) y agendar citas con otros perfiles.
+- Guardar favoritos, calificar espacios y roomies, y reportar contenido.
+- Recibir notificaciones y gestionar su perfil, reservas, citas y publicaciones.
 
-## Learning Laravel
+**Para los administradores**
+- Panel con resumen general de la plataforma.
+- Gestión de usuarios (bloquear y desbloquear cuentas) y creación de otros administradores.
+- Supervisión de publicaciones y perfiles roomie.
+- Revisión de reportes de moderación y mensajes del formulario de contacto.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## Capturas de pantalla
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+| Habitaciones | Detalle de una publicación |
+|---|---|
+| ![Habitaciones](docs/img/habitaciones.jpg) | ![Detalle de publicación](docs/img/detalle-publicacion.jpg) |
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+| Roomies | Perfil de un roomie |
+|---|---|
+| ![Roomies](docs/img/roomies.jpg) | ![Perfil roomie](docs/img/perfil-roomie.jpg) |
 
-## Agentic Development
+| Crear publicación | Mis citas |
+|---|---|
+| ![Crear publicación](docs/img/crear-publicacion.jpg) | ![Mis citas](docs/img/mis-citas.jpg) |
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+| Inicio de sesión | Panel de administración |
+|---|---|
+| ![Login](docs/img/login.jpg) | ![Panel de administración](docs/img/panel-admin.jpg) |
+
+## Tecnologías
+
+- **Backend:** PHP y Laravel (Eloquent ORM, migraciones, FormRequests)
+- **API REST** autenticada con **Laravel Sanctum** (tokens)
+- **Base de datos:** MySQL (14 tablas: 11 del dominio funcional y 3 técnicas)
+- **Frontend:** Blade, HTML, CSS (diseño responsive) y JavaScript
+- **Control de versiones:** Git y GitHub
+- **Metodología:** Scrum y Kanban
+
+## Base de datos
+
+El modelo relacional incluye usuarios, publicaciones, perfiles roomie, reservas, citas, calificaciones, favoritos, reportes y notificaciones. Las calificaciones, favoritos y reportes son **polimórficos** (pueden apuntar a una publicación, a una persona o a un usuario). Las publicaciones y perfiles roomie usan **borrado lógico** (`deleted_at`).
+
+![Modelo relacional](docs/img/modelo-relacional.jpg)
+
+## Instalación
+
+**Requisitos:** PHP 8.2 o superior, Composer, MySQL.
 
 ```bash
-composer require laravel/boost --dev
+# 1. Clonar el repositorio
+git clone https://github.com/felipejimenez1806-blip/Roommatch.git
+cd Roommatch
 
-php artisan boost:install
+# 2. Instalar dependencias
+composer install
+
+# 3. Crear el archivo de entorno y generar la clave de la aplicación
+cp .env.example .env
+php artisan key:generate
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+4. Crea una base de datos vacía en MySQL y configura en `.env` los datos de conexión (`DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`). Para el envío de códigos por correo, configura también las variables `MAIL_*`.
 
-## Contributing
+```bash
+# 5. Crear las tablas
+php artisan migrate
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+# 6. Enlazar la carpeta de imágenes subidas
+php artisan storage:link
 
-## Code of Conduct
+# 7. Iniciar el servidor
+php artisan serve
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+La aplicación quedará disponible en `http://localhost:8000`.
 
-## Security Vulnerabilities
+> **Nota:** el administrador principal se crea manualmente en la base de datos o con un seeder. Configura estos datos antes de usar el panel de administración.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## Estructura del proyecto
 
-## License
+```
+app/Http/Controllers/   Controladores (reservas, roomies, autenticación, etc.)
+app/Http/Requests/      Validaciones con FormRequests
+app/Models/             Modelos Eloquent
+database/migrations/    Migraciones de las 14 tablas
+resources/views/        Vistas Blade (layout, navbar, footer)
+routes/                 Rutas web y API
+public/                 CSS y JavaScript del frontend
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## Documentación
+
+El proyecto cuenta con documentación técnica: requisitos (IEEE 830), diseño de base de datos, consultas SQL, función y procedimiento almacenados, prototipos de interfaz y diagramas UML (casos de uso, clases, actividades, secuencia, componentes, despliegue y paquetes).
+
+## Equipo
+
+- **Andrés Felipe Jiménez González** – [@felipejimenez1806-blip](https://github.com/felipejimenez1806-blip)
+- **Samuel López** – *[enlace a su GitHub]*
+- **Diego Gamboa** – *[enlace a su GitHub]*
+
+## Estado del proyecto
+
+En desarrollo. Próximas mejoras: migrar la autenticación a Sanctum SPA (cookies) y completar el módulo de citas.
