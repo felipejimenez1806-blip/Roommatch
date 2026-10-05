@@ -110,9 +110,9 @@ El proyecto cuenta con documentación técnica: requisitos (IEEE 830), diseño d
 ## Equipo
 
 - **Andrés Felipe Jiménez González** – [@felipejimenez1806-blip](https://github.com/felipejimenez1806-blip)
-- **Samuel López** – *[enlace a su GitHub]*
-- **Diego Gamboa** – *[enlace a su GitHub]*
+- **Samuel López** – 
+- **Diego Gamboa** – 
 
 ## Estado del proyecto
 
-En desarrollo. Próximas mejoras: migrar la autenticación a Sanctum SPA (cookies) y completar el módulo de citas.
+En desarrollo. Próximas mejoras: migrar la autenticación a Sanctum SPA (cookies).
