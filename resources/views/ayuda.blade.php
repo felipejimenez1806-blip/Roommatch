@@ -231,5 +231,5 @@
 @endsection
 
 @push('js')
-<script src="{{ asset('Js/ayuda.js') }}"></script>
+@vite('resources/js/pages/ayuda.js')
 @endpush

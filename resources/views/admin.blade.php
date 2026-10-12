@@ -29,7 +29,7 @@
       <h1 class="prf-title">Usuarios registrados</h1>
       <p class="prf-subtitle">Consulta y modera las cuentas de la plataforma</p>
     </div>
-    <a href="/admin/nuevo-administrador" class="adm-row-btn is-primary" style="white-space:nowrap;text-decoration:none;">
+    <a href="{{ url('/admin/nuevo-administrador') }}" class="adm-row-btn is-primary" style="white-space:nowrap;text-decoration:none;">
       + Crear administrador
     </a>
   </div>
@@ -128,5 +128,5 @@
 @endsection
 
 @push('js')
-<script src="{{ asset('Js/admin.js') }}"></script>
+@vite('resources/js/pages/admin.js')
 @endpush

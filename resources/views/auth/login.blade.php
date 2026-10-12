@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
+  @include('partials.app-config')
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="csrf-token" content="{{ csrf_token() }}">
   <title>Roommatch | Iniciar sesión</title>
@@ -71,6 +72,6 @@
 
   <div class="toast" id="toast"></div>
 
-  <script src="{{ asset('Js/login.js') }}"></script>
+  @vite('resources/js/pages/login.js')
 </body>
 </html>

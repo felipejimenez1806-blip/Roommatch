@@ -84,5 +84,5 @@
 @endsection
 
 @push('js')
-<script src="{{ asset('Js/dashboard.js') }}"></script>
+@vite('resources/js/pages/dashboard.js')
 @endpush

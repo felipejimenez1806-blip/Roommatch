@@ -15,5 +15,5 @@
 @endsection
 
 @push('js')
-<script src="{{ asset('Js/reserva.js') }}"></script>
+@vite('resources/js/pages/reserva.js')
 @endpush

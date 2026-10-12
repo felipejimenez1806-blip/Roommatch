@@ -166,5 +166,5 @@
 @endsection
 
 @push('js')
-<script src="{{ asset('Js/habitaciones.js') }}"></script>
+@vite('resources/js/pages/habitaciones.js')
 @endpush

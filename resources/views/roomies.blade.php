@@ -153,5 +153,5 @@
 @endsection
 
 @push('js')
-<script src="{{ asset('Js/roomies.js') }}"></script>
+@vite('resources/js/pages/roomies.js')
 @endpush

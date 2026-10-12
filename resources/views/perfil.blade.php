@@ -130,5 +130,5 @@
 @endsection
 
 @push('js')
-<script src="{{ asset('Js/perfil.js') }}"></script>
+@vite('resources/js/pages/perfil.js')
 @endpush

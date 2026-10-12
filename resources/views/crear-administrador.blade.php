@@ -11,7 +11,7 @@
 <div class="admcta-page">
   <div class="admcta-card">
 
-    <a href="/admin" class="admcta-back">
+    <a href="{{ url('/admin') }}" class="admcta-back">
       <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
       Volver al panel de administración
     </a>
@@ -153,5 +153,5 @@
 @endsection
 
 @push('js')
-<script src="{{ asset('Js/crear-administrador.js') }}"></script>
+@vite('resources/js/pages/crear-administrador.js')
 @endpush

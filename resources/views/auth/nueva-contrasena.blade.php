@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
+  @include('partials.app-config')
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="csrf-token" content="{{ csrf_token() }}">
   <title>Roommatch | Nueva contraseña</title>
@@ -51,6 +52,6 @@
 
   <div class="toast" id="toast"></div>
 
-  <script src="{{ asset('Js/nueva-contrasena.js') }}"></script>
+  @vite('resources/js/pages/nueva-contrasena.js')
 </body>
 </html>

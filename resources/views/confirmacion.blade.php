@@ -15,5 +15,5 @@
 @endsection
 
 @push('js')
-<script src="{{ asset('Js/confirmacion.js') }}"></script>
+@vite('resources/js/pages/confirmacion.js')
 @endpush

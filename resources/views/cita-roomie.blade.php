@@ -15,5 +15,5 @@
 @endsection
 
 @push('js')
-<script src="{{ asset('Js/cita-roomie.js') }}"></script>
+@vite('resources/js/pages/cita-roomie.js')
 @endpush
