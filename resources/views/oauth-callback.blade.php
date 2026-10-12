@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
+  @include('partials.app-config')
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Roommatch | Conectando tu cuenta...</title>
   <link rel="stylesheet" href="{{ asset('Css/oauth-callback.css') }}">
@@ -29,6 +30,6 @@
     window.__oauthUser = @json($usuario);
     window.__oauthRedirectTo = @json($redirectTo);
   </script>
-  <script src="{{ asset('Js/oauth-callback.js') }}"></script>
+  @vite('resources/js/pages/oauth-callback.js')
 </body>
 </html>

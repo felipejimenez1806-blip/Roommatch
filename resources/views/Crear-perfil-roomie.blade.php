@@ -13,5 +13,5 @@
 @endsection
 
 @push('js')
-<script src="{{ asset('Js/crear-perfil-roomie.js') }}"></script>
+@vite('resources/js/pages/crear-perfil-roomie.js')
 @endpush

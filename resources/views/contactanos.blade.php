@@ -97,5 +97,5 @@
 @endsection
 
 @push('js')
-<script src="{{ asset('Js/contactanos.js') }}"></script>
+@vite('resources/js/pages/contactanos.js')
 @endpush

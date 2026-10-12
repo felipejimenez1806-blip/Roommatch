@@ -13,5 +13,5 @@
 @endsection
 
 @push('js')
-<script src="{{ asset('Js/crear-publicacion.js') }}"></script>
+@vite('resources/js/pages/crear-publicacion.js')
 @endpush

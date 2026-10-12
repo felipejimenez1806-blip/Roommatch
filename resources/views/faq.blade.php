@@ -125,5 +125,5 @@
 @endsection
 
 @push('js')
-<script src="{{ asset('Js/faq.js') }}"></script>
+@vite('resources/js/pages/faq.js')
 @endpush

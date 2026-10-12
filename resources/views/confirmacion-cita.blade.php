@@ -15,5 +15,5 @@
 @endsection
 
 @push('js')
-<script src="{{ asset('Js/confirmacion-cita.js') }}"></script>
+@vite('resources/js/pages/confirmacion-cita.js')
 @endpush
