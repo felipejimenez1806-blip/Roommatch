@@ -6,7 +6,7 @@
   <title>@yield('code') – @yield('title') | Roommatch</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
-  <link href="{{ asset('css/error-azul.css') }}" rel="stylesheet">
+  @vite('resources/css/pages/error-azul.css')
 </head>
 <body>
 

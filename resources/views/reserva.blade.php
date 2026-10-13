@@ -3,7 +3,7 @@
 @section('title', 'Roommatch – Solicitar reserva')
 
 @push('css')
-<link rel="stylesheet" href="{{ asset('Css/reserva.css') }}" />
+@vite('resources/css/pages/reserva.css')
 @endpush
 
 @section('content')

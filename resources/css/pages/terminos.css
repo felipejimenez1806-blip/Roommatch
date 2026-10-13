@@ -1,0 +1,122 @@
+:root {
+  --azul-principal: #2f7cf6;
+  --azul-oscuro: #1857b8;
+  --texto-oscuro: #1f2733;
+  --texto-gris: #6b7684;
+  --borde: #e3e7ec;
+  --fondo-pagina: #f4f6f9;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color: var(--texto-oscuro);
+  background: var(--fondo-pagina);
+}
+
+.terminos-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--borde);
+  background: #ffffff;
+}
+
+.terminos-logo-link {
+  display: inline-block;
+}
+
+.terminos-logo {
+  height: 40px;
+  width: auto;
+}
+
+.terminos-wrapper {
+  display: flex;
+  justify-content: center;
+  padding: 40px 16px 60px;
+}
+
+.terminos-card {
+  width: 100%;
+  max-width: 760px;
+  background: #ffffff;
+  border-radius: 18px;
+  border: 1px solid var(--borde);
+  box-shadow: 0 12px 40px rgba(15, 30, 60, 0.06);
+  padding: 40px 44px;
+  line-height: 1.65;
+}
+
+.terminos-card h1 {
+  font-size: 1.9rem;
+  margin: 0 0 6px;
+  color: var(--texto-oscuro);
+}
+
+.terminos-actualizado {
+  color: var(--texto-gris);
+  font-size: 0.85rem;
+  margin: 0 0 24px;
+}
+
+.terminos-card h2 {
+  font-size: 1.15rem;
+  color: var(--azul-oscuro);
+  margin: 30px 0 10px;
+}
+
+.terminos-card p,
+.terminos-card li {
+  color: var(--texto-oscuro);
+  font-size: 0.95rem;
+}
+
+.terminos-card ul {
+  padding-left: 22px;
+  margin: 6px 0 14px;
+}
+
+.terminos-card li {
+  margin-bottom: 6px;
+}
+
+.terminos-card a {
+  color: var(--azul-principal);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.terminos-card a:hover {
+  text-decoration: underline;
+}
+
+.terminos-volver {
+  display: inline-block;
+  margin-top: 30px;
+  font-size: 0.9rem;
+}
+
+.terminos-footer {
+  text-align: center;
+  color: var(--texto-gris);
+  font-size: 0.82rem;
+  padding: 20px 16px 40px;
+}
+
+.terminos-footer a {
+  color: var(--texto-gris);
+  text-decoration: none;
+}
+
+.terminos-footer a:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 500px) {
+  .terminos-card {
+    padding: 28px 22px;
+  }
+}

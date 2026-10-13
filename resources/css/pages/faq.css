@@ -1,0 +1,103 @@
+/* ============================================================
+   FAQ — preguntas frecuentes generales de la plataforma
+   Misma familia visual que ayuda.css (gradiente azul, acordeón),
+   pero como página independiente propia se define aparte para
+   no acoplar la carga de CSS entre páginas.
+   ============================================================ */
+
+/* ── ENCABEZADO ── */
+.faq-hero {
+  margin: 20px 40px 0;
+  padding: 36px 40px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #1a9ecf 0%, #0f6f96 100%);
+  color: #fff;
+  text-align: center;
+}
+.faq-hero h1 { font-size: 28px; font-weight: 800; margin-bottom: 6px; }
+.faq-hero p { font-size: 14px; opacity: .9; }
+
+/* ── LISTA ── */
+.faq-section { max-width: 760px; margin: 0 auto; }
+
+.faq-item {
+  background: #fff;
+  border: 1px solid #ececec;
+  border-radius: 12px;
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+
+.faq-question {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 15px 18px;
+  border: none;
+  background: transparent;
+  text-align: left;
+  font-size: 14px;
+  font-weight: 600;
+  color: #222;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.faq-chevron {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  stroke: #888;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform .2s;
+}
+.faq-item.open .faq-chevron { transform: rotate(180deg); }
+
+.faq-answer {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height .2s ease;
+}
+.faq-item.open .faq-answer { max-height: 240px; }
+.faq-answer p {
+  padding: 0 18px 16px;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: #666;
+}
+
+/* ── CTA ── */
+.faq-cta-wrap { padding: 8px 40px 40px; }
+.faq-cta {
+  max-width: 760px;
+  margin: 0 auto;
+  background: #f2f9fc;
+  border: 1.5px solid #d9eef6;
+  border-radius: 16px;
+  padding: 22px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.faq-cta-title { font-size: 15px; font-weight: 700; color: #111; }
+.faq-cta-text { font-size: 13px; color: #666; margin-top: 2px; }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 860px) {
+  .faq-hero { margin: 16px 20px 0; padding: 28px 20px; }
+  .faq-hero h1 { font-size: 22px; }
+  .faq-cta-wrap { padding: 8px 20px 32px; }
+  .faq-cta { padding: 18px 20px; }
+}
+
+@media (max-width: 480px) {
+  .faq-cta { flex-direction: column; align-items: flex-start; }
+  .faq-cta .btn-custom { width: 100%; text-align: center; }
+}

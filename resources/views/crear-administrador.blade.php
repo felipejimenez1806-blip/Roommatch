@@ -3,7 +3,7 @@
 @section('title', 'Roommatch – Crear administrador')
 
 @push('css')
-<link rel="stylesheet" href="{{ asset('Css/crear-administrador.css') }}" />
+@vite('resources/css/pages/crear-administrador.css')
 @endpush
 
 @section('content')

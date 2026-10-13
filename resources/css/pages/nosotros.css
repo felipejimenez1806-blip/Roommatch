@@ -1,0 +1,143 @@
+/* ============================================================
+   NOSOTROS — historia, valores y equipo
+   ============================================================ */
+
+/* ── ENCABEZADO ── */
+.about-hero {
+  margin: 20px 40px 0;
+  padding: 44px 40px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #1a9ecf 0%, #0f6f96 100%);
+  color: #fff;
+  text-align: center;
+}
+.about-hero h1 { font-size: 30px; font-weight: 800; margin-bottom: 8px; }
+.about-hero p { font-size: 14px; opacity: .92; max-width: 520px; margin: 0 auto; }
+
+/* ── HISTORIA ── */
+.about-story-section { padding-top: 40px; }
+.about-story {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 40px;
+  align-items: center;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+.about-eyebrow {
+  font-size: 12px;
+  font-weight: 700;
+  color: #1a9ecf;
+  margin-bottom: 10px;
+}
+.about-story-text p { font-size: 13.5px; line-height: 1.7; color: #444; margin-bottom: 14px; }
+.about-story-text p:last-child { margin-bottom: 0; }
+.about-story-text strong { color: #111; }
+
+.about-story-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.about-stat {
+  background: #fff;
+  border: 1px solid #ececec;
+  border-radius: 14px;
+  padding: 16px 18px;
+}
+.about-stat-num { font-size: 26px; font-weight: 800; color: #1a9ecf; line-height: 1; }
+.about-stat-label { font-size: 12.5px; color: #777; margin-top: 6px; }
+
+/* ── VALORES ── */
+.about-values-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+.about-value-card {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 1px 6px rgba(0,0,0,.07);
+  padding: 22px;
+  transition: box-shadow .2s, transform .2s;
+}
+.about-value-card:hover { box-shadow: 0 6px 20px rgba(0,0,0,.13); transform: translateY(-2px); }
+.about-value-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: #f2f9fc;
+  color: #1a9ecf;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  margin-bottom: 14px;
+}
+.about-value-title { font-size: 14.5px; font-weight: 700; color: #111; margin-bottom: 6px; }
+.about-value-text { font-size: 12.5px; color: #888; line-height: 1.55; }
+
+/* ── EQUIPO ── */
+.about-team-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+.about-team-card {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 1px 6px rgba(0,0,0,.07);
+  padding: 26px 20px;
+  text-align: center;
+  transition: box-shadow .2s, transform .2s;
+}
+.about-team-card:hover { box-shadow: 0 6px 20px rgba(0,0,0,.13); transform: translateY(-2px); }
+.about-team-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  margin: 0 auto 14px;
+  background: linear-gradient(135deg, #1a9ecf, #0f6f96);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 800;
+}
+.about-team-name { font-size: 14px; font-weight: 700; color: #111; }
+.about-team-role { font-size: 12px; color: #888; margin-top: 3px; }
+
+/* ── CTA ── */
+.about-cta-wrap { padding: 8px 40px 40px; }
+.about-cta {
+  background: #f2f9fc;
+  border: 1.5px solid #d9eef6;
+  border-radius: 16px;
+  padding: 22px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.about-cta-title { font-size: 15px; font-weight: 700; color: #111; }
+.about-cta-text { font-size: 13px; color: #666; margin-top: 2px; }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 860px) {
+  .about-hero { margin: 16px 20px 0; padding: 32px 20px; }
+  .about-hero h1 { font-size: 23px; }
+  .about-story { grid-template-columns: 1fr; gap: 24px; }
+  .about-values-grid,
+  .about-team-grid { grid-template-columns: 1fr 1fr; }
+  .about-cta-wrap { padding: 8px 20px 32px; }
+  .about-cta { padding: 18px 20px; }
+}
+
+@media (max-width: 560px) {
+  .about-values-grid,
+  .about-team-grid { grid-template-columns: 1fr; }
+  .about-cta { flex-direction: column; align-items: flex-start; }
+  .about-cta .btn-custom { width: 100%; text-align: center; }
+}

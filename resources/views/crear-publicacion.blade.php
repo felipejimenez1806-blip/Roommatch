@@ -3,7 +3,7 @@
 @section('title', 'Roommatch – Crear publicación')
 
 @push('css')
-<link rel="stylesheet" href="{{ asset('Css/crear-publicacion.css') }}" />
+@vite('resources/css/pages/crear-publicacion.css')
 @endpush
 
 @section('content')

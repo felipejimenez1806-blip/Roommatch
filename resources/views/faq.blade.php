@@ -3,7 +3,7 @@
 @section('title', 'Roommatch – Preguntas frecuentes')
 
 @push('css')
-<link rel="stylesheet" href="{{ asset('Css/faq.css') }}" />
+@vite('resources/css/pages/faq.css')
 @endpush
 
 @section('content')

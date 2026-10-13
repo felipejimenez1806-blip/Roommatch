@@ -5,7 +5,7 @@
   @include('partials.app-config')
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Roommatch | Conectando tu cuenta...</title>
-  <link rel="stylesheet" href="{{ asset('Css/oauth-callback.css') }}">
+  @vite('resources/css/pages/oauth-callback.css')
 </head>
 <body>
   <div class="caja">

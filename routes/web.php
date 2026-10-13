@@ -24,12 +24,16 @@ use App\Http\Controllers\SocialAuthController;
 |   1. Agrupación por prefijo /admin, para que la estructura de rutas
 |      refleje la separación real y podamos aplicar el guard de abajo
 |      solo a este grupo.
-|   2. resources/js/admin-guard.js, cargado de forma bloqueante en
-|      <head> ANTES de pintar el <body> (en layouts.admin y
-|      layouts.app respectivamente): revisa el rol guardado en
-|      sessionStorage y redirige de inmediato si no corresponde a esa
-|      zona. No reemplaza la protección real de datos (esa ya la
-|      tienes con 'es.admin' en la API) — solo evita que alguien vea
+|   2. resources/views/partials/admin-guard.blade.php: script INLINE en
+|      el <head>, incluido por layouts.app, layouts.admin y
+|      layouts.admin-bare, que se ejecuta ANTES de pintar el <body>:
+|      revisa el rol activo guardado en sessionStorage y redirige de
+|      inmediato si no corresponde a esa zona. Va inline (no como módulo
+|      de Vite) porque un módulo es diferido y correría después de
+|      pintar. Usa window.APP (partials/app-config.blade.php) para que
+|      las rutas y redirecciones funcionen aunque la app viva en un
+|      subdirectorio. No reemplaza la protección real de datos (esa ya
+|      la tienes con 'es.admin' en la API) — solo evita que alguien vea
 |      el HTML/JS de la zona equivocada o un flash de contenido ajeno.
 |
 | Migrar esto a un middleware real de Laravel implicaría pasar el login
@@ -65,7 +69,7 @@ Route::get('/auth/{proveedor}/callback', [SocialAuthController::class, 'callback
 
 // ==========================================================================
 // Rutas de cliente (roomie / arrendador) — usan layouts.app.
-// admin-guard.js redirige a /admin si el usuario logueado es admin.
+// partials/admin-guard redirige a /admin si el usuario logueado es admin.
 // ==========================================================================
 
 Route::get('/dashboard', fn () => view('dashboard'))->name('dashboard');
@@ -86,7 +90,7 @@ Route::get('/confirmacion-cita', fn () => view('confirmacion-cita'))->name('conf
 
 // ==========================================================================
 // Rutas de administración — usan layouts.admin (sin nav de cliente).
-// admin-guard.js redirige a /dashboard si el usuario logueado NO es admin.
+// partials/admin-guard redirige a /dashboard si el usuario logueado NO es admin.
 //
 // Nombres de ruta sin cambios ('admin' y 'admin.crear-administrador')
 // para no romper los route()/@route() que ya existan en las vistas.

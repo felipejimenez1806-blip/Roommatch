@@ -1,0 +1,403 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ── STICKY FOOTER ──
+   El body se organiza en columna con una altura MÍNIMA de toda la
+   pantalla (min-height, no height fijo — así puede crecer si el
+   contenido es más alto que el viewport, sin comprimir nada).
+   El footer, al ser el último elemento con margin-top:auto, se empuja
+   siempre hasta el fondo cuando el contenido de la página es corto
+   (ej: perfil.html con "Datos personales" o "Favoritos"), y baja de
+   forma natural cuando el contenido es más largo que la pantalla. */
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+/* Ningún hijo directo de body (nav, hero, secciones, sidebars con
+   sticky/overflow, footer, etc.) debe poder encogerse por debajo de
+   su tamaño natural: sin esto, elementos con overflow distinto de
+   "visible" (como el sidebar de filtros con overflow-y:auto) pueden
+   recibir un tamaño mínimo automático de 0 dentro del flex y verse
+   comprimidos. El footer se sigue empujando abajo solo con margin-top:auto. */
+body > * { flex-shrink: 0; }
+footer { margin-top: auto; }
+
+body { font-family: 'Inter', sans-serif; background: #f7f7f8; color: #222; font-size: 14px; }
+
+/* ── NAVBAR ── */
+nav {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 40px; height: 58px; background: #fff;
+  border-bottom: 1px solid #ececec; position: sticky; top: 0; z-index: 100;
+}
+.logo { display: flex; align-items: center; text-decoration: none; }
+.logo-img { height: 60px; width: auto; display: block; }
+.nav-links { display: flex; gap: 28px; list-style: none; }
+.nav-links a { text-decoration: none; color: #444; font-size: 14px; font-weight: 500; transition: color .2s; }
+.nav-links a:hover { color: #1a9ecf; }
+.nav-actions { display: flex; gap: 10px; align-items: center; }
+.btn-outline {
+  padding: 8px 22px; border: 1.5px solid #1a9ecf; border-radius: 22px;
+  background: transparent; color: #1a9ecf; font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: all .2s; text-decoration: none; display: inline-block;
+}
+.btn-outline:hover { background: #1a9ecf; color: #fff; }
+.btn-solid {
+  padding: 8px 22px; border: none; border-radius: 22px;
+  background: #1a9ecf; color: #fff; font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: background .2s; text-decoration: none; display: inline-block;
+}
+.btn-solid:hover { background: #1585b0; }
+
+/* ---------- MENÚ MÓVIL (hamburguesa) ----------
+   El botón .nav-burger lo inyecta nav.js (una sola vez, en
+   cualquier página que lo cargue). En escritorio no se muestra y
+   no afecta el layout: display:none lo saca del flex por completo. */
+.nav-burger {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  width: 38px;
+  height: 38px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.nav-burger span {
+  display: block;
+  width: 22px;
+  height: 2px;
+  background: #333;
+  border-radius: 2px;
+  transition: transform .2s ease, opacity .2s ease;
+}
+nav.nav-open .nav-burger span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+nav.nav-open .nav-burger span:nth-child(2) { opacity: 0; }
+nav.nav-open .nav-burger span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+@media (max-width: 860px) {
+  nav {
+    flex-wrap: wrap;
+    height: auto;
+    min-height: 58px;
+    padding: 10px 20px;
+  }
+  .nav-burger { display: flex; }
+
+  /* Ocultos por defecto; se muestran como panel plegable de ancho
+     completo cuando <nav> tiene la clase "nav-open" (nav.js). */
+  .nav-links,
+  .nav-actions {
+    display: none;
+    width: 100%;
+  }
+  nav.nav-open .nav-links,
+  nav.nav-open .nav-actions {
+    display: flex;
+  }
+
+  .nav-links {
+    order: 3;
+    flex-direction: column;
+    gap: 0;
+    padding-top: 6px;
+    border-top: 1px solid #f2f2f2;
+    margin-top: 10px;
+  }
+  .nav-links li { width: 100%; }
+  .nav-links a {
+    display: block;
+    padding: 12px 4px;
+  }
+  .nav-links li + li a {
+    border-top: 1px solid #f7f7f7;
+  }
+
+  .nav-actions {
+    order: 4;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: stretch;
+    gap: 10px;
+    padding: 14px 0 6px;
+    border-top: 1px solid #f2f2f2;
+    margin-top: 4px;
+  }
+  /* Los botones de ancho completo (sesión / admin) fuerzan su propia
+     línea por el wrap; la campanita y la pastilla de usuario quedan
+     libres para compartir la fila que sigue. */
+  .nav-actions .btn-outline,
+  .nav-actions .btn-solid {
+    width: 100%;
+    box-sizing: border-box;
+    justify-content: center;
+  }
+  /* Antes la campanita quedaba sola en su línea (align-self:
+     flex-start) y la pastilla de usuario se estiraba aparte, sin
+     relación visual entre las dos. Ahora comparten una sola fila:
+     campanita de tamaño fijo + pastilla ocupando el resto. */
+  .nav-actions .nav-bell {
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+  }
+  .nav-actions .user-menu-trigger {
+    flex: 1;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+}
+
+/* ── HERO ── */
+.hero {
+  margin: 20px 40px 0;
+  border-radius: 18px;
+  overflow: hidden;
+  position: relative;
+  height: 220px;
+}
+.hero img {
+  width: 100%; height: 100%; object-fit: cover; display: block;
+  filter: brightness(0.55);
+}
+.hero-text {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -54%);
+  text-align: center; color: #fff;
+}
+.hero-text h1 { font-size: 32px; font-weight: 800; margin-bottom: 4px; white-space: nowrap; }
+.hero-text p { font-size: 14px; opacity: 0.9; }
+
+/* ── SEARCH BAR ── */
+.search-wrap {
+  margin: -22px 40px 0;
+  position: relative; z-index: 10;
+}
+.search-bar {
+  display: flex; align-items: center;
+  background: #fff; border-radius: 40px;
+  box-shadow: 0 4px 24px rgba(0,0,0,.12);
+  padding: 6px 6px 6px 24px;
+}
+.search-bar input {
+  flex: 1; border: none; outline: none;
+  font-size: 14px; color: #333; background: transparent;
+}
+.search-bar input::placeholder { color: #bbb; }
+.search-btn {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: #1a9ecf; border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 20px; transition: background .2s; flex-shrink: 0;
+}
+.search-btn:hover { background: #1585b0; }
+
+/* ── SECTIONS ── */
+.section { padding: 32px 40px 0; }
+.section-title { font-size: 16px; font-weight: 700; margin-bottom: 16px; }
+.section-title-row { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 16px; }
+.section-title-row .section-title { margin-bottom: 0; }
+.results-count { font-size: 12px; color: #888; }
+.no-results {
+  grid-column: 1 / -1; text-align: center; padding: 40px 20px;
+  color: #888; font-size: 14px;
+}
+.no-results button {
+  margin-top: 10px; padding: 8px 20px; border: 1.5px solid #1a9ecf;
+  border-radius: 20px; background: transparent; color: #1a9ecf;
+  font-size: 13px; font-weight: 600; cursor: pointer;
+}
+
+/* ── LUGARES POPULARES ── */
+.lugares-grid {
+  display: grid;
+  grid-template-columns: 1fr 0.6fr 1fr 0.6fr;
+  grid-template-rows: auto auto;
+  gap: 10px;
+}
+.lugar-card {
+  position: relative; border-radius: 14px; overflow: hidden; cursor: pointer;
+  transition: transform .2s;
+}
+.lugar-card:hover { transform: scale(1.02); }
+.lugar-card.active-zone::after {
+  content: ""; position: absolute; inset: 0;
+  border: 3px solid #1a9ecf; border-radius: 14px; pointer-events: none;
+}
+.lugar-card img { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* layout overrides */
+.lugar-card.tall { grid-row: 1 / 3; }
+.lugar-card.short { height: 125px; }
+.lugar-label {
+  position: absolute; bottom: 10px; left: 10px;
+  background: rgba(255,255,255,0.92); backdrop-filter: blur(4px);
+  padding: 4px 12px; border-radius: 20px;
+  font-size: 12px; font-weight: 600; color: #222;
+}
+
+/* ── RECOMENDADOS ── */
+.recom-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 14px;
+  padding-bottom: 8px;
+}
+.recom-card {
+  background: #fff; border-radius: 14px; overflow: hidden;
+  box-shadow: 0 1px 6px rgba(0,0,0,.07);
+  transition: box-shadow .2s, transform .2s;
+  cursor: pointer;
+}
+.recom-card:hover { box-shadow: 0 6px 20px rgba(0,0,0,.13); transform: translateY(-2px); }
+.recom-img-wrap { position: relative; }
+.recom-card img { width: 100%; height: 130px; object-fit: cover; display: block; }
+.recom-badge {
+  position: absolute; top: 8px; left: 8px;
+  background: #1a9ecf; color: #fff;
+  font-size: 11px; font-weight: 700;
+  padding: 3px 7px; border-radius: 8px;
+}
+.recom-fav {
+  position: absolute; top: 8px; right: 8px;
+  width: 28px; height: 28px; border-radius: 50%;
+  background: rgba(255,255,255,0.85);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; cursor: pointer;
+  border: none;
+}
+.recom-fav.is-fav { color: #e03; }
+.recom-body { padding: 10px 12px 12px; }
+.recom-type { font-size: 13px; font-weight: 700; margin-bottom: 1px; }
+.recom-zone { font-size: 12px; color: #888; margin-bottom: 8px; }
+.recom-price {
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 13px; font-weight: 700; color: #111;
+}
+.arrow-btn {
+  width: 24px; height: 24px; border-radius: 50%;
+  border: 1.5px solid #ddd; background: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; color: #555; cursor: pointer; transition: all .2s;
+}
+.arrow-btn:hover { border-color: #1a9ecf; color: #1a9ecf; }
+
+/* ── BUSQUEDA PERSONALIZADA ── */
+.custom-search-wrap {
+  display: flex; justify-content: center;
+  padding: 36px 40px 40px;
+}
+.btn-custom {
+  padding: 12px 36px; border: 1.5px solid #1a9ecf;
+  border-radius: 30px; background: transparent;
+  color: #1a9ecf; font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all .2s;
+  text-decoration: none; display: inline-block;
+}
+.btn-custom:hover { background: #1a9ecf; color: #fff; }
+
+/* ── FOOTER ── */
+footer {
+  background: #f0f0f0; border-top: 1px solid #e0e0e0;
+  padding: 28px 40px;
+  display: flex; justify-content: space-between; align-items: flex-start;
+}
+.footer-name { font-size: 15px; font-weight: 800; color: #111; }
+.footer-copy { font-size: 11px; color: #888; margin-top: 6px; }
+.footer-links { display: flex; flex-direction: column; gap: 4px; text-align: right; }
+.footer-links a { font-size: 13px; color: #555; text-decoration: none; font-weight: 500; }
+.footer-links a:hover { color: #1a9ecf; }
+
+/* ============================================================
+   RESPONSIVE (resto del layout: hero, búsqueda, grillas, footer)
+   Ninguna de estas secciones tenía media queries. Como index.css
+   se importa en casi todas las páginas, esto arregla de paso el
+   layout base de dashboard, habitaciones, favoritos, etc.
+   ============================================================ */
+@media (max-width: 860px) {
+  .hero { margin: 16px 20px 0; height: 190px; }
+  .hero-text h1 { font-size: 24px; white-space: normal; }
+  .search-wrap { margin: -20px 20px 0; }
+  .section { padding: 24px 20px 0; }
+  .custom-search-wrap { padding: 28px 20px 32px; }
+
+  /* Mosaico de 4 columnas desiguales -> tira de scroll horizontal.
+     Una grilla simple de 2 columnas mezclaba tarjetas .tall (160px)
+     y .short (130px) en la misma fila con alturas distintas, así
+     que las filas no cerraban parejo. El scroll horizontal evita
+     ese problema por completo (todas las tarjetas miden lo mismo) y
+     de paso ya no depende de que el número de zonas sea par. */
+  .lugares-grid {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+    gap: 10px;
+    padding: 2px 20px 6px;
+    margin: 0 -20px;
+  }
+  /* El HTML no tiene 6 tarjetas sueltas: tiene 4 hijos directos en
+     .lugares-grid — 2 tarjetas .tall y 2 <div> envoltorio (sin
+     clase) que apilan 2 fotos .short cada uno en columna. Para que
+     el scroll quede parejo, el envoltorio se trata como una tarjeta
+     más de 150px de ancho/alto, y sus 2 fotos internas se reparten
+     ese alto con flex en vez de tener 150px cada una. */
+  .lugares-grid > .lugar-card,
+  .lugares-grid > div:not(.lugar-card) {
+    flex: 0 0 150px;
+    width: 150px;
+    height: 150px;
+    scroll-snap-align: start;
+  }
+  .lugares-grid > div:not(.lugar-card) {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .lugares-grid > div:not(.lugar-card) > .lugar-card {
+    flex: 1 1 0;
+    width: 100%;
+    height: auto;
+    min-height: 0;
+  }
+  .lugares-grid::-webkit-scrollbar { display: none; }
+  .lugares-grid { scrollbar-width: none; }
+
+  /* 5 columnas fijas no caben en tablet/celular */
+  .recom-grid { grid-template-columns: repeat(3, 1fr); }
+
+  footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 24px 20px;
+  }
+  .footer-links { text-align: left; }
+}
+
+@media (max-width: 640px) {
+  .recom-grid { grid-template-columns: repeat(2, 1fr); }
+
+  /* Mismo arreglo que en lugares-grid: la última tarjeta, si queda
+     sola en la fila, se estira a ancho completo en vez de quedar a
+     medias a la izquierda (el caso de la captura, con 5 tarjetas). */
+  .recom-grid > .recom-card:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 420px) {
+  .hero-text h1 { font-size: 20px; }
+  .hero { height: 170px; }
+  .recom-grid { gap: 10px; }
+  .lugares-grid { gap: 8px; }
+  .lugares-grid > .lugar-card,
+  .lugares-grid > div:not(.lugar-card) {
+    flex-basis: 132px;
+    width: 132px;
+    height: 132px;
+  }
+}

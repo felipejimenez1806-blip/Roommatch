@@ -1,0 +1,320 @@
+/* ============================================================
+   ROOMMATCH – Crear administrador
+   ------------------------------------------------------------
+   Hoja de estilos propia para esta página (antes reusaba
+   signup.css, pensada para el fondo con foto del login/registro
+   público, lo cual no encajaba con una herramienta interna de
+   administración). Look limpio, sobrio, sin foto de fondo.
+   ============================================================ */
+
+:root {
+  --admcta-primary: #1a9ecf;
+  --admcta-primary-dark: #1585b0;
+  --admcta-bg: #f2f5f8;
+  --admcta-card: #ffffff;
+  --admcta-border: #e3e7ec;
+  --admcta-text: #1c2126;
+  --admcta-text-muted: #6b7480;
+  --admcta-danger: #e5484d;
+  --admcta-danger-bg: #fdecec;
+  --admcta-success: #1a9ecf;
+  --admcta-success-bg: #e8f6fb;
+  --admcta-warn-bg: #fff4e5;
+  --admcta-warn-text: #92600a;
+}
+
+.admcta-page {
+  min-height: calc(100vh - 64px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  background: radial-gradient(circle at top, #ffffff 0%, var(--admcta-bg) 55%);
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+.admcta-card {
+  width: 100%;
+  max-width: 560px;
+  background: var(--admcta-card);
+  border: 1px solid var(--admcta-border);
+  border-radius: 20px;
+  box-shadow: 0 20px 45px -20px rgba(20, 30, 40, 0.18);
+  padding: 40px 44px 36px;
+}
+
+/* ---------- Header ---------- */
+.admcta-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--admcta-text-muted);
+  text-decoration: none;
+  margin-bottom: 22px;
+  transition: color .15s;
+}
+.admcta-back:hover { color: var(--admcta-primary); }
+
+.admcta-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: .03em;
+  text-transform: uppercase;
+  color: var(--admcta-warn-text);
+  background: var(--admcta-warn-bg);
+  padding: 5px 12px;
+  border-radius: 999px;
+  margin-bottom: 14px;
+}
+.admcta-badge svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2.2; }
+
+.admcta-header h1 {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--admcta-text);
+  margin: 0 0 6px;
+}
+.admcta-header p {
+  font-size: 13.5px;
+  color: var(--admcta-text-muted);
+  margin: 0 0 28px;
+  line-height: 1.5;
+}
+
+/* ---------- Secciones ---------- */
+.admcta-section { margin-bottom: 26px; }
+.admcta-section:last-of-type { margin-bottom: 0; }
+
+.admcta-section-title {
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  color: var(--admcta-text-muted);
+  margin: 0 0 14px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--admcta-border);
+}
+
+.admcta-section-confirm {
+  background: var(--admcta-bg);
+  border: 1px solid var(--admcta-border);
+  border-radius: 14px;
+  padding: 18px 20px 20px;
+}
+.admcta-section-confirm .admcta-section-title { border-bottom: none; padding-bottom: 0; }
+
+/* ---------- Campos ---------- */
+.admcta-field { margin-bottom: 16px; }
+.admcta-field:last-child { margin-bottom: 0; }
+
+.admcta-field label {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--admcta-text);
+  margin-bottom: 6px;
+}
+
+.admcta-input {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border: 1.5px solid var(--admcta-border);
+  border-radius: 12px;
+  transition: border-color .15s, box-shadow .15s;
+}
+.admcta-input:focus-within {
+  border-color: var(--admcta-primary);
+  box-shadow: 0 0 0 3px rgba(26, 158, 207, 0.14);
+}
+.admcta-input.has-error {
+  border-color: var(--admcta-danger);
+}
+.admcta-input.has-error:focus-within {
+  box-shadow: 0 0 0 3px rgba(229, 72, 77, 0.12);
+}
+
+.admcta-icon {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  color: var(--admcta-text-muted);
+}
+.admcta-icon svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.8; }
+
+.admcta-input input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 14.5px;
+  color: var(--admcta-text);
+  padding: 13px 12px 13px 0;
+}
+.admcta-input input::placeholder { color: #a7aeb6; }
+
+/* Botón mostrar/ocultar contraseña: ancho fijo para no chocar con el
+   texto tecleado, siempre clickeable por encima del input. */
+.admcta-toggle {
+  flex: none;
+  width: 62px;
+  margin-right: 6px;
+  padding: 6px 0;
+  background: transparent;
+  border: none;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--admcta-primary);
+  cursor: pointer;
+  text-align: center;
+  border-radius: 7px;
+  z-index: 2;
+}
+.admcta-toggle:hover { background: rgba(26, 158, 207, 0.1); }
+
+.admcta-error {
+  font-size: 12px;
+  color: var(--admcta-danger);
+  margin: 6px 0 0;
+  min-height: 0;
+}
+
+/* ---------- Checklist de contraseña ---------- */
+.admcta-checklist {
+  list-style: none;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 14px;
+  margin: 10px 0 0;
+  padding: 0;
+}
+.admcta-checklist li {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  color: var(--admcta-text-muted);
+  transition: color .15s;
+}
+.admcta-checklist li::before {
+  content: "";
+  flex: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1.5px solid #c9d0d7;
+  background: #fff;
+  transition: all .15s;
+}
+.admcta-checklist li.is-valid { color: var(--admcta-success); }
+.admcta-checklist li.is-valid::before {
+  border-color: var(--admcta-primary);
+  background: var(--admcta-primary);
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='20 6 9 17 4 12'/></svg>");
+  background-size: 9px 9px;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+@media (max-width: 480px) {
+  .admcta-checklist { grid-template-columns: 1fr; }
+}
+
+/* ---------- Mensaje / toast ---------- */
+.form-message {
+  font-size: 13px;
+  text-align: center;
+  border-radius: 10px;
+  padding: 0;
+  min-height: 0;
+  margin: 0;
+  transition: padding .15s;
+}
+.form-message.error {
+  color: var(--admcta-danger);
+  background: var(--admcta-danger-bg);
+  padding: 10px 14px;
+  margin: 18px 0 0;
+}
+.form-message.success {
+  color: var(--admcta-success);
+  background: var(--admcta-success-bg);
+  padding: 10px 14px;
+  margin: 18px 0 0;
+}
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 28px;
+  transform: translateX(-50%) translateY(20px);
+  background: #1c2126;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 12px 20px;
+  border-radius: 10px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s, transform .2s;
+  z-index: 50;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ---------- Botón enviar ---------- */
+.admcta-submit {
+  width: 100%;
+  margin-top: 26px;
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--admcta-primary), var(--admcta-primary-dark));
+  color: #fff;
+  font-family: inherit;
+  font-size: 14.5px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: filter .15s, opacity .15s;
+}
+.admcta-submit:hover { filter: brightness(1.06); }
+.admcta-submit:disabled { opacity: .75; cursor: default; }
+
+.admcta-submit .spinner {
+  width: 16px;
+  height: 16px;
+  border: 2.5px solid rgba(255,255,255,.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: admcta-spin .7s linear infinite;
+}
+@keyframes admcta-spin { to { transform: rotate(360deg); } }
+
+/* Campos señuelo: existen en el DOM para absorber el autocompletado
+   del navegador, pero nunca deben ser visibles ni alcanzables. */
+.admcta-decoy {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  left: -9999px;
+  opacity: 0;
+}
+
+@media (max-width: 600px) {
+  .admcta-card { padding: 30px 22px 26px; border-radius: 16px; }
+}

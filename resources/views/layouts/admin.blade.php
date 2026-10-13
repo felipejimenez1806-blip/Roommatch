@@ -14,7 +14,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
 {{-- index.css: reset/tokens base que admin.css asume. nav.css no se
      incluye aquí porque es del navbar de cliente, que esta zona no usa. --}}
-<link rel="stylesheet" href="{{ asset('Css/index.css') }}" />
+@vite('resources/css/index.css')
 @stack('css')
 </head>
 <body>
