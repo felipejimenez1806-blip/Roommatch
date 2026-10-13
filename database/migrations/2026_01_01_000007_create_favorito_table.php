@@ -3,7 +3,6 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
@@ -34,12 +33,10 @@ return new class extends Migration
             $table->index('id_persona', 'idx_fav_persona');
         });
 
-        DB::statement("
-            ALTER TABLE favorito ADD CONSTRAINT chk_fav_objetivo CHECK (
-                (tipo = 'publicacion' AND id_publicacion IS NOT NULL AND id_persona IS NULL) OR
-                (tipo = 'persona' AND id_persona IS NOT NULL AND id_publicacion IS NULL)
-            )
-        ");
+        // NOTA: la regla "exactamente un objetivo según tipo" YA NO es un CHECK.
+        // MySQL 8 no permite CHECK sobre columnas con FK CASCADE (error 3823).
+        // Se valida en FavoritoController (tipo='publicacion' => solo
+        // id_publicacion; tipo='persona' => solo id_persona).
     }
 
     public function down(): void

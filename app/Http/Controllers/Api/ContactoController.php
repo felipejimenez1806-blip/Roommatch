@@ -20,7 +20,13 @@ class ContactoController extends Controller
 
         // El mensaje queda guardado primero. Así, si algún correo falla
         // (ej. credenciales SMTP mal configuradas), el mensaje no se pierde.
-        $registro = MensajeContacto::create($datos);
+        // id_usuario sale SIEMPRE del servidor (token/sesión), nunca del
+        // formulario: el formulario es público, así que para un visitante sin
+        // cuenta queda NULL. user('sanctum') funciona aunque la ruta no esté
+        // protegida con auth:sanctum.
+        $registro = MensajeContacto::create($datos + [
+            'id_usuario' => $request->user('sanctum')?->id_usuario,
+        ]);
 
         Notificacion::notificarAdminsNuevoMensajeContacto($registro);
 

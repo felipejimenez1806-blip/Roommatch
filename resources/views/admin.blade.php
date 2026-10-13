@@ -3,7 +3,7 @@
 @section('title', 'Roommatch – Panel de administración')
 
 @push('css')
-<link rel="stylesheet" href="{{ asset('Css/admin.css') }}" />
+@vite('resources/css/pages/admin.css')
 @endpush
 
 @section('content')

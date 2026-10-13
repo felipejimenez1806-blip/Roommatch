@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class MensajeContacto extends Model
 {
@@ -10,14 +11,30 @@ class MensajeContacto extends Model
     protected $primaryKey = 'id_mensaje_contacto';
 
     protected $fillable = [
+        'id_usuario',
+        'id_administrador',
         'nombre',
         'correo',
         'asunto',
         'mensaje',
         'atendido',
+        'fecha_atencion',
     ];
 
     protected $casts = [
         'atendido' => 'boolean',
+        'fecha_atencion' => 'datetime',
     ];
+
+    /** Remitente, si tenía sesión iniciada (NULL = visitante sin cuenta). */
+    public function usuario(): BelongsTo
+    {
+        return $this->belongsTo(Usuario::class, 'id_usuario', 'id_usuario');
+    }
+
+    /** Administrador que atendió el mensaje. */
+    public function administrador(): BelongsTo
+    {
+        return $this->belongsTo(Usuario::class, 'id_administrador', 'id_usuario');
+    }
 }

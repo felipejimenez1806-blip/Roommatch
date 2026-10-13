@@ -3,7 +3,7 @@
 @section('title', 'Roommatch – Ayuda')
 
 @push('css')
-<link rel="stylesheet" href="{{ asset('Css/ayuda.css') }}" />
+@vite('resources/css/pages/ayuda.css')
 @endpush
 
 @section('content')

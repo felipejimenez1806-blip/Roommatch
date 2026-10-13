@@ -36,12 +36,12 @@ return new class extends Migration
         });
 
         DB::statement("ALTER TABLE calificacion ADD CONSTRAINT chk_calif_puntuacion CHECK (puntuacion BETWEEN 1 AND 10)");
-        DB::statement("
-            ALTER TABLE calificacion ADD CONSTRAINT chk_calif_objetivo CHECK (
-                (tipo = 'publicacion' AND id_publicacion IS NOT NULL AND id_persona IS NULL) OR
-                (tipo = 'persona' AND id_persona IS NOT NULL AND id_publicacion IS NULL)
-            )
-        ");
+
+        // NOTA: la regla "exactamente un objetivo según tipo" (tipo='publicacion'
+        // => solo id_publicacion; tipo='persona' => solo id_persona) YA NO es un
+        // CHECK. MySQL 8 no permite CHECK sobre columnas que tienen FK con
+        // acciones referenciales (CASCADE / SET NULL): error 3823. Se valida en
+        // el controlador / FormRequest de calificaciones.
     }
 
     public function down(): void

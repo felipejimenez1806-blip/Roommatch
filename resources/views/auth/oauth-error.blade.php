@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Roommatch | No se pudo iniciar sesión</title>
-  <link rel="stylesheet" href="{{ asset('Css/oauth-error.css') }}">
+  @vite('resources/css/pages/oauth-error.css')
 </head>
 <body>
   <div class="caja">

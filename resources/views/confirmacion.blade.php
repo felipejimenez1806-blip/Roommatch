@@ -3,7 +3,7 @@
 @section('title', 'Roommatch – Solicitud enviada')
 
 @push('css')
-<link rel="stylesheet" href="{{ asset('Css/confirmacion.css') }}" />
+@vite('resources/css/pages/confirmacion.css')
 @endpush
 
 @section('content')

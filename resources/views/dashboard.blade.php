@@ -3,7 +3,7 @@
 @section('title', 'Roommatch – Dashboard')
 
 @push('css')
-<link rel="stylesheet" href="{{ asset('Css/dashboard.css') }}" />
+@vite('resources/css/pages/dashboard.css')
 @endpush
 
 @section('content')

@@ -10,7 +10,11 @@ return new class extends Migration
     {
         Schema::create('password_reset_codes', function (Blueprint $table) {
             $table->id();
-            $table->string('email')->index();
+
+            // FK -> usuario.correo (columna UNIQUE). Misma longitud (150) que
+            // usuario.correo. Si el usuario cambia de correo se actualiza en
+            // cascada; si se elimina la cuenta, sus códigos se eliminan con ella.
+            $table->string('email', 150)->index();
 
             // Hash del código de 6 dígitos (nunca se guarda en texto plano).
             $table->string('codigo');
@@ -24,6 +28,10 @@ return new class extends Migration
             $table->timestamp('expira_en');
             $table->timestamp('verificado_en')->nullable();
             $table->timestamp('created_at')->nullable();
+
+            $table->foreign('email', 'fk_pwdreset_usuario')
+                ->references('correo')->on('usuario')
+                ->onDelete('cascade')->onUpdate('cascade');
         });
     }
 

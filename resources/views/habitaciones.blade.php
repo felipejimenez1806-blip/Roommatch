@@ -3,7 +3,7 @@
 @section('title', 'Roommatch – Habitaciones')
 
 @push('css')
-<link rel="stylesheet" href="{{ asset('Css/habitaciones.css') }}" />
+@vite('resources/css/pages/habitaciones.css')
 @endpush
 
 @section('content')

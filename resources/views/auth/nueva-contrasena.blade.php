@@ -6,8 +6,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="csrf-token" content="{{ csrf_token() }}">
   <title>Roommatch | Nueva contraseña</title>
-  <link rel="stylesheet" href="{{ asset('Css/login.css') }}">
-  <link rel="stylesheet" href="{{ asset('Css/recuperar-password.css') }}">
+  @vite('resources/css/pages/login.css')
+  @vite('resources/css/pages/recuperar-password.css')
 </head>
 <body>
 

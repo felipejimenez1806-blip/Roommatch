@@ -89,11 +89,28 @@ class ReporteController extends Controller
         if ($reporte->tipo === 'publicacion' && $reporte->id_publicacion) {
             $this->eliminarPublicacionReportada($reporte->id_publicacion);
         } elseif ($reporte->tipo === 'usuario' && $reporte->id_usuario_reportado) {
-            Usuario::whereKey($reporte->id_usuario_reportado)->update([
-                'bloqueado' => true,
-                'bloqueado_motivo' => "Reporte: {$reporte->motivo}",
-                'bloqueado_fecha' => now(),
-            ]);
+            $reportado = Usuario::find($reporte->id_usuario_reportado);
+
+            // Mismo resguardo que UsuarioController::bloquear(): una cuenta
+            // admin (incluida la de sistema) no se bloquea. Se corta ANTES de
+            // cambiar nada, así el reporte queda pendiente y el admin puede
+            // descartarlo o gestionarlo por otra vía.
+            if ($reportado?->esAdmin()) {
+                return response()->json([
+                    'mensaje' => 'No se puede bloquear una cuenta de administrador. Descarta el reporte o gestiónalo por otra vía.',
+                ], 422);
+            }
+
+            if ($reportado) {
+                Usuario::whereKey($reportado->id_usuario)->update([
+                    'bloqueado' => true,
+                    'bloqueado_motivo' => "Reporte: {$reporte->motivo}",
+                    'bloqueado_fecha' => now(),
+                ]);
+
+                // Cierra las sesiones abiertas del usuario bloqueado.
+                $reportado->tokens()->delete();
+            }
         } elseif ($reporte->tipo === 'persona' && $reporte->id_persona) {
             $this->eliminarPersonaReportada($reporte->id_persona);
         }

@@ -3,7 +3,7 @@
 @section('title', 'Roommatch – Cita agendada')
 
 @push('css')
-<link rel="stylesheet" href="{{ asset('Css/confirmacion-cita.css') }}" />
+@vite('resources/css/pages/confirmacion-cita.css')
 @endpush
 
 @section('content')
