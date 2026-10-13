@@ -6,6 +6,7 @@ use App\Mail\CodigoRecuperacionMail;
 use App\Models\Usuario;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
@@ -28,27 +29,27 @@ class PasswordResetController extends Controller
 
         $email = strtolower($datos['email']);
 
-        // Cooldown: evita reenvíos en ráfaga.
-        $ultimo = DB::table('password_reset_codes')
-            ->where('email', $email)
-            ->orderByDesc('created_at')
-            ->first();
+        // Cooldown: evita reenvíos en ráfaga. Se controla con caché (store
+        // 'file', que no requiere tabla en la BD) y NO con la tabla
+        // password_reset_codes: esa tabla solo tiene filas para correos
+        // registrados, así que usarla como cooldown dejaba descubrir qué
+        // correos existen (429 solo para los registrados). Aquí el cooldown
+        // se aplica igual exista o no el usuario.
+        $cache = Cache::store('file');
+        $claveCooldown = 'pwd_reset_cooldown:' . sha1($email);
+        $inicioCooldown = $cache->get($claveCooldown);
 
-        if ($ultimo) {
-            // created_at viene como string plano de DB::table(); hay que
-            // parsearlo a Carbon explícitamente. Además, en Carbon 3
-            // diffInSeconds() ya no redondea ni fuerza el valor absoluto
-            // por defecto, así que hay que pedirlo explícitamente (true)
-            // y castear a int para no mostrar decimales ni negativos.
-            $segundosTranscurridos = (int) Carbon::parse($ultimo->created_at)->diffInSeconds(now(), true);
+        if ($inicioCooldown !== null) {
+            $restante = self::SEGUNDOS_COOLDOWN_REENVIO - (now()->timestamp - (int) $inicioCooldown);
 
-            if ($segundosTranscurridos < self::SEGUNDOS_COOLDOWN_REENVIO) {
-                $restante = self::SEGUNDOS_COOLDOWN_REENVIO - $segundosTranscurridos;
+            if ($restante > 0) {
                 return response()->json([
                     'mensaje' => "Espera {$restante} segundos antes de solicitar otro código.",
                 ], 429);
             }
         }
+
+        $cache->put($claveCooldown, now()->timestamp, self::SEGUNDOS_COOLDOWN_REENVIO);
 
         // Mensaje genérico: no revela si el correo existe o no en la BD.
         // Las cuentas de Google/Facebook no tienen contraseña local que
@@ -146,7 +147,7 @@ class PasswordResetController extends Controller
             return response()->json(['mensaje' => 'Debes verificar tu código primero.'], 403);
         }
 
-        if (now()->diffInMinutes($registro->verificado_en) > self::MINUTOS_EXPIRACION) {
+        if (Carbon::parse($registro->verificado_en)->addMinutes(self::MINUTOS_EXPIRACION)->isPast()) {
             return response()->json(['mensaje' => 'El proceso expiró. Empieza de nuevo.'], 410);
         }
 

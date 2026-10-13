@@ -1,5 +1,11 @@
 import { API_BASE } from "../core/config.js";
 
+// Mismo almacenamiento que usan el resto de páginas. El formulario es
+// público, así que el token es OPCIONAL: si hay sesión se envía para que el
+// backend guarde quién escribe (mensajes_contacto.id_usuario); si no hay,
+// el mensaje se guarda como de visitante (NULL).
+const STORAGE_TOKEN_KEY = "roommatch_token";
+
 document.addEventListener('DOMContentLoaded', () => {
   const form = document.getElementById('contactForm');
   const submitBtn = document.getElementById('contactSubmit');
@@ -72,12 +78,16 @@ document.addEventListener('DOMContentLoaded', () => {
     submitBtn.textContent = 'Enviando…';
 
     try {
+      const headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      };
+      const token = sessionStorage.getItem(STORAGE_TOKEN_KEY);
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
       const respuesta = await fetch(`${API_BASE}/contacto`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
+        headers,
         body: JSON.stringify({
           nombre: document.getElementById('contactNombre').value.trim(),
           correo: document.getElementById('contactCorreo').value.trim(),

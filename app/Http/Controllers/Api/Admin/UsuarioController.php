@@ -249,6 +249,11 @@ class UsuarioController extends Controller
             'bloqueado_fecha' => now(),
         ]);
 
+        // Cierra las sesiones abiertas: personal_access_tokens ahora tiene FK
+        // a usuario, así que $usuario->tokens() borra todos sus tokens y el
+        // bloqueo surte efecto de inmediato, sin esperar a que expiren.
+        $usuario->tokens()->delete();
+
         return response()->json(['mensaje' => "{$usuario->nombre_completo} fue bloqueado."]);
     }
 

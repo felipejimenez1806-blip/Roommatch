@@ -14,7 +14,7 @@ class MensajeContactoController extends Controller
      */
     public function index(Request $request)
     {
-        $query = MensajeContacto::query()->orderByDesc('created_at');
+        $query = MensajeContacto::query()->with('administrador')->orderByDesc('created_at');
 
         $estado = $request->input('estado', 'pendiente');
         if ($estado === 'pendiente') {
@@ -32,9 +32,17 @@ class MensajeContactoController extends Controller
     /**
      * PATCH /api/admin/mensajes-contacto/{mensajeContacto}/atender
      */
-    public function atender(MensajeContacto $mensajeContacto)
+    public function atender(Request $request, MensajeContacto $mensajeContacto)
     {
-        $mensajeContacto->update(['atendido' => true]);
+        // Idempotente: si ya estaba atendido no se pisa quién ni cuándo lo
+        // atendió originalmente (id_administrador / fecha_atencion).
+        if (! $mensajeContacto->atendido) {
+            $mensajeContacto->update([
+                'atendido' => true,
+                'id_administrador' => $request->user()->id_usuario,
+                'fecha_atencion' => now(),
+            ]);
+        }
 
         return response()->json(['mensaje' => 'Mensaje marcado como atendido.']);
     }
@@ -57,6 +65,8 @@ class MensajeContactoController extends Controller
             'asunto_label' => $etiquetas[$m->asunto] ?? $m->asunto,
             'mensaje' => $m->mensaje,
             'atendido' => $m->atendido,
+            'atendido_por' => $m->administrador->nombre_completo ?? null,
+            'fecha_atencion' => optional($m->fecha_atencion)->toIso8601String(),
             'fecha' => optional($m->created_at)->toIso8601String(),
         ];
     }
