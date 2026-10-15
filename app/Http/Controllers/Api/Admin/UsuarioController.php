@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Rol;
 use App\Models\Usuario;
+use App\Services\SesionUsuario;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -249,10 +250,11 @@ class UsuarioController extends Controller
             'bloqueado_fecha' => now(),
         ]);
 
-        // Cierra las sesiones abiertas: personal_access_tokens ahora tiene FK
-        // a usuario, así que $usuario->tokens() borra todos sus tokens y el
-        // bloqueo surte efecto de inmediato, sin esperar a que expiren.
-        $usuario->tokens()->delete();
+        // Cierra las sesiones abiertas de inmediato (con el driver 'database'
+        // borra sus filas de la tabla de sesiones). Aunque el driver no lo
+        // permita, el middleware 'cuenta.activa' lo expulsa en su siguiente
+        // petición: el bloqueo no depende de este borrado.
+        SesionUsuario::cerrarSesionesDe($usuario);
 
         return response()->json(['mensaje' => "{$usuario->nombre_completo} fue bloqueado."]);
     }

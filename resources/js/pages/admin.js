@@ -3,7 +3,7 @@
 // ------------------------------------------------------------
 // Cubre HU-11 (usuarios), HU-12 (publicaciones) y HU-13 (reportes),
 // consumiendo /api/admin/* en vez de localStorage. Mismo patrón de
-// autenticación que perfil.js (token Sanctum guardado en sessionStorage).
+// autenticación que perfil.js (sesión manejada por core/auth.js).
 //
 // La protección real de "solo admin" vive en el servidor
 // (middleware es.admin sobre /api/admin/*). Aquí solo se evita
@@ -26,40 +26,15 @@
 // tras revisar un reporte se concluye que no incumplía nada.
 // ============================================================
 
-import { API_BASE, appUrl } from "../core/config.js";
+import { API_BASE } from "../core/config.js";
+import { requerirSesion, obtenerUsuario, cabecerasAutenticadas, manejarNoAutorizado as manejarSesionInvalida } from "../core/auth.js";
 
-const STORAGE_TOKEN_KEY = "roommatch_token";
-const STORAGE_USER_KEY = "roommatch_user";
+requerirSesion({ rol: "admin" });
+const usuarioActual = obtenerUsuario();
 
-const token = sessionStorage.getItem(STORAGE_TOKEN_KEY);
-const usuarioActual = JSON.parse(sessionStorage.getItem(STORAGE_USER_KEY) || "null");
-
-if (!token || !usuarioActual) {
-  window.location.href = appUrl("/login");
-  throw new Error("Redirigiendo a login: no hay sesión activa.");
-}
-if (!(usuarioActual.roles || []).includes("admin")) {
-  window.location.href = appUrl("/dashboard");
-  throw new Error("Acceso restringido: la cuenta activa no tiene rol de administrador.");
-}
-
-function cabecerasAutenticadas(conJson = true) {
-  const cabeceras = { Authorization: `Bearer ${token}`, Accept: "application/json" };
-  if (conJson) cabeceras["Content-Type"] = "application/json";
-  return cabeceras;
-}
+// En el panel admin un 403 (la cuenta perdió el rol) también expulsa al dashboard.
 function manejarNoAutorizado(respuesta) {
-  if (respuesta.status === 401) {
-    sessionStorage.removeItem(STORAGE_TOKEN_KEY);
-    sessionStorage.removeItem(STORAGE_USER_KEY);
-    window.location.href = appUrl("/login");
-    return true;
-  }
-  if (respuesta.status === 403) {
-    window.location.href = appUrl("/dashboard");
-    return true;
-  }
-  return false;
+  return manejarSesionInvalida(respuesta, { redirigir403: true });
 }
 
 document.getElementById("admLogoutBtn").addEventListener("click", () => {
@@ -71,8 +46,8 @@ document.getElementById("admLogoutBtn").addEventListener("click", () => {
 // ------------------------------------------------------------
 // El botón equivalente en nav.js pinta dentro de #navActions, que NO
 // existe en layouts.admin — y un admin puro nunca puede salir de
-// /admin para verlo en una página con layouts.app (admin-guard.js lo
-// rebota de vuelta). Así que aquí, en el panel mismo, se inyecta un
+// /admin para verlo en una página con layouts.app (el middleware
+// zona.cliente lo rebota de vuelta). Así que aquí, en el panel mismo, se inyecta un
 // botón junto al de "Cerrar sesión" (reutiliza su misma clase CSS,
 // sea cual sea, para no depender de estilos que no están en admin.css)
 // y reusa el modal ya construido en nav.js vía window.RoommatchNav.
@@ -597,7 +572,7 @@ async function restaurarRoomie(id) {
 // características, propietario y reseñas ya formateadas, sin duplicar
 // ese formateo en el controlador de admin. Antes esto era un enlace
 // <a href="${appUrl('/roomie/{id}')}" target="_blank"> — pero una pestaña nueva
-// hereda el mismo sessionStorage, así que admin-guard.js la detectaba
+// comparte la misma sesión, así que el middleware zona.cliente la detectaba
 // como "admin fuera de /admin" y la rebotaba de vuelta al panel. Un
 // modal evita el problema de raíz: nunca se navega a otra ruta.
 const ETIQUETAS_ESTADO_BUSQUEDA = {

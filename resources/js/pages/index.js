@@ -7,20 +7,7 @@
 // ============================================================
 
 import { API_BASE, appUrl } from "../core/config.js";
-
-const STORAGE_TOKEN_KEY = "roommatch_token";
-const STORAGE_USER_KEY = "roommatch_user";
-
-const token = sessionStorage.getItem(STORAGE_TOKEN_KEY);
-const usuario = JSON.parse(sessionStorage.getItem(STORAGE_USER_KEY) || "null");
-
-function cabecerasAutenticadas() {
-  return {
-    Authorization: `Bearer ${token}`,
-    Accept: "application/json",
-    "Content-Type": "application/json",
-  };
-}
+import { haySesion, cabecerasAutenticadas, manejarNoAutorizado } from "../core/auth.js";
 
 const CANTIDAD_RECOMENDADOS = 5;
 let listings = [];
@@ -63,7 +50,7 @@ async function cargarListings() {
 }
 
 async function cargarFavoritos() {
-  if (!token || !usuario) return [];
+  if (!haySesion()) return [];
   const respuesta = await fetch(`${API_BASE}/mis-favoritos`, {
     headers: cabecerasAutenticadas(),
   });
@@ -75,7 +62,7 @@ async function cargarFavoritos() {
 // Sin sesión, un click en el corazón manda a login (mismo patrón que
 // reservar/agendar cita en las demás páginas del sitio).
 async function toggleFavorito(item, btn) {
-  if (!token || !usuario) {
+  if (!haySesion()) {
     window.location.href = appUrl("/login");
     return;
   }
@@ -85,12 +72,7 @@ async function toggleFavorito(item, btn) {
     headers: cabecerasAutenticadas(),
   });
 
-  if (respuesta.status === 401) {
-    sessionStorage.removeItem(STORAGE_TOKEN_KEY);
-    sessionStorage.removeItem(STORAGE_USER_KEY);
-    window.location.href = appUrl("/login");
-    return;
-  }
+  if (manejarNoAutorizado(respuesta)) return;
 
   const datos = await respuesta.json();
   if (datos.favorito) {

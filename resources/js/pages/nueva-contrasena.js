@@ -4,6 +4,7 @@
 
 
 import { API_BASE, appUrl } from "../core/config.js";
+import { cabecerasAutenticadas } from "../core/auth.js";
 
 const email = sessionStorage.getItem("roommatch_recuperar_email");
 const token = sessionStorage.getItem("roommatch_recuperar_token");
@@ -87,7 +88,7 @@ form.addEventListener("submit", async (evento) => {
   try {
     const respuesta = await fetch(`${API_BASE}/password/restablecer`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      headers: cabecerasAutenticadas(),
       body: JSON.stringify({
         email,
         token,

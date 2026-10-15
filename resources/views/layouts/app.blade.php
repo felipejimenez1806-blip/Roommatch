@@ -2,11 +2,10 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8"/>
-{{-- window.APP (URL base de la app) y guardia de rol: van primero y son
-     scripts inline y síncronos a propósito — la guardia debe redirigir
-     ANTES de que se pinte el resto del <head>/<body>. --}}
+{{-- window.APP (URL base y sesión del usuario): va primero, antes de
+     cualquier @vite. El control de acceso por rol/zona ya no se hace aquí
+     con JavaScript sino en el servidor (middleware zona.cliente / zona.admin). --}}
 @include('partials.app-config')
-@include('partials.admin-guard')
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <meta name="csrf-token" content="{{ csrf_token() }}">
 <title>@yield('title', 'Roommatch')</title>

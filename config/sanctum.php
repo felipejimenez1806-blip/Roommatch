@@ -2,7 +2,6 @@
 
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
-use Laravel\Sanctum\Http\Middleware\AuthenticateSession;
 use Laravel\Sanctum\Sanctum;
 
 return [
@@ -18,11 +17,16 @@ return [
     |
     */
 
+    // currentRequestHost() añade el host de la PROPIA petición (con puerto) a
+    // la lista: así el sitio funciona igual en local, en un subdirectorio o en
+    // producción sin tener que mantener SANCTUM_STATEFUL_DOMAINS. Sigue siendo
+    // seguro: una petición desde OTRO sitio trae un Origin/Referer distinto de
+    // su propio host y por tanto no recibe sesión ni cookies.
     'stateful' => explode(',', env('SANCTUM_STATEFUL_DOMAINS', sprintf(
-        '%s%s',
+        '%s%s%s',
         'localhost,localhost:3000,127.0.0.1,127.0.0.1:8000,::1',
         Sanctum::currentApplicationUrlWithPort(),
-        // Sanctum::currentRequestHost(),
+        Sanctum::currentRequestHost(),
     ))),
 
     /*
@@ -79,7 +83,11 @@ return [
     */
 
     'middleware' => [
-        'authenticate_session' => AuthenticateSession::class,
+        // Desactivado a propósito: con cuentas sociales (contrasena = NULL),
+        // este middleware le pasa null a hash_hmac() en cada petición. El
+        // cierre de sesiones al cambiar/restablecer contraseña se hace con
+        // SesionUsuario::cerrarSesionesDe().
+        'authenticate_session' => null,
         'encrypt_cookies' => EncryptCookies::class,
         'validate_csrf_token' => ValidateCsrfToken::class,
     ],

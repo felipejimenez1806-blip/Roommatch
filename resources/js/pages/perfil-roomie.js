@@ -11,26 +11,7 @@
 // ============================================================
 
 import { API_BASE, appUrl } from "../core/config.js";
-
-const STORAGE_TOKEN_KEY = "roommatch_token";
-const STORAGE_USER_KEY = "roommatch_user";
-
-function obtenerToken() {
-  return sessionStorage.getItem(STORAGE_TOKEN_KEY);
-}
-
-function obtenerUsuarioGuardado() {
-  return JSON.parse(sessionStorage.getItem(STORAGE_USER_KEY) || "null");
-}
-
-function authHeaders(extra = {}) {
-  const token = obtenerToken();
-  return {
-    Accept: "application/json",
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    ...extra,
-  };
-}
+import { haySesion, obtenerUsuario, cabecerasAutenticadas } from "../core/auth.js";
 
 // ---------- HELPERS ----------
 function formatCOP(n) {
@@ -87,8 +68,7 @@ function renderListaFeatures(c, campos) {
 
 // ---------- FAVORITOS (solo si hay sesión) ----------
 async function toggleFavorito(item, btn) {
-  const token = obtenerToken();
-  if (!token) {
+  if (!haySesion()) {
     window.location.href = appUrl("/login");
     return;
   }
@@ -97,7 +77,7 @@ async function toggleFavorito(item, btn) {
   try {
     const resp = await fetch(`${API_BASE}/roomies/${item.id}/favorito`, {
       method: "POST",
-      headers: authHeaders(),
+      headers: cabecerasAutenticadas(false),
     });
     if (!resp.ok) throw new Error("Error al actualizar favorito");
 
@@ -116,7 +96,7 @@ async function toggleFavorito(item, btn) {
 // En vez de un mensaje directo, se propone una cita en persona
 // para conocerse y visitar juntos el sitio que compartirían.
 function agendarCita(item) {
-  if (!obtenerToken()) {
+  if (!haySesion()) {
     window.location.href = appUrl("/login");
     return;
   }
@@ -231,8 +211,8 @@ function tabResenas(item) {
 // ---------- RENDER PRINCIPAL ----------
 function renderPerfil(item, favoritoActivo) {
   const contenedor = document.getElementById("rpPage");
-  const token = obtenerToken();
-  const usuarioActual = obtenerUsuarioGuardado();
+  const conSesion = haySesion();
+  const usuarioActual = obtenerUsuario();
   const resenas = item.resenas || [];
 
   // Un roomie no debe poder agendarse cita consigo mismo.
@@ -289,7 +269,7 @@ function renderPerfil(item, favoritoActivo) {
           <button type="button" class="rp-cta-secondary${favoritoActivo ? " is-fav-active" : ""}" id="favoritoBtn">
             ${favoritoActivo ? "♥ Guardado en favoritos" : "♡ Guardar en favoritos"}
           </button>
-          ${!token ? `<p class="rp-login-note">Inicia sesión para agendar una cita o guardar en favoritos</p>` : ""}
+          ${!conSesion ? `<p class="rp-login-note">Inicia sesión para agendar una cita o guardar en favoritos</p>` : ""}
         </div>
       </div>
     </div>`;
@@ -313,10 +293,9 @@ async function cargarPerfil() {
     const { persona: item } = await resp.json();
 
     let favoritoActivo = false;
-    const token = obtenerToken();
-    if (token) {
+    if (haySesion()) {
       try {
-        const respFav = await fetch(`${API_BASE}/mis-favoritos`, { headers: authHeaders() });
+        const respFav = await fetch(`${API_BASE}/mis-favoritos`, { headers: cabecerasAutenticadas(false) });
         if (respFav.ok) {
           const { idsPersonas } = await respFav.json();
           favoritoActivo = (idsPersonas || []).includes(item.id);

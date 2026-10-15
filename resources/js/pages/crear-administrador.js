@@ -19,21 +19,9 @@
 // producía un SyntaxError de "Identifier ya declarado" que rompía TODO
 // el archivo — por eso no validaba nada ni pintaba el checklist en verde.
 import { API_BASE, appUrl } from "../core/config.js";
+import { requerirSesion, cabecerasAutenticadas, manejarNoAutorizado } from "../core/auth.js";
 
-const STORAGE_TOKEN_KEY = "roommatch_token";
-const STORAGE_USER_KEY = "roommatch_user";
-
-const token = sessionStorage.getItem(STORAGE_TOKEN_KEY);
-const usuarioActual = JSON.parse(sessionStorage.getItem(STORAGE_USER_KEY) || "null");
-
-if (!token || !usuarioActual) {
-  window.location.href = appUrl("/login");
-  throw new Error("Redirigiendo a login: no hay sesión activa.");
-}
-if (!(usuarioActual.roles || []).includes("admin")) {
-  window.location.href = appUrl("/dashboard");
-  throw new Error("Acceso restringido: la cuenta activa no tiene rol de administrador.");
-}
+requerirSesion({ rol: "admin" });
 
 // --- Referencias DOM ---
 const form = document.getElementById("crearAdminForm");
@@ -252,11 +240,7 @@ form.addEventListener("submit", async (evento) => {
   try {
     const respuesta = await fetch(`${API_BASE}/admin/administradores`, {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
+      headers: cabecerasAutenticadas(),
       body: JSON.stringify({
         nombre,
         correo,
@@ -271,12 +255,7 @@ form.addEventListener("submit", async (evento) => {
     const datos = await respuesta.json();
     setCargando(false);
 
-    if (respuesta.status === 401) {
-      sessionStorage.removeItem(STORAGE_TOKEN_KEY);
-      sessionStorage.removeItem(STORAGE_USER_KEY);
-      window.location.href = appUrl("/login");
-      return;
-    }
+    if (manejarNoAutorizado(respuesta)) return;
 
     if (!respuesta.ok) {
       if (respuesta.status === 422 && datos.errors) {

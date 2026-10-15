@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Mail\CodigoRecuperacionMail;
 use App\Models\Usuario;
+use App\Services\SesionUsuario;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -158,6 +159,12 @@ class PasswordResetController extends Controller
         Usuario::where('correo', $email)->update([
             'contrasena' => Hash::make($datos['password']),
         ]);
+
+        // Si alguien más tenía una sesión abierta con la contraseña vieja,
+        // se cierra (con el driver 'database'; ver SesionUsuario).
+        if ($usuarioReseteado = Usuario::where('correo', $email)->first()) {
+            SesionUsuario::cerrarSesionesDe($usuarioReseteado);
+        }
 
         // Uso único: se elimina el registro para que no se pueda reutilizar.
         DB::table('password_reset_codes')->where('email', $email)->delete();

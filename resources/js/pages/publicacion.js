@@ -7,31 +7,12 @@
 //
 // CAMBIO PRINCIPAL: ya no depende de `publicaciones` (data.js).
 // Ahora consume la API vía fetch, y la sesión se lee con las
-// mismas claves que usa nav.js:
-//   - "roommatch_token": token Sanctum
-//   - "roommatch_user":  snapshot del usuario logueado
+// misma capa que usa nav.js:
+//   - core/auth.js (sesión opcional en esta página)
 // ============================================================
 
 import { API_BASE, appUrl } from "../core/config.js";
-
-const STORAGE_TOKEN_KEY = "roommatch_token";
-const STORAGE_USER_KEY = "roommatch_user";
-
-// ---------- SESIÓN (opcional en esta página) ----------
-function obtenerToken() {
-  return sessionStorage.getItem(STORAGE_TOKEN_KEY);
-}
-
-function obtenerUsuarioGuardado() {
-  return JSON.parse(sessionStorage.getItem(STORAGE_USER_KEY) || "null");
-}
-
-function authHeaders() {
-  const token = obtenerToken();
-  return token
-    ? { Authorization: `Bearer ${token}`, Accept: "application/json" }
-    : { Accept: "application/json" };
-}
+import { haySesion, obtenerUsuario, cabecerasAutenticadas } from "../core/auth.js";
 
 // ---------- HELPERS ----------
 function formatCOP(n) {
@@ -89,8 +70,7 @@ function renderListaFeatures(c, campos) {
 
 // ---------- FAVORITOS (solo si hay sesión) ----------
 async function toggleFavorito(item, btn) {
-  const token = obtenerToken();
-  if (!token) {
+  if (!haySesion()) {
     window.location.href = appUrl("/login");
     return;
   }
@@ -99,7 +79,7 @@ async function toggleFavorito(item, btn) {
   try {
     const resp = await fetch(`${API_BASE}/publicaciones/${item.id}/favorito`, {
       method: "POST",
-      headers: authHeaders(),
+      headers: cabecerasAutenticadas(false),
     });
     if (!resp.ok) throw new Error("Error al actualizar favorito");
 
@@ -116,7 +96,7 @@ async function toggleFavorito(item, btn) {
 
 // ---------- RESERVAR (requiere sesión) ----------
 function solicitarReserva(item) {
-  if (!obtenerToken()) {
+  if (!haySesion()) {
     window.location.href = appUrl("/login");
     return;
   }
@@ -255,8 +235,8 @@ function tabResenas(item) {
 // ---------- RENDER PRINCIPAL ----------
 function renderPublicacion(item, favoritoActivo) {
   const contenedor = document.getElementById("pubPage");
-  const token = obtenerToken();
-  const usuarioActual = obtenerUsuarioGuardado();
+  const conSesion = haySesion();
+  const usuarioActual = obtenerUsuario();
   const resenas = item.resenas || [];
 
   const esPropiaPublicacion = usuarioActual && item.propietario
@@ -326,7 +306,7 @@ function renderPublicacion(item, favoritoActivo) {
           <button type="button" class="pub-cta-secondary${favoritoActivo ? " is-fav-active" : ""}" id="favoritoBtn">
             ${favoritoActivo ? "♥ Guardado en favoritos" : "♡ Guardar en favoritos"}
           </button>
-          ${!token ? `<p class="pub-login-note">Inicia sesión para reservar o guardar en favoritos</p>` : ""}
+          ${!conSesion ? `<p class="pub-login-note">Inicia sesión para reservar o guardar en favoritos</p>` : ""}
         </div>
       </div>
     </div>`;
@@ -353,10 +333,9 @@ async function cargarPublicacion() {
     // Si hay sesión, se consulta si esta publicación ya está en
     // favoritos (mismo endpoint que usa dashboard.js/favoritos).
     let favoritoActivo = false;
-    const token = obtenerToken();
-    if (token) {
+    if (haySesion()) {
       try {
-        const respFav = await fetch(`${API_BASE}/mis-favoritos`, { headers: authHeaders() });
+        const respFav = await fetch(`${API_BASE}/mis-favoritos`, { headers: cabecerasAutenticadas(false) });
         if (respFav.ok) {
           const { idsPublicaciones } = await respFav.json();
           favoritoActivo = (idsPublicaciones || []).includes(item.id);

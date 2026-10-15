@@ -5,15 +5,14 @@
    login con Google/Facebook (Socialite). tipo_usuario ya NO
    se pide aquí: todo usuario nace 'cliente' desde su creación
    (default en BD), tanto en registro local como social.
-   Requiere sesión ya iniciada (token en sessionStorage), ya
+   Requiere sesión ya iniciada (core/auth.js), ya
    que EnsurePerfilCompleto solo deja pasar aquí a usuarios
    autenticados con el perfil incompleto.
    ========================================================= */
 
 import { API_BASE, appUrl } from "../core/config.js";
+import { requerirSesion, cabecerasAutenticadas, limpiarSesion, actualizarUsuario } from "../core/auth.js";
 
-const STORAGE_TOKEN_KEY = "roommatch_token";
-const STORAGE_USER_KEY = "roommatch_user";
 const TOTAL_PASOS = 2;
 
 let pasoActual = 1;
@@ -65,15 +64,9 @@ function limpiarError(grupo, elementoError) {
   elementoError.textContent = "";
 }
 
-function obtenerToken() {
-  return sessionStorage.getItem(STORAGE_TOKEN_KEY);
-}
-
 // Si no hay sesión iniciada, esta pantalla no tiene sentido: se manda
 // al login en vez de dejar que el submit falle con un 401 confuso.
-if (!obtenerToken()) {
-  window.location.href = appUrl("/login");
-}
+requerirSesion();
 
 // --- Navegación entre pasos ---
 function irAPaso(nuevoPaso) {
@@ -180,11 +173,7 @@ form.addEventListener("submit", async (evento) => {
   try {
     const respuesta = await fetch(`${API_BASE}/onboarding`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-        Authorization: `Bearer ${obtenerToken()}`,
-      },
+      headers: cabecerasAutenticadas(),
       body: JSON.stringify({
         telefono: datos.telefono,
         genero: datos.genero,
@@ -196,8 +185,7 @@ form.addEventListener("submit", async (evento) => {
 
     if (!respuesta.ok) {
       if (respuesta.status === 401) {
-        sessionStorage.removeItem(STORAGE_TOKEN_KEY);
-        sessionStorage.removeItem(STORAGE_USER_KEY);
+        limpiarSesion();
         mostrarToast(respuestaDatos.mensaje || "Tu sesión expiró.");
         setTimeout(() => { window.location.href = appUrl("/login"); }, 1200);
         return;
@@ -218,7 +206,7 @@ form.addEventListener("submit", async (evento) => {
     }
 
     if (respuestaDatos.usuario) {
-      sessionStorage.setItem(STORAGE_USER_KEY, JSON.stringify(respuestaDatos.usuario));
+      actualizarUsuario(respuestaDatos.usuario);
     }
 
     formMessage.classList.add("success");

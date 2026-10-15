@@ -1,91 +1,36 @@
 // ============================================================
-// ROOMMATCH – Barra de navegación según sesión activa
+// ROOMMATCH – Comportamiento del navbar y de la sesión
 // ------------------------------------------------------------
-// Misma responsabilidad que la versión original: pintar, dentro
-// de <div class="nav-actions" id="navActions"></div>, el estado
-// correcto según haya o no sesión.
+// El HTML del navbar (botones de sesión, avatar, campana) lo pinta
+// el servidor en partials/nav.blade.php con @auth/@guest. Aquí
+// solo queda lo que necesita JavaScript: los modales de rol, el
+// badge de notificaciones, el menú móvil, el aviso de inactividad
+// y el logout.
 //
-// La sesión vive en sessionStorage (se borra sola al cerrar la
-// pestaña/ventana) en tres claves:
-//   - "roommatch_token":      el token Sanctum de la sesión actual
-//   - "roommatch_user":       snapshot del usuario (paraFrontend()),
-//                              incluye 'roles' (arreglo completo,
-//                              ej. ["cliente"] o ["cliente","admin"])
-//   - "roommatch_rol_activo": qué rol tiene fijado el token ACTUAL
-//                              ('cliente' o 'admin') — depende del
-//                              token, no del usuario, así que se
-//                              guarda aparte (ver Fase 4).
+// La sesión la maneja core/auth.js: aquí no se arma ningún header
+// de autenticación.
 // ============================================================
 
-import { API_BASE, appUrl, rutaActual } from "./core/config.js";
+import { API_BASE, appUrl } from "./core/config.js";
+import {
+  haySesion,
+  obtenerUsuario,
+  obtenerRolActivo,
+  guardarSesion,
+  cabecerasAutenticadas,
+  cambiarRol,
+  agregarRolCliente,
+  renovarSesion,
+  cerrarSesion as cerrarSesionApi,
+} from "./core/auth.js";
 
 (function () {
-  const STORAGE_TOKEN_KEY = "roommatch_token";
-  const STORAGE_USER_KEY = "roommatch_user";
-  const STORAGE_ROL_ACTIVO_KEY = "roommatch_rol_activo";
-
-  function obtenerToken() {
-    return sessionStorage.getItem(STORAGE_TOKEN_KEY);
-  }
-
-  function obtenerUsuarioGuardado() {
-    return JSON.parse(sessionStorage.getItem(STORAGE_USER_KEY) || "null");
-  }
-
-  function obtenerRolActivo() {
-    return sessionStorage.getItem(STORAGE_ROL_ACTIVO_KEY);
-  }
-
-  function guardarSesion(token, usuario, rolActivo) {
-    sessionStorage.setItem(STORAGE_TOKEN_KEY, token);
-    sessionStorage.setItem(STORAGE_USER_KEY, JSON.stringify(usuario));
-    sessionStorage.setItem(STORAGE_ROL_ACTIVO_KEY, rolActivo);
-  }
-
-  function cerrarSesionLocal() {
-    sessionStorage.removeItem(STORAGE_TOKEN_KEY);
-    sessionStorage.removeItem(STORAGE_USER_KEY);
-    sessionStorage.removeItem(STORAGE_ROL_ACTIVO_KEY);
-  }
-
   function primerNombre(nombreCompleto) {
     return (nombreCompleto || "Usuario").trim().split(/\s+/)[0];
   }
 
   function inicialAvatar(nombreCompleto) {
     return (nombreCompleto || "U").trim().charAt(0).toUpperCase();
-  }
-
-  // ============================================================
-  // PERFIL INCOMPLETO -> ONBOARDING
-  // ------------------------------------------------------------
-  // El servidor no puede hacer este chequeo en una carga de página
-  // normal (no viaja el header Authorization en una navegación),
-  // así que vive aquí, del lado del cliente, igual que el resto de
-  // la sesión. Usa el snapshot ya guardado en sessionStorage —el
-  // mismo que ya se usa para pintar el nombre/avatar— sin llamar a
-  // la API de nuevo.
-  //
-  // CAMBIO (roles N:N): igual que Usuario::perfilCompleto() en el
-  // backend, esto mira si el usuario TIENE el rol admin asignado
-  // (usuario.roles), no si está activo como admin ahora mismo — un
-  // admin nunca debería tener que pasar por onboarding, ni siquiera
-  // navegando como cliente.
-  // ============================================================
-  function perfilCompleto(usuario) {
-    if (usuario && (usuario.roles || []).includes("admin")) return true;
-    return Boolean(usuario && usuario.telefono);
-  }
-
-  function redirigirSiPerfilIncompleto() {
-    const token = obtenerToken();
-    const usuario = obtenerUsuarioGuardado();
-
-    if (!token || !usuario) return; // sin sesión, no aplica aquí
-    if (perfilCompleto(usuario)) return;
-    if (rutaActual() === "/onboarding") return; // evita loop
-
-    window.location.href = appUrl("/onboarding");
   }
 
   function inyectarEstilosSesion() {
@@ -137,24 +82,15 @@ import { API_BASE, appUrl, rutaActual } from "./core/config.js";
     limpiarTimersInactividad();
     mostrarOverlayCerrandoSesion();
 
-    const token = obtenerToken();
-    try {
-      if (token) {
-        await fetch(`${API_BASE}/logout`, {
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
-        });
-      }
-    } catch (e) {
-      // Si falla la llamada (sin conexión, token ya vencido, etc.) igual
-      // limpiamos la sesión local: el usuario quiere salir de todas formas.
-    }
+    // cerrarSesionApi avisa al servidor y borra la sesión local (si falla la
+    // llamada igual limpia: el usuario quiere salir de todas formas). La
+    // pausa deliberada evita que "Cerrando sesión..." se sienta instantáneo/
+    // brusco, incluso si la llamada fue muy rápida.
+    await Promise.all([
+      cerrarSesionApi(),
+      new Promise((resolve) => setTimeout(resolve, 900)),
+    ]);
 
-    // Pequeña pausa deliberada para que "Cerrando sesión..." no se sienta
-    // instantáneo/brusco, incluso si la llamada anterior fue muy rápida.
-    await new Promise((resolve) => setTimeout(resolve, 900));
-
-    cerrarSesionLocal();
     window.location.href = appUrl("/");
   }
 
@@ -164,10 +100,9 @@ import { API_BASE, appUrl, rutaActual } from "./core/config.js";
   // Solo aparece cuando el usuario tiene más de un rol asignado
   // (usuario.roles.length > 1). Pide contraseña únicamente cuando el
   // destino es 'admin' (mismo criterio que el backend, ver
-  // CambiarRolRequest). Al terminar, reemplaza el token/rolActivo
-  // guardados y navega a la zona correspondiente — admin-guard.js en
-  // la página de destino ya se encarga de que quede en el lugar
-  // correcto.
+  // CambiarRolRequest). Al terminar, el servidor ya cambió el rol
+  // activo de la sesión; se navega a /dashboard y el middleware
+  // (zona.cliente / zona.admin) deja al usuario en la zona correcta.
   // ============================================================
   const ETIQUETAS_ROL = { cliente: "Cliente", admin: "Administrador" };
 
@@ -224,24 +159,14 @@ import { API_BASE, appUrl, rutaActual } from "./core/config.js";
     });
 
     async function confirmarCambioRol(rol, password) {
-      const body = rol === "admin" ? { rol, password } : { rol };
-      const respuesta = await fetch(`${API_BASE}/cambiar-rol`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${obtenerToken()}`,
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify(body),
-      });
-      const datos = await respuesta.json().catch(() => ({}));
+      const { ok, datos } = await cambiarRol(rol, password);
 
-      if (!respuesta.ok) {
+      if (!ok) {
         errorEl.textContent = datos.mensaje || "No se pudo cambiar de rol.";
         return;
       }
 
-      guardarSesion(datos.token, datos.usuario, datos.rolActivo);
+      guardarSesion(datos);
       cerrar();
       window.location.href = appUrl(datos.rolActivo === "admin" ? "/admin" : "/dashboard");
     }
@@ -296,33 +221,20 @@ import { API_BASE, appUrl, rutaActual } from "./core/config.js";
       errorEl.textContent = "";
 
       try {
-        const respuestaRol = await fetch(`${API_BASE}/agregar-rol-cliente`, {
-          method: "POST",
-          headers: { Authorization: `Bearer ${obtenerToken()}`, Accept: "application/json" },
-        });
-        const datosRol = await respuestaRol.json().catch(() => ({}));
+        const { ok: rolAgregado, datos: datosRol } = await agregarRolCliente();
 
-        if (!respuestaRol.ok) {
+        if (!rolAgregado) {
           errorEl.textContent = datosRol.mensaje || "No se pudo agregar el rol de cliente.";
           confirmarBtn.disabled = false;
           return;
         }
 
-        // Ya tiene el rol cliente asignado; ahora se canjea el token
-        // actual (rol:admin) por uno con rol:cliente para dejarlo
-        // navegando como cliente de inmediato.
-        const respuestaCambio = await fetch(`${API_BASE}/cambiar-rol`, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${obtenerToken()}`,
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
-          body: JSON.stringify({ rol: "cliente" }),
-        });
-        const datosCambio = await respuestaCambio.json().catch(() => ({}));
+        // Ya tiene el rol cliente asignado; ahora se cambia el rol
+        // activo de la sesión a cliente para dejarlo navegando como
+        // cliente de inmediato.
+        const { ok: cambioOk, datos: datosCambio } = await cambiarRol("cliente");
 
-        if (!respuestaCambio.ok) {
+        if (!cambioOk) {
           // El rol ya quedó agregado en BD aunque esto falle; el usuario
           // puede entrar como cliente después con "Cambiar de rol".
           errorEl.textContent = datosCambio.mensaje || "Se agregó el rol, pero no se pudo cambiar automáticamente. Usa \"Cambiar de rol\".";
@@ -330,7 +242,7 @@ import { API_BASE, appUrl, rutaActual } from "./core/config.js";
           return;
         }
 
-        guardarSesion(datosCambio.token, datosCambio.usuario, datosCambio.rolActivo);
+        guardarSesion(datosCambio);
         cerrar();
         window.location.href = appUrl("/dashboard");
       } catch (e) {
@@ -340,79 +252,60 @@ import { API_BASE, appUrl, rutaActual } from "./core/config.js";
     });
   }
 
-  function renderNavbar() {
-    const navActions = document.getElementById("navActions");
-    if (!navActions) return; // La página no tiene navbar dinámico (p.ej. login/signup)
+  // ============================================================
+  // NAVBAR: el HTML lo pinta Blade; aquí solo se conecta y se refresca
+  // ------------------------------------------------------------
+  // conectarNavbar(): engancha los botones de rol que Blade dejó en
+  // #navActions y pide el contador de notificaciones.
+  // renderNavbar(): perfil.js lo llama tras editar nombre/foto; actualiza
+  // el nombre y el avatar con el usuario en memoria (sin repintar todo).
+  // ============================================================
+  function conectarNavbar() {
+    const usuario = obtenerUsuario();
+    if (!usuario) return;
 
-    const token = obtenerToken();
-    const usuario = obtenerUsuarioGuardado();
-
-    // ---------- SIN SESIÓN ----------
-    if (!token || !usuario) {
-      navActions.innerHTML = `
-        <a class="btn-outline" href="${appUrl('/login')}">Iniciar sesión</a>
-        <a class="btn-solid" href="${appUrl('/signup')}">Registrarse</a>`;
-      return;
-    }
-
-    // ---------- CON SESIÓN ----------
-    const avatarInterior = usuario.fotoPerfil
-      ? `<img src="${usuario.fotoPerfil}" alt="${primerNombre(usuario.nombre)}"/>`
-      : inicialAvatar(usuario.nombre);
-
-    const roles = usuario.roles || [];
-
-    // "Cambiar de rol" solo tiene sentido si el usuario tiene más de un
-    // rol asignado. Es un <button>, no un <a href="/admin">: cambiar
-    // de rol requiere un token nuevo con la ability correcta antes de
-    // poder entrar a /admin (ver abrirModalCambiarRol).
-    const tieneVariosRoles = roles.length > 1;
-    const botonCambiarRol = tieneVariosRoles
-      ? `<button type="button" class="btn-outline" id="navCambiarRolBtn" title="Cambiar de rol">Cambiar de rol</button>`
-      : "";
-
-    // Admin sin rol cliente todavía: ofrece agregárselo (autoservicio,
-    // sin contraseña — ver abrirModalUsarComoCliente).
-    const esSoloAdmin = roles.includes("admin") && !roles.includes("cliente");
-    const botonUsarComoCliente = esSoloAdmin
-      ? `<button type="button" class="btn-outline" id="navUsarClienteBtn" title="Usar también como cliente">Usar también como cliente</button>`
-      : "";
-
-    navActions.innerHTML = `
-      ${botonCambiarRol}
-      ${botonUsarComoCliente}
-      <a class="nav-bell" id="navBell" href="${appUrl('/perfil#panelNotificaciones')}" title="Notificaciones">
-        <svg class="nav-bell-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/>
-          <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-        </svg>
-        <span class="nav-bell-badge" id="navBellBadge" hidden>0</span>
-      </a>
-      <a class="user-menu-trigger" id="userMenuTrigger" href="${appUrl('/perfil')}" title="Mi perfil">
-        <span class="user-avatar" id="userAvatar">${avatarInterior}</span>
-        <span class="user-name" id="userName">${primerNombre(usuario.nombre)}</span>
-      </a>`;
-
-    if (tieneVariosRoles) {
-      document.getElementById("navCambiarRolBtn").addEventListener("click", () => {
+    const cambiarRolBtn = document.getElementById("navCambiarRolBtn");
+    if (cambiarRolBtn) {
+      cambiarRolBtn.addEventListener("click", () => {
         abrirModalCambiarRol(usuario, obtenerRolActivo());
       });
     }
-    if (esSoloAdmin) {
-      document.getElementById("navUsarClienteBtn").addEventListener("click", abrirModalUsarComoCliente);
+
+    const usarClienteBtn = document.getElementById("navUsarClienteBtn");
+    if (usarClienteBtn) {
+      usarClienteBtn.addEventListener("click", abrirModalUsarComoCliente);
     }
 
-    actualizarBadgeNotificaciones();
+    if (document.getElementById("navBell")) actualizarBadgeNotificaciones();
+  }
+
+  function renderNavbar() {
+    const usuario = obtenerUsuario();
+    if (!usuario) return;
+
+    const nombreEl = document.getElementById("userName");
+    if (nombreEl) nombreEl.textContent = primerNombre(usuario.nombre);
+
+    const avatarEl = document.getElementById("userAvatar");
+    if (avatarEl) {
+      if (usuario.fotoPerfil) {
+        const img = document.createElement("img");
+        img.src = usuario.fotoPerfil;
+        img.alt = primerNombre(usuario.nombre);
+        avatarEl.replaceChildren(img);
+      } else {
+        avatarEl.textContent = inicialAvatar(usuario.nombre);
+      }
+    }
   }
 
   async function actualizarBadgeNotificaciones() {
     const badge = document.getElementById("navBellBadge");
     if (!badge) return;
-    const tok = obtenerToken();
-    if (!tok) return;
+    if (!haySesion()) return;
     try {
       const respuesta = await fetch(`${API_BASE}/notificaciones`, {
-        headers: { Authorization: `Bearer ${tok}`, Accept: "application/json" },
+        headers: cabecerasAutenticadas(false),
       });
       if (!respuesta.ok) return;
       const datos = await respuesta.json();
@@ -441,7 +334,7 @@ import { API_BASE, appUrl, rutaActual } from "./core/config.js";
     // cual (comportamiento ya funcional en index/dashboard).
     if (document.getElementById("popularesSection")) return;
 
-    const destino = obtenerToken() ? "/dashboard" : "/";
+    const destino = haySesion() ? "/dashboard" : "/";
     link.setAttribute("href", `${appUrl(destino)}#popularesSection`);
   }
 
@@ -491,6 +384,19 @@ import { API_BASE, appUrl, rutaActual } from "./core/config.js";
   const INACTIVIDAD_AVISO_MS = 60 * 1000; // mostrar el aviso 1 min antes del límite
   const EVENTOS_ACTIVIDAD = ["mousedown", "mousemove", "keydown", "scroll", "touchstart"];
 
+  // La sesión del servidor caduca por inactividad de PETICIONES, no de
+  // mouse/teclado. Mientras el usuario esté activo en la página (p. ej.
+  // rellenando un formulario largo) se hace un ping periódico para que el
+  // servidor no la venza antes que el timer de aquí. Ver SESSION_LIFETIME.
+  const RENOVAR_SESION_CADA_MS = 4 * 60 * 1000;
+  let ultimaRenovacion = Date.now();
+
+  function renovarSesionSiHaceFalta() {
+    if (Date.now() - ultimaRenovacion < RENOVAR_SESION_CADA_MS) return;
+    ultimaRenovacion = Date.now();
+    renovarSesion();
+  }
+
   let inactividadTimer = null;
   let avisoTimer = null;
   let avisoOverlay = null;
@@ -522,6 +428,8 @@ import { API_BASE, appUrl, rutaActual } from "./core/config.js";
     document.getElementById("rmSeguirActivoBtn").addEventListener("click", () => {
       cerrarAvisoInactividad();
       reiniciarTimerInactividad();
+      ultimaRenovacion = Date.now();
+      renovarSesion();
     });
 
     // El límite final sigue corriendo en paralelo al aviso: si no hay
@@ -533,13 +441,13 @@ import { API_BASE, appUrl, rutaActual } from "./core/config.js";
   }
 
   function reiniciarTimerInactividad() {
-    if (!obtenerToken()) return; // sin sesión activa no hay nada que cerrar
+    if (!haySesion()) return; // sin sesión activa no hay nada que cerrar
     limpiarTimersInactividad();
     avisoTimer = setTimeout(mostrarAvisoInactividad, INACTIVIDAD_LIMITE_MS - INACTIVIDAD_AVISO_MS);
   }
 
   function inicializarDetectorInactividad() {
-    if (!obtenerToken()) return; // páginas públicas (index sin sesión, login, signup) no necesitan esto
+    if (!haySesion()) return; // páginas públicas (index sin sesión, login, signup) no necesitan esto
 
     EVENTOS_ACTIVIDAD.forEach((evento) => {
       document.addEventListener(evento, () => {
@@ -548,17 +456,17 @@ import { API_BASE, appUrl, rutaActual } from "./core/config.js";
         // para no reiniciar el timer sin querer con el cursor de paso.
         if (avisoOverlay) return;
         reiniciarTimerInactividad();
+        renovarSesionSiHaceFalta();
       }, { passive: true });
     });
 
     reiniciarTimerInactividad();
   }
 
-  redirigirSiPerfilIncompleto();
   inicializarMenuMovil();
   ajustarLinkPopular();
-  renderNavbar();
+  conectarNavbar();
   inicializarDetectorInactividad();
 
-  window.RoommatchNav = { renderNavbar, cerrarSesion, actualizarBadgeNotificaciones, guardarSesion, abrirModalUsarComoCliente };
+  window.RoommatchNav = { renderNavbar, cerrarSesion, actualizarBadgeNotificaciones, abrirModalUsarComoCliente };
 })();

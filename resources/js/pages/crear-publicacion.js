@@ -2,16 +2,14 @@
 // ROOMMATCH – lógica de la página CREAR PUBLICACIÓN
 // ------------------------------------------------------------
 // Misma UX que la versión original (wizard de 5 pasos), pero:
-//   - Sesión: token + usuario de localStorage (igual que dashboard.js)
+//   - Sesión: core/auth.js (igual que dashboard.js)
 //   - Modo edición (?id=): precarga vía GET /api/mis-publicaciones/{id}
 //   - Publicar/Guardar: POST o PUT contra /api/mis-publicaciones
 //   - Ya NO depende de data.js (guardarPublicacionExtra, etc.)
 // ============================================================
 
 import { API_BASE, appUrl } from "../core/config.js";
-
-const STORAGE_TOKEN_KEY = "roommatch_token";
-const STORAGE_USER_KEY = "roommatch_user";
+import { requerirSesion, obtenerUsuario, cabecerasAutenticadas, manejarNoAutorizado } from "../core/auth.js";
 
 // ---------- LOCALIDADES DE BOGOTÁ ----------
 const LOCALIDADES_BOGOTA = [
@@ -38,29 +36,8 @@ const LOCALIDADES_BOGOTA = [
 ];
 
 // ---------- PROTECCIÓN DE SESIÓN ----------
-const token = sessionStorage.getItem(STORAGE_TOKEN_KEY);
-const usuarioActual = JSON.parse(sessionStorage.getItem(STORAGE_USER_KEY) || "null");
-
-if (!token || !usuarioActual) {
-  window.location.href = appUrl("/login");
-  throw new Error("Redirigiendo a login: no hay sesión activa.");
-}
-
-function cabecerasAutenticadas(conJson = true) {
-  const cabeceras = { Authorization: `Bearer ${token}`, Accept: "application/json" };
-  if (conJson) cabeceras["Content-Type"] = "application/json";
-  return cabeceras;
-}
-
-function manejarNoAutorizado(respuesta) {
-  if (respuesta.status === 401) {
-    sessionStorage.removeItem(STORAGE_TOKEN_KEY);
-    sessionStorage.removeItem(STORAGE_USER_KEY);
-    window.location.href = appUrl("/login");
-    return true;
-  }
-  return false;
-}
+requerirSesion();
+const usuarioActual = obtenerUsuario();
 
 // ---------- MODO EDICIÓN (?id=<id>) ----------
 const parametrosUrl = new URLSearchParams(window.location.search);

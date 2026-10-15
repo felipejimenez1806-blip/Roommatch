@@ -8,42 +8,14 @@
 // ============================================================
 
 import { API_BASE, appUrl } from "../core/config.js";
-
-const STORAGE_TOKEN_KEY = "roommatch_token";
-const STORAGE_USER_KEY = "roommatch_user";
+import { requerirSesion, obtenerUsuario, cabecerasAutenticadas, manejarNoAutorizado } from "../core/auth.js";
 
 // ---------- PROTECCIÓN DE SESIÓN ----------
-// Verificación optimista con lo guardado en localStorage (evita un
+// Verificación optimista con la sesión local (evita un
 // parpadeo esperando la red). Si el token resultara inválido/vencido,
 // la primera llamada protegida (mis-favoritos) lo detecta y redirige.
-const token = sessionStorage.getItem(STORAGE_TOKEN_KEY);
-const usuario = JSON.parse(sessionStorage.getItem(STORAGE_USER_KEY) || "null");
-
-if (!token || !usuario) {
-  window.location.href = appUrl("/login");
-  throw new Error("Redirigiendo a login: no hay sesión activa.");
-}
-
-function cabecerasAutenticadas() {
-  return {
-    Authorization: `Bearer ${token}`,
-    Accept: "application/json",
-    "Content-Type": "application/json",
-  };
-}
-
-// Si el backend responde 401 (token inválido/revocado), se limpia la
-// sesión local y se manda a login — evita quedar "logueado" en el
-// navbar pero sin poder cargar nada.
-function manejarNoAutorizado(respuesta) {
-  if (respuesta.status === 401) {
-    sessionStorage.removeItem(STORAGE_TOKEN_KEY);
-    sessionStorage.removeItem(STORAGE_USER_KEY);
-    window.location.href = appUrl("/login");
-    return true;
-  }
-  return false;
-}
+requerirSesion();
+const usuario = obtenerUsuario();
 
 // ---------- ESTADO ----------
 const CANTIDAD_RECOMENDADOS = 5;
