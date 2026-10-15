@@ -9,6 +9,7 @@ use App\Http\Requests\RegistroRequest;
 use App\Http\Requests\SeleccionarRolRequest;
 use App\Models\Rol;
 use App\Models\Usuario;
+use App\Services\SesionUsuario;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -26,6 +27,9 @@ class AuthController extends Controller
      * con el rol 'cliente' únicamente (asignado aquí mismo tras crear la
      * fila en usuario). 'admin' solo se asigna manualmente en BD o desde
      * el panel de administración (Fase 3).
+     *
+     * La sesión queda abierta al terminar el registro (cookie de sesión de
+     * Laravel, ver App\Services\SesionUsuario): el cuerpo ya no trae token.
      *
      * terminos_aceptados_en: RegistroRequest ya exige que el checkbox
      * llegue marcado (acepta_terminos => accepted), así que si la petición
@@ -57,7 +61,7 @@ class AuthController extends Controller
         });
 
         $usuario->load('roles');
-        $emision = $usuario->emitirTokenSesion();
+        $emision = SesionUsuario::iniciar($request, $usuario);
 
         return response()->json(array_merge([
             'mensaje' => '¡Cuenta creada con éxito!',
@@ -79,7 +83,7 @@ class AuthController extends Controller
      * mantiene genérico mientras la cuenta no esté bloqueada, para no
      * revelar por intentos si un correo existe o no en la base de datos.
      *
-     * Selección de rol: ver Usuario::emitirTokenSesion().
+     * Selección de rol: ver SesionUsuario::iniciar().
      */
     public function login(LoginRequest $request)
     {
@@ -124,7 +128,7 @@ class AuthController extends Controller
         }
 
         $usuario->load('roles');
-        $emision = $usuario->emitirTokenSesion();
+        $emision = SesionUsuario::iniciar($request, $usuario);
 
         return response()->json(array_merge([
             'mensaje' => '¡Bienvenido a RoomMatch!',
@@ -134,10 +138,11 @@ class AuthController extends Controller
 
     /**
      * POST /api/seleccionar-rol
-     * Canjea el token limitado (ability seleccionar-rol, emitido por
-     * Usuario::emitirTokenSesion() cuando el usuario tiene más de un
-     * rol) por el token real de la sesión. Protegido por el middleware
-     * RequiereSeleccionRol.
+     * Segundo paso del login cuando la cuenta tiene más de un rol: el
+     * usuario ya puso bien su contraseña (login() o el login social lo
+     * dejaron "pendiente" en la sesión, sin autenticar) y aquí elige con
+     * cuál entrar. Protegido por el middleware RequiereSeleccionRol, que
+     * es quien resuelve el usuario pendiente.
      *
      * No vuelve a pedir contraseña: el usuario la acaba de escribir hace
      * segundos para llegar aquí desde login(). Comparar con cambiarRol(),
@@ -146,22 +151,17 @@ class AuthController extends Controller
      */
     public function seleccionarRol(SeleccionarRolRequest $request)
     {
-        $usuario = $request->user();
+        $usuario = $request->attributes->get('usuario_pendiente');
         $rol = $request->validated('rol');
 
         if (! $usuario->tieneRol($rol)) {
             abort(403, 'No tienes asignado ese rol.');
         }
 
-        // El token limitado ya cumplió su propósito; se revoca antes de
-        // emitir el real para que no quede vivo un token de un solo uso.
-        $request->user()->currentAccessToken()->delete();
-
-        $token = $usuario->createToken('roommatch-token', ["rol:{$rol}"])->plainTextToken;
+        SesionUsuario::abrir($request, $usuario, $rol);
 
         return response()->json([
             'mensaje' => "Ingresaste como {$rol}.",
-            'token' => $token,
             'rolActivo' => $rol,
             'usuario' => $usuario->paraFrontend(),
         ]);
@@ -193,13 +193,13 @@ class AuthController extends Controller
             }
         }
 
-        $request->user()->currentAccessToken()->delete();
-
-        $token = $usuario->createToken('roommatch-token', ["rol:{$rolDestino}"])->plainTextToken;
+        // El rol activo vive en la sesión. Se regenera el id de sesión
+        // porque cambia el nivel de privilegio (sobre todo al pasar a admin).
+        $request->session()->put(SesionUsuario::ROL_ACTIVO, $rolDestino);
+        $request->session()->regenerate();
 
         return response()->json([
             'mensaje' => "Ahora estás como {$rolDestino}.",
-            'token' => $token,
             'rolActivo' => $rolDestino,
             'usuario' => $usuario->paraFrontend(),
         ]);
@@ -242,20 +242,21 @@ class AuthController extends Controller
 
     /**
      * POST /api/logout
-     * Revoca el token actual (requiere ir autenticado con Sanctum).
+     * Cierra la sesión (cookie) y rota el token CSRF.
      */
     public function logout(Request $request)
     {
-        $request->user()->currentAccessToken()->delete();
+        SesionUsuario::cerrar($request);
 
         return response()->json(['mensaje' => 'Sesión cerrada correctamente.']);
     }
 
     /**
      * GET /api/usuario
-     * Devuelve el usuario autenticado actual (para restaurar sesión al
-     * recargar la página, verificando el token guardado en el frontend),
-     * junto con el rol activo del token actual.
+     * Devuelve el usuario autenticado actual junto con el rol activo de la
+     * sesión. Además de servir para restaurar datos, el frontend lo usa
+     * como "ping" para mantener viva la sesión mientras hay actividad (ver
+     * renovarSesion() en core/auth.js).
      */
     public function usuarioActual(Request $request)
     {
@@ -263,30 +264,7 @@ class AuthController extends Controller
 
         return response()->json([
             'usuario' => $usuario->paraFrontend(),
-            'rolActivo' => $this->rolActivo($usuario),
+            'rolActivo' => SesionUsuario::rolActivo(),
         ]);
-    }
-
-    // ------------------- Helper privado -------------------
-
-    /**
-     * Lee la ability rol:<rol> del token con el que llegó la petición
-     * actual, para poder devolver el rol activo sin guardarlo aparte.
-     */
-    private function rolActivo(Usuario $usuario): ?string
-    {
-        $token = $usuario->currentAccessToken();
-
-        if (! $token) {
-            return null;
-        }
-
-        foreach ($token->abilities as $ability) {
-            if (str_starts_with($ability, 'rol:')) {
-                return substr($ability, 4);
-            }
-        }
-
-        return null;
     }
 }

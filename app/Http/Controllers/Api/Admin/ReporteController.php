@@ -8,6 +8,7 @@ use App\Models\PersonaRoomie;
 use App\Models\Publicacion;
 use App\Models\Reporte;
 use App\Models\Usuario;
+use App\Services\SesionUsuario;
 use Illuminate\Http\Request;
 
 class ReporteController extends Controller
@@ -108,8 +109,9 @@ class ReporteController extends Controller
                     'bloqueado_fecha' => now(),
                 ]);
 
-                // Cierra las sesiones abiertas del usuario bloqueado.
-                $reportado->tokens()->delete();
+                // Cierra las sesiones abiertas del usuario bloqueado (el
+                // middleware 'cuenta.activa' cubre el resto, ver SesionUsuario).
+                SesionUsuario::cerrarSesionesDe($reportado);
             }
         } elseif ($reporte->tipo === 'persona' && $reporte->id_persona) {
             $this->eliminarPersonaReportada($reporte->id_persona);

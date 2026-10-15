@@ -3,17 +3,14 @@
    ---------------------------------------------------------
    Igual que la versión original, pero ahora conectado a la
    API real de Laravel (POST /api/registro) en vez de
-   localStorage. El token que devuelve el backend se guarda
-   para mantener la sesión iniciada tras el registro.
+   localStorage. El servidor abre la sesión (cookie HttpOnly) al
+   registrar; aquí no se guarda nada.
    tipo_usuario ya NO se pide en este formulario: todo registro
    público nace 'cliente' por el default de la columna en BD.
    ========================================================= */
 
 import { API_BASE, appUrl } from "../core/config.js";
-
-const STORAGE_TOKEN_KEY = "roommatch_token";
-const STORAGE_USER_KEY = "roommatch_user";
-const STORAGE_ROL_ACTIVO_KEY = "roommatch_rol_activo";
+import { cabecerasAutenticadas } from "../core/auth.js";
 
 // --- Referencias DOM ---
 const form = document.getElementById("signupForm");
@@ -245,10 +242,7 @@ form.addEventListener("submit", async (evento) => {
   try {
     const respuesta = await fetch(`${API_BASE}/registro`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
+      headers: cabecerasAutenticadas(),
       body: JSON.stringify({
         nombre,
         email,
@@ -273,9 +267,6 @@ form.addEventListener("submit", async (evento) => {
       return;
     }
 
-    sessionStorage.setItem(STORAGE_TOKEN_KEY, datos.token);
-    sessionStorage.setItem(STORAGE_USER_KEY, JSON.stringify(datos.usuario));
-    sessionStorage.setItem(STORAGE_ROL_ACTIVO_KEY, datos.rolActivo || "cliente");
 
     formMessage.classList.add("success");
     formMessage.textContent = "¡Cuenta creada con éxito! Redirigiendo al inicio de sesión...";
@@ -297,8 +288,8 @@ form.addEventListener("submit", async (evento) => {
 // Esto es una navegación de página completa (no fetch): OAuth necesita
 // que el navegador vaya realmente a Google/Facebook, así que no hay
 // respuesta que manejar aquí. El flujo continúa en
-// /auth/{proveedor}/callback -> auth/oauth-callback.blade.php, que
-// guarda el token en sessionStorage y redirige a /onboarding o /dashboard.
+// /auth/{proveedor}/callback (SocialAuthController), que abre la sesión
+// en el servidor y redirige a /onboarding o /dashboard.
 socialButtons.forEach((boton) => {
   boton.addEventListener("click", () => {
     const proveedor = boton.dataset.provider;

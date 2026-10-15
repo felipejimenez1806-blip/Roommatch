@@ -3,6 +3,7 @@
    ========================================================= */
 
 import { API_BASE, appUrl } from "../core/config.js";
+import { cabecerasAutenticadas } from "../core/auth.js";
 
 const SEGUNDOS_COOLDOWN = 60;
 
@@ -113,7 +114,7 @@ form.addEventListener("submit", async (evento) => {
   try {
     const respuesta = await fetch(`${API_BASE}/password/verificar-codigo`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      headers: cabecerasAutenticadas(),
       body: JSON.stringify({ email, codigo }),
     });
 
@@ -166,7 +167,7 @@ reenviarBtn.addEventListener("click", async () => {
   try {
     const respuesta = await fetch(`${API_BASE}/password/enviar-codigo`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      headers: cabecerasAutenticadas(),
       body: JSON.stringify({ email }),
     });
 

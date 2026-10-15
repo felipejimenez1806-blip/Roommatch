@@ -15,9 +15,8 @@ class EnsurePerfilCompleto
      * publicar una habitación o hacer una reserva.
      *
      * El chequeo de "¿lo mando a /onboarding?" para las páginas
-     * normales vive en nav.js (ver redirigirSiPerfilIncompleto),
-     * porque una navegación de página completa no manda el header
-     * Authorization y este middleware no vería nada de todas formas.
+     * normales vive en el middleware ZonaCliente (rutas web), que
+     * redirige en vez de responder JSON.
      */
     public function handle(Request $request, Closure $next): Response
     {

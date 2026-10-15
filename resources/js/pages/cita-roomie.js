@@ -13,43 +13,12 @@
 // ============================================================
 
 import { API_BASE, appUrl } from "../core/config.js";
+import { requerirSesion, obtenerUsuario, cabecerasAutenticadas, manejarNoAutorizado } from "../core/auth.js";
 
-const STORAGE_TOKEN_KEY = "roommatch_token";
-const STORAGE_USER_KEY = "roommatch_user";
+// Página privada: sin sesión no hay nada que hacer aquí.
+requerirSesion();
 
-function obtenerToken() {
-  return sessionStorage.getItem(STORAGE_TOKEN_KEY);
-}
-
-function obtenerUsuarioGuardado() {
-  return JSON.parse(sessionStorage.getItem(STORAGE_USER_KEY) || "null");
-}
-
-function authHeaders(extra = {}) {
-  const token = obtenerToken();
-  return {
-    Accept: "application/json",
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    ...extra,
-  };
-}
-
-function manejarNoAutorizado(respuesta) {
-  if (respuesta.status === 401) {
-    sessionStorage.removeItem(STORAGE_TOKEN_KEY);
-    sessionStorage.removeItem(STORAGE_USER_KEY);
-    window.location.href = appUrl("/login");
-    return true;
-  }
-  return false;
-}
-
-// Página privada: sin token no hay nada que hacer aquí.
-if (!obtenerToken()) {
-  window.location.href = appUrl("/login");
-}
-
-const usuarioActual = obtenerUsuarioGuardado();
+const usuarioActual = obtenerUsuario();
 
 // ---------- HELPERS ----------
 function formatCOP(n) {
@@ -472,7 +441,7 @@ function activarEnvio(item) {
     try {
       const resp = await fetch(`${API_BASE}/roomies/${item.id}/citas`, {
         method: "POST",
-        headers: authHeaders({ "Content-Type": "application/json" }),
+        headers: cabecerasAutenticadas(),
         body: JSON.stringify(campos),
       });
 

@@ -8,58 +8,35 @@ use App\Http\Controllers\SocialAuthController;
 | Web Routes
 |--------------------------------------------------------------------------
 |
-| Estas rutas solo sirven el shell HTML (Blade). Los datos reales se
-| cargan después vía fetch() a /api/*, mandando el token en el header
-| Authorization — ahí es donde vive la protección real por rol
-| (middleware 'es.admin' sobre /api/admin/*, ver api.php).
+| Estas rutas sirven el shell HTML (Blade). Los datos reales se cargan
+| después vía fetch() a /api/*, ver api.php.
 |
-| IMPORTANTE: esta app no usa autenticación por sesión/cookie para las
-| rutas web — el login es puramente por token, guardado en
-| sessionStorage por el JS del cliente. Una petición GET normal de
-| navegación (como estas) NO manda ese token, así que un middleware
-| tipo `auth` / `es.admin` de Laravel puesto aquí no vería nada y
-| dejaría pasar a cualquiera. Por eso la separación de acceso en este
-| archivo se hace en dos capas:
+| Autenticación: cookie de sesión de Laravel (HttpOnly) + CSRF. El servidor
+| ve al usuario en cada página, así que el control de acceso es middleware
+| real (ya no hay scripts de guardia en el navegador):
 |
-|   1. Agrupación por prefijo /admin, para que la estructura de rutas
-|      refleje la separación real y podamos aplicar el guard de abajo
-|      solo a este grupo.
-|   2. resources/views/partials/admin-guard.blade.php: script INLINE en
-|      el <head>, incluido por layouts.app, layouts.admin y
-|      layouts.admin-bare, que se ejecuta ANTES de pintar el <body>:
-|      revisa el rol activo guardado en sessionStorage y redirige de
-|      inmediato si no corresponde a esa zona. Va inline (no como módulo
-|      de Vite) porque un módulo es diferido y correría después de
-|      pintar. Usa window.APP (partials/app-config.blade.php) para que
-|      las rutas y redirecciones funcionen aunque la app viva en un
-|      subdirectorio. No reemplaza la protección real de datos (esa ya
-|      la tienes con 'es.admin' en la API) — solo evita que alguien vea
-|      el HTML/JS de la zona equivocada o un flash de contenido ajeno.
+|   auth          visitante sin sesión -> /login
+|   cuenta.activa cuenta bloqueada o rol activo inválido -> sesión cerrada
+|   zona.cliente  páginas del sitio de cliente (layouts.app): un admin que
+|                 navega como admin va a /admin; un usuario con el perfil
+|                 incompleto va a /onboarding
+|   zona.admin    páginas de administración: solo con el rol activo admin
 |
-| Migrar esto a un middleware real de Laravel implicaría pasar el login
-| a Sanctum SPA (cookies httpOnly + CSRF) en vez de token manual en
-| sessionStorage — es un cambio más grande, queda como mejora futura.
+| Esto es experiencia de uso; la protección de los DATOS sigue siendo la de
+| la API ('auth:sanctum', 'es.admin', 'perfil.completo').
 |
 */
 
 // ==========================================================================
-// Rutas públicas (sin sesión)
+// Rutas públicas sin navbar de cliente (no pasan por zona.cliente)
 // ==========================================================================
 
-Route::get('/', fn () => view('index'))->name('index');
 Route::get('/login', fn () => view('auth.login'))->name('login');
 Route::get('/signup', fn () => view('auth.signup'))->name('signup');
 Route::get('/recuperar-password', fn () => view('auth.recuperar-password'))->name('password.recuperar');
 Route::get('/verificar-codigo', fn () => view('auth.verificar-codigo'))->name('password.verificar');
 Route::get('/nueva-contrasena', fn () => view('auth.nueva-contrasena'))->name('password.nueva');
-Route::get('/onboarding', fn () => view('onboarding'))->name('onboarding');
-
-Route::get('/ayuda', fn () => view('ayuda'))->name('ayuda');
-Route::get('/faq', fn () => view('faq'))->name('faq');
 Route::get('/terminos-condiciones', fn () => view('terminos-condiciones'))->name('terminos');
-Route::get('/siguenos', fn () => view('siguenos'))->name('siguenos');
-Route::get('/nosotros', fn () => view('nosotros'))->name('nosotros');
-Route::get('/contactanos', fn () => view('contactanos'))->name('contactanos');
 Route::get('/error413', fn () => view('errors.413'))->name('error413');
 
 Route::get('/auth/{proveedor}/redirect', [SocialAuthController::class, 'redirect'])
@@ -67,41 +44,61 @@ Route::get('/auth/{proveedor}/redirect', [SocialAuthController::class, 'redirect
 Route::get('/auth/{proveedor}/callback', [SocialAuthController::class, 'callback'])
     ->name('auth.social.callback');
 
-// ==========================================================================
-// Rutas de cliente (roomie / arrendador) — usan layouts.app.
-// partials/admin-guard redirige a /admin si el usuario logueado es admin.
-// ==========================================================================
-
-Route::get('/dashboard', fn () => view('dashboard'))->name('dashboard');
-Route::get('/perfil', fn () => view('perfil'))->name('perfil');
-
-Route::get('/habitaciones', fn () => view('habitaciones'))->name('habitaciones');
-Route::get('/publicacion/{id}', fn (string $id) => view('publicacion', ['id' => $id]))->name('publicacion');
-Route::get('/crear-publicacion', fn () => view('crear-publicacion'))->name('crear-publicacion');
-Route::get('/mis-publicaciones', fn () => view('mis-publicaciones'))->name('mis-publicaciones');
-Route::get('/reserva/{id}', fn (string $id) => view('reserva', ['id' => $id]))->name('reserva');
-Route::get('/confirmacion', fn () => view('confirmacion'))->name('confirmacion');
-
-Route::get('/roomies', fn () => view('roomies'))->name('roomies');
-Route::get('/roomie/{id}', fn (string $id) => view('perfil-roomie', ['id' => $id]))->name('roomie');
-Route::get('/crear-perfil-roomie', fn () => view('crear-perfil-roomie'))->name('crear-perfil-roomie');
-Route::get('/cita/{id}', fn (string $id) => view('cita-roomie', ['id' => $id]))->name('cita');
-Route::get('/confirmacion-cita', fn () => view('confirmacion-cita'))->name('confirmacion-cita');
+// Onboarding: exige sesión pero NO pasa por zona.cliente (esa zona manda aquí
+// a quien tiene el perfil incompleto; pasar por ella sería un bucle).
+Route::get('/onboarding', fn () => view('onboarding'))
+    ->middleware(['auth', 'cuenta.activa'])
+    ->name('onboarding');
 
 // ==========================================================================
-// Rutas de administración — usan layouts.admin (sin nav de cliente).
-// partials/admin-guard redirige a /dashboard si el usuario logueado NO es admin.
-//
-// Nombres de ruta sin cambios ('admin' y 'admin.crear-administrador')
-// para no romper los route()/@route() que ya existan en las vistas.
+// Sitio de cliente — públicas (se pueden ver con o sin sesión)
 // ==========================================================================
 
-Route::prefix('admin')->group(function () {
+Route::middleware(['cuenta.activa', 'zona.cliente'])->group(function () {
+    Route::get('/', fn () => view('index'))->name('index');
+
+    Route::get('/ayuda', fn () => view('ayuda'))->name('ayuda');
+    Route::get('/faq', fn () => view('faq'))->name('faq');
+    Route::get('/siguenos', fn () => view('siguenos'))->name('siguenos');
+    Route::get('/nosotros', fn () => view('nosotros'))->name('nosotros');
+    Route::get('/contactanos', fn () => view('contactanos'))->name('contactanos');
+
+    Route::get('/habitaciones', fn () => view('habitaciones'))->name('habitaciones');
+    Route::get('/publicacion/{id}', fn (string $id) => view('publicacion', ['id' => $id]))->name('publicacion');
+    Route::get('/roomies', fn () => view('roomies'))->name('roomies');
+    Route::get('/roomie/{id}', fn (string $id) => view('perfil-roomie', ['id' => $id]))->name('roomie');
+});
+
+// ==========================================================================
+// Sitio de cliente — privadas (exigen sesión)
+// ==========================================================================
+
+Route::middleware(['auth', 'cuenta.activa', 'zona.cliente'])->group(function () {
+    Route::get('/dashboard', fn () => view('dashboard'))->name('dashboard');
+    Route::get('/perfil', fn () => view('perfil'))->name('perfil');
+
+    Route::get('/crear-publicacion', fn () => view('crear-publicacion'))->name('crear-publicacion');
+    Route::get('/mis-publicaciones', fn () => view('mis-publicaciones'))->name('mis-publicaciones');
+    Route::get('/reserva/{id}', fn (string $id) => view('reserva', ['id' => $id]))->name('reserva');
+    Route::get('/confirmacion', fn () => view('confirmacion'))->name('confirmacion');
+
+    Route::get('/crear-perfil-roomie', fn () => view('crear-perfil-roomie'))->name('crear-perfil-roomie');
+    Route::get('/cita/{id}', fn (string $id) => view('cita-roomie', ['id' => $id]))->name('cita');
+    Route::get('/confirmacion-cita', fn () => view('confirmacion-cita'))->name('confirmacion-cita');
+});
+
+// ==========================================================================
+// Administración — usan layouts.admin / layouts.admin-bare (sin nav de
+// cliente). Nombres de ruta sin cambios ('admin' y
+// 'admin.crear-administrador') para no romper los route() de las vistas.
+// ==========================================================================
+
+Route::prefix('admin')->middleware(['auth', 'cuenta.activa', 'zona.admin'])->group(function () {
     Route::get('/', fn () => view('admin'))->name('admin');
 
-    // Próximo paso: cuando dividamos el panel en secciones (usuarios,
-    // publicaciones, reportes, mensajes-contacto), cada una entra aquí
-    // como su propia ruta dentro de este mismo grupo, por ejemplo:
+    // Cuando el panel se divida en secciones (usuarios, publicaciones,
+    // reportes, mensajes-contacto), cada una entra aquí como su propia ruta,
+    // por ejemplo:
     // Route::get('/usuarios', fn () => view('admin.usuarios'))->name('admin.usuarios');
 
     Route::get('/nuevo-administrador', fn () => view('crear-administrador'))

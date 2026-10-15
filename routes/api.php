@@ -26,25 +26,37 @@ use Illuminate\Support\Facades\Route;
 |
 | Rutas públicas: registro, login, listar publicaciones/roomies
 | (cualquiera puede navegar el catálogo, con o sin sesión).
-| Rutas protegidas por 'auth:sanctum': requieren token válido, que el
-| frontend manda en el header Authorization: Bearer {token}.
-| Rutas protegidas además por 'perfil.completo': requieren, encima del
-| token válido, que el usuario ya tenga perfil completo (ver
+|
+| Autenticación: cookie de sesión de Laravel (HttpOnly) + token CSRF, vía
+| Sanctum en modo "stateful" (bootstrap/app.php -> statefulApi()). El
+| navegador manda la cookie solo y el JS añade X-CSRF-TOKEN (ver
+| core/auth.js). Ya no hay tokens Bearer ni sessionStorage.
+|
+| Rutas protegidas por 'auth:sanctum' + 'cuenta.activa': requieren sesión
+| válida y que la cuenta no esté bloqueada.
+| Rutas protegidas además por 'perfil.completo': requieren, encima de la
+| sesión, que el usuario ya tenga perfil completo (ver
 | Usuario::perfilCompleto()) — son las acciones de "crear algo nuevo"
 | que no tiene sentido permitir con el perfil a medias.
 |
-| Roles (N:N, ver rol/usuario_rol): login()/registro() emiten un token
-| real con ability rol:cliente o rol:admin cuando el usuario tiene un
-| solo rol, o un token limitado con ability seleccionar-rol cuando tiene
-| los dos. 'seleccion.rol' exige esa ability para /seleccionar-rol;
-| 'es.admin' exige la ability rol:admin (y el rol vigente en BD) para
-| /admin/*. agregar-rol-cliente es autoservicio (sin restricción extra):
-| ver AuthController::agregarRolCliente().
+| Roles (N:N, ver rol/usuario_rol): el rol activo vive en la sesión
+| ('rol_activo'). login()/registro() abren la sesión directamente cuando el
+| usuario tiene un solo rol; con dos roles dejan el login "pendiente" y el
+| usuario lo completa con /seleccionar-rol ('seleccion.rol' exige ese login
+| pendiente; en ese momento aún NO está autenticado, por eso la ruta va
+| fuera del grupo auth). 'es.admin' exige rol activo admin (y el rol vigente
+| en BD) para /admin/*. agregar-rol-cliente es autoservicio (sin restricción
+| extra): ver AuthController::agregarRolCliente().
 |
 */
 
 Route::post('/registro', [AuthController::class, 'registro']);
 Route::post('/login', [AuthController::class, 'login']);
+
+// Segundo paso del login con más de un rol. Sin 'auth:sanctum' a propósito
+// (ver nota de arriba); el gate es 'seleccion.rol'.
+Route::post('/seleccionar-rol', [AuthController::class, 'seleccionarRol'])
+    ->middleware('seleccion.rol');
 Route::post('/password/enviar-codigo', [PasswordResetController::class, 'enviarCodigo'])
     ->middleware('throttle:5,1');
 Route::post('/password/verificar-codigo', [PasswordResetController::class, 'verificarCodigo'])
@@ -66,21 +78,18 @@ Route::get('/roomies', [PersonaRoomieController::class, 'index']);
 Route::get('/roomies/{persona}', [PersonaRoomieController::class, 'show']);
 Route::get('/roomies/{persona}/horarios-ocupados', [CitaController::class, 'horariosOcupados']);
 
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware(['auth:sanctum', 'cuenta.activa'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/usuario', [AuthController::class, 'usuarioActual']);
     Route::post('/onboarding', [OnboardingController::class, 'completar']);
 
-    // ---------- Selección / cambio de rol ----------
-    // seleccionar-rol: canjea el token limitado (ability seleccionar-rol,
-    // emitido por login/registro cuando hay más de un rol) por el token
-    // real de sesión. cambiar-rol: desde una sesión ya abierta, salta
-    // entre los roles ya asignados (pide contraseña otra vez solo si el
-    // destino es admin, ver CambiarRolRequest). agregar-rol-cliente:
-    // autoservicio para que un admin sin rol cliente se lo agregue (no
-    // es elevación de privilegios, no pide contraseña).
-    Route::post('/seleccionar-rol', [AuthController::class, 'seleccionarRol'])
-        ->middleware('seleccion.rol');
+    // ---------- Cambio de rol ----------
+    // cambiar-rol: desde una sesión ya abierta, salta entre los roles ya
+    // asignados (pide contraseña otra vez solo si el destino es admin, ver
+    // CambiarRolRequest). agregar-rol-cliente: autoservicio para que un
+    // admin sin rol cliente se lo agregue (no es elevación de privilegios,
+    // no pide contraseña). (seleccionar-rol está más arriba, fuera de este
+    // grupo, porque ocurre antes de estar autenticado.)
     Route::post('/cambiar-rol', [AuthController::class, 'cambiarRol']);
     Route::post('/agregar-rol-cliente', [AuthController::class, 'agregarRolCliente']);
 

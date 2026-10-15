@@ -4,6 +4,7 @@
 
 
 import { API_BASE, appUrl } from "../core/config.js";
+import { cabecerasAutenticadas } from "../core/auth.js";
 
 const form = document.getElementById("recuperarForm");
 const emailInput = document.getElementById("email");
@@ -65,7 +66,7 @@ form.addEventListener("submit", async (evento) => {
   try {
     const respuesta = await fetch(`${API_BASE}/password/enviar-codigo`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      headers: cabecerasAutenticadas(),
       body: JSON.stringify({ email }),
     });
 

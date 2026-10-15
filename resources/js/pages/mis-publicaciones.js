@@ -9,33 +9,10 @@
 // ============================================================
 
 import { API_BASE, appUrl } from "../core/config.js";
+import { requerirSesion, obtenerUsuario, cabecerasAutenticadas, manejarNoAutorizado } from "../core/auth.js";
 
-const STORAGE_TOKEN_KEY = "roommatch_token";
-const STORAGE_USER_KEY = "roommatch_user";
-
-const token = sessionStorage.getItem(STORAGE_TOKEN_KEY);
-const usuarioActual = JSON.parse(sessionStorage.getItem(STORAGE_USER_KEY) || "null");
-
-if (!token || !usuarioActual) {
-  window.location.href = appUrl("/login");
-  throw new Error("Redirigiendo a login: no hay sesión activa.");
-}
-
-function cabecerasAutenticadas(conJson = true) {
-  const cabeceras = { Authorization: `Bearer ${token}`, Accept: "application/json" };
-  if (conJson) cabeceras["Content-Type"] = "application/json";
-  return cabeceras;
-}
-
-function manejarNoAutorizado(respuesta) {
-  if (respuesta.status === 401) {
-    sessionStorage.removeItem(STORAGE_TOKEN_KEY);
-    sessionStorage.removeItem(STORAGE_USER_KEY);
-    window.location.href = appUrl("/login");
-    return true;
-  }
-  return false;
-}
+requerirSesion();
+const usuarioActual = obtenerUsuario();
 
 // ---------- HELPERS ----------
 function formatCOP(n) {

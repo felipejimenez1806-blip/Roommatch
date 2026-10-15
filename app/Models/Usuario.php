@@ -6,11 +6,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Laravel\Sanctum\HasApiTokens;
 
 class Usuario extends Authenticatable
 {
-    use HasFactory, Notifiable, HasApiTokens;
+    // Sin HasApiTokens a propósito: Sanctum ya no emite ni acepta tokens Bearer
+    // para este modelo (su guard solo los acepta si el modelo usa ese trait).
+    // La única forma de autenticarse es la cookie de sesión.
+    use HasFactory, Notifiable;
 
     protected $table = 'usuario';
     protected $primaryKey = 'id_usuario';
@@ -140,44 +142,17 @@ class Usuario extends Authenticatable
     }
 
     /**
-     * Única fuente de emisión de token de sesión: la usan tanto
-     * AuthController (login/registro) como SocialAuthController
-     * (login social), para no duplicar esta lógica ni arriesgar que
-     * una de las dos rutas emita un token sin abilities de rol (lo que
-     * pasaba antes en el login social: createToken() sin abilities
-     * emite un token con ability '*', que EsAdmin habría aceptado como
-     * 'rol:admin' sin serlo de verdad).
-     *
-     * 1 solo rol -> token real directo con ability rol:<rol>.
-     * 2 roles -> token limitado con ability seleccionar-rol; el
-     * frontend debe mostrar "Ingresar como…" y llamar a
-     * POST /api/seleccionar-rol para canjearlo por el real.
+     * La tabla usuario no tiene columna remember_token. Sin esto, el guard de
+     * sesión intentaría leerla/escribirla (Auth::logout() la rota si existe).
+     * Devolver '' desactiva el mecanismo "recordarme" por completo.
      */
-    public function emitirTokenSesion(): array
+    public function getRememberTokenName(): string
     {
-        $this->loadMissing('roles');
-        $roles = $this->roles->pluck('nombre')->values();
-
-        if ($roles->count() > 1) {
-            $token = $this->createToken('roommatch-seleccion-rol', ['seleccionar-rol'])->plainTextToken;
-
-            return [
-                'token' => $token,
-                'requiereSeleccionRol' => true,
-                'roles' => $roles,
-            ];
-        }
-
-        $rolUnico = $roles->first() ?? 'cliente';
-        $token = $this->createToken('roommatch-token', ["rol:{$rolUnico}"])->plainTextToken;
-
-        return [
-            'token' => $token,
-            'requiereSeleccionRol' => false,
-            'roles' => $roles,
-            'rolActivo' => $rolUnico,
-        ];
+        return '';
     }
+
+    // La emisión de la sesión (antes emitirTokenSesion(), que creaba tokens
+    // Sanctum con abilities de rol) vive ahora en App\Services\SesionUsuario.
 
     // ------------------- Scopes útiles -------------------
 

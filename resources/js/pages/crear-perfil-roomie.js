@@ -2,7 +2,7 @@
 // ROOMMATCH – lógica de la página CREAR PERFIL DE ROOMIE
 // ------------------------------------------------------------
 // Mismo patrón que crear-publicacion.js:
-//   - Sesión: token + usuario de sessionStorage
+//   - Sesión: core/auth.js
 //   - El perfil de roomie es 1 a 1 con el usuario, así que "modo
 //     edición" ya NO depende de un ?id= en la URL: simplemente le
 //     preguntamos a GET /api/mi-perfil-roomie si ya existe uno.
@@ -11,15 +11,11 @@
 //   - Publicar/Guardar: POST o PUT contra /api/mi-perfil-roomie
 //   - Ya NO depende de roomies-data.js (guardarPersonaExtra, etc.)
 //
-// CAMBIO: token/usuario ahora se leen y limpian en sessionStorage
-// (antes localStorage), para que la sesión se cierre sola al cerrar
-// la pestaña/ventana en vez de persistir indefinidamente.
+// La sesión (token/usuario) se maneja en core/auth.js.
 // ============================================================
 
 import { API_BASE, appUrl } from "../core/config.js";
-
-const STORAGE_TOKEN_KEY = "roommatch_token";
-const STORAGE_USER_KEY = "roommatch_user";
+import { requerirSesion, obtenerUsuario, cabecerasAutenticadas, manejarNoAutorizado } from "../core/auth.js";
 
 // ---------- LOCALIDADES DE BOGOTÁ ----------
 // Mismo listado que crear-publicacion.js, para que "zona" sea consistente
@@ -49,29 +45,8 @@ const LOCALIDADES_BOGOTA = [
 ];
 
 // ---------- PROTECCIÓN DE SESIÓN ----------
-const token = sessionStorage.getItem(STORAGE_TOKEN_KEY);
-const usuarioActual = JSON.parse(sessionStorage.getItem(STORAGE_USER_KEY) || "null");
-
-if (!token || !usuarioActual) {
-  window.location.href = appUrl("/login");
-  throw new Error("Redirigiendo a login: no hay sesión activa.");
-}
-
-function cabecerasAutenticadas(conJson = true) {
-  const cabeceras = { Authorization: `Bearer ${token}`, Accept: "application/json" };
-  if (conJson) cabeceras["Content-Type"] = "application/json";
-  return cabeceras;
-}
-
-function manejarNoAutorizado(respuesta) {
-  if (respuesta.status === 401) {
-    sessionStorage.removeItem(STORAGE_TOKEN_KEY);
-    sessionStorage.removeItem(STORAGE_USER_KEY);
-    window.location.href = appUrl("/login");
-    return true;
-  }
-  return false;
-}
+requerirSesion();
+const usuarioActual = obtenerUsuario();
 
 // ============================================================
 // ESTADO DEL WIZARD

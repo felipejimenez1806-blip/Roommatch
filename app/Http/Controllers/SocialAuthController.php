@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Rol;
 use App\Models\Usuario;
+use App\Services\SesionUsuario;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Laravel\Socialite\Facades\Socialite;
 
@@ -22,11 +24,15 @@ class SocialAuthController extends Controller
     }
 
     /**
-     * Recibe la respuesta del proveedor, crea o reutiliza el usuario,
-     * genera un token Sanctum y entrega una vista puente que guarda
-     * ese token en sessionStorage antes de continuar en el frontend.
+     * Recibe la respuesta del proveedor, crea o reutiliza el usuario y abre
+     * la sesión (cookie de Laravel) igual que el login con contraseña:
+     *  - 1 rol: entra directo y se redirige a /onboarding (perfil
+     *    incompleto) o /dashboard.
+     *  - 2+ roles: queda "pendiente" y se vuelve a /login, que muestra el
+     *    selector "Ingresar como…" (ver SesionUsuario::iniciar()).
+     * Ya no hay vista puente ni sessionStorage.
      */
-    public function callback(string $proveedor)
+    public function callback(Request $request, string $proveedor)
     {
         $this->validarProveedor($proveedor);
 
@@ -87,12 +93,23 @@ class SocialAuthController extends Controller
             $usuario->load('roles');
         }
 
-        $emision = $usuario->emitirTokenSesion();
+        // Misma regla que el login con contraseña: una cuenta bloqueada no
+        // entra por ningún camino.
+        if ($usuario->bloqueado) {
+            return view('auth.oauth-error', [
+                'mensaje' => $usuario->bloqueado_motivo
+                    ? "Tu cuenta fue bloqueada: {$usuario->bloqueado_motivo}"
+                    : 'Tu cuenta ha sido bloqueada. Contacta al soporte.',
+            ]);
+        }
 
-        return view('auth.oauth-callback', array_merge($emision, [
-            'usuario' => $usuario->paraFrontend(),
-            'redirectTo' => $usuario->perfilCompleto() ? '/dashboard' : '/onboarding',
-        ]));
+        $emision = SesionUsuario::iniciar($request, $usuario);
+
+        if ($emision['requiereSeleccionRol']) {
+            return redirect()->route('login');
+        }
+
+        return redirect()->to(url($usuario->perfilCompleto() ? '/dashboard' : '/onboarding'));
     }
 
     protected function validarProveedor(string $proveedor): void

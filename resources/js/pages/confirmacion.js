@@ -10,26 +10,10 @@
 // ============================================================
 
 import { API_BASE, appUrl } from "../core/config.js";
+import { requerirSesion, cabecerasAutenticadas } from "../core/auth.js";
 
-const STORAGE_TOKEN_KEY = "roommatch_token";
-
-function obtenerToken() {
-  return sessionStorage.getItem(STORAGE_TOKEN_KEY);
-}
-
-function authHeaders(extra = {}) {
-  const token = obtenerToken();
-  return {
-    Accept: "application/json",
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    ...extra,
-  };
-}
-
-// Página privada: sin token no hay nada que hacer aquí.
-if (!obtenerToken()) {
-  window.location.href = appUrl("/login");
-}
+// Página privada: sin sesión no hay nada que hacer aquí.
+requerirSesion();
 
 // ---------- HELPERS ----------
 function formatCOP(n) {
@@ -74,7 +58,7 @@ async function cargarConfirmacion() {
   }
 
   try {
-    const resp = await fetch(`${API_BASE}/reservas/${reservaId}`, { headers: authHeaders() });
+    const resp = await fetch(`${API_BASE}/reservas/${reservaId}`, { headers: cabecerasAutenticadas(false) });
     if (!resp.ok) throw new Error("Solicitud no encontrada");
 
     const { reserva } = await resp.json();
@@ -191,7 +175,7 @@ function cancelarSolicitud(reserva) {
     try {
       const resp = await fetch(`${API_BASE}/reservas/${reserva.id}/cancelar`, {
         method: "PATCH",
-        headers: authHeaders(),
+        headers: cabecerasAutenticadas(false),
       });
       if (!resp.ok) throw new Error("No se pudo cancelar la solicitud");
       mostrarAvisoCancelacion();

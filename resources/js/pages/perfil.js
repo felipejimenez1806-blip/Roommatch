@@ -13,9 +13,7 @@
 // todas las páginas — este archivo ya NO lo toca directamente.
 // Favoritos->Roomies queda con estado vacío: pendiente de migrar.
 //
-// CAMBIO: token/usuario ahora se leen y escriben en sessionStorage
-// (antes localStorage), para que la sesión se cierre sola al cerrar
-// la pestaña/ventana en vez de persistir indefinidamente.
+// La sesión (token/usuario) se maneja en core/auth.js.
 //
 // CAMBIO (roles): con el ENUM tipo_usuario reducido a cliente/admin,
 // el campo "Tipo de cuenta" se quitó de Datos personales (ya no se
@@ -26,35 +24,14 @@
 // ============================================================
 
 import { API_BASE, appUrl } from "../core/config.js";
+import { requerirSesion, obtenerUsuario, actualizarUsuario, cabecerasAutenticadas, manejarNoAutorizado } from "../core/auth.js";
 
-const STORAGE_TOKEN_KEY = "roommatch_token";
-const STORAGE_USER_KEY = "roommatch_user";
+requerirSesion();
+let usuarioActual = obtenerUsuario();
 
-const token = sessionStorage.getItem(STORAGE_TOKEN_KEY);
-let usuarioActual = JSON.parse(sessionStorage.getItem(STORAGE_USER_KEY) || "null");
-
-if (!token || !usuarioActual) {
-  window.location.href = appUrl("/login");
-  throw new Error("Redirigiendo a login: no hay sesión activa.");
-}
-
-function cabecerasAutenticadas(conJson = true) {
-  const cabeceras = { Authorization: `Bearer ${token}`, Accept: "application/json" };
-  if (conJson) cabeceras["Content-Type"] = "application/json";
-  return cabeceras;
-}
-function manejarNoAutorizado(respuesta) {
-  if (respuesta.status === 401) {
-    sessionStorage.removeItem(STORAGE_TOKEN_KEY);
-    sessionStorage.removeItem(STORAGE_USER_KEY);
-    window.location.href = appUrl("/login");
-    return true;
-  }
-  return false;
-}
 function guardarUsuarioLocal(usuario) {
   usuarioActual = usuario;
-  sessionStorage.setItem(STORAGE_USER_KEY, JSON.stringify(usuario));
+  actualizarUsuario(usuario);
 }
 
 document.getElementById("logoutBtnSidebar").addEventListener("click", () => {
@@ -370,7 +347,7 @@ function mostrarNotaGuardado() {
 async function actualizarPreferencia(campo, valor) {
   usuarioActual.preferenciasConvivencia = usuarioActual.preferenciasConvivencia || {};
   usuarioActual.preferenciasConvivencia[campo] = valor;
-  sessionStorage.setItem(STORAGE_USER_KEY, JSON.stringify(usuarioActual));
+  actualizarUsuario(usuarioActual);
 
   const respuesta = await fetch(`${API_BASE}/usuario/convivencia`, {
     method: "PUT",

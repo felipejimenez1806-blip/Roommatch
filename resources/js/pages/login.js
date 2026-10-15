@@ -1,26 +1,22 @@
 /* =========================================================
    Roommatch - Login
    ---------------------------------------------------------
-   Igual que la versión original, pero conectado a la API
-   real de Laravel + Sanctum (POST /api/login) en vez de
-   localStorage. Ya no se necesita sembrar usuario demo ni
-   admin manualmente: el admin vive en la base de datos
-   real (AdminUsuarioSeeder).
+   Conectado a la API real de Laravel (POST /api/login). El
+   servidor abre la sesión con una cookie HttpOnly: aquí no se
+   guarda nada, solo se muestra el resultado y se navega.
 
-   CAMBIO (roles N:N, Fase 4): /api/login puede devolver
-   requiereSeleccionRol=true cuando la cuenta tiene más de un
-   rol (cliente Y admin). En ese caso el token que llega es uno
-   limitado (solo sirve para POST /api/seleccionar-rol) y NO se
-   guarda todavía en sessionStorage — se mantiene en memoria
-   mientras se muestra la pantalla "Ingresar como…", y solo se
-   guarda la sesión real una vez el usuario elige.
+   Roles N:N: /api/login puede devolver requiereSeleccionRol=true
+   cuando la cuenta tiene más de un rol (cliente Y admin). En ese
+   caso el login queda PENDIENTE en el servidor (todavía sin
+   sesión) mientras se muestra la pantalla "Ingresar como…"; la
+   sesión real se abre cuando el usuario elige (POST
+   /api/seleccionar-rol). Lo mismo pasa tras un login social con
+   más de un rol: el servidor vuelve a /login con el login
+   pendiente y esta página muestra el selector al cargar.
    ========================================================= */
 
-import { API_BASE, appUrl } from "../core/config.js";
-
-const STORAGE_TOKEN_KEY = "roommatch_token";
-const STORAGE_USER_KEY = "roommatch_user";
-const STORAGE_ROL_ACTIVO_KEY = "roommatch_rol_activo";
+import { appUrl } from "../core/config.js";
+import { iniciarSesion, seleccionarRol, obtenerRolesPendientes } from "../core/auth.js";
 
 // --- Referencias DOM ---
 const form = document.getElementById("loginForm");
@@ -65,17 +61,13 @@ function setCargando(cargando) {
   submitBtn.querySelector(".spinner").hidden = !cargando;
 }
 
-function guardarSesionYRedirigir(token, usuario, rolActivo) {
-  sessionStorage.setItem(STORAGE_TOKEN_KEY, token);
-  sessionStorage.setItem(STORAGE_USER_KEY, JSON.stringify(usuario));
-  sessionStorage.setItem(STORAGE_ROL_ACTIVO_KEY, rolActivo);
-
+function sesionAbiertaYRedirigir() {
   formMessage.classList.add("success");
   formMessage.textContent = "¡Bienvenido a Roommatch! Redirigiendo...";
   mostrarToast("Inicio de sesión exitoso");
   setTimeout(() => {
-    // admin-guard.js, en la página de destino, ya se encarga de mandar
-    // a /admin si el rol activo resultó ser 'admin'.
+    // El middleware zona.cliente del servidor manda a /admin si el rol
+    // activo resultó ser 'admin', y a /onboarding si falta completar perfil.
     window.location.href = appUrl("/dashboard");
   }, 900);
 }
@@ -83,8 +75,8 @@ function guardarSesionYRedirigir(token, usuario, rolActivo) {
 // ============================================================
 // "INGRESAR COMO…" — cuenta con más de un rol asignado
 // ------------------------------------------------------------
-// tokenLimitado solo sirve para canjearlo en POST /seleccionar-rol
-// (ability 'seleccionar-rol'); nunca se guarda en sessionStorage.
+// El login está pendiente en el servidor (sin sesión todavía); elegir
+// el rol con POST /seleccionar-rol lo completa.
 // ============================================================
 const ETIQUETAS_ROL = { cliente: "Cliente", admin: "Administrador" };
 
@@ -105,7 +97,7 @@ function inyectarEstilosSelectorRol() {
   document.head.appendChild(style);
 }
 
-function mostrarSelectorRol(tokenLimitado, roles) {
+function mostrarSelectorRol(roles) {
   inyectarEstilosSelectorRol();
 
   const overlay = document.createElement("div");
@@ -129,25 +121,16 @@ function mostrarSelectorRol(tokenLimitado, roles) {
       errorEl.textContent = "";
 
       try {
-        const respuesta = await fetch(`${API_BASE}/seleccionar-rol`, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${tokenLimitado}`,
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
-          body: JSON.stringify({ rol: btn.dataset.rol }),
-        });
-        const datos = await respuesta.json().catch(() => ({}));
+        const { ok, datos } = await seleccionarRol(btn.dataset.rol);
 
-        if (!respuesta.ok) {
+        if (!ok) {
           errorEl.textContent = datos.mensaje || "No se pudo continuar con ese rol.";
           btn.disabled = false;
           return;
         }
 
         overlay.remove();
-        guardarSesionYRedirigir(datos.token, datos.usuario, datos.rolActivo);
+        sesionAbiertaYRedirigir();
       } catch (e) {
         errorEl.textContent = "No se pudo conectar con el servidor. Intenta de nuevo.";
         btn.disabled = false;
@@ -203,19 +186,10 @@ form.addEventListener("submit", async (evento) => {
   setCargando(true);
 
   try {
-    const respuesta = await fetch(`${API_BASE}/login`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      body: JSON.stringify({ email, password }),
-    });
-
-    const datos = await respuesta.json();
+    const { ok, datos } = await iniciarSesion(email, password);
     setCargando(false);
 
-    if (!respuesta.ok) {
+    if (!ok) {
       formMessage.classList.add("error");
       formMessage.textContent = datos.mensaje || "Datos incorrectos vuelva a intentar.";
       mostrarToast(datos.mensaje || "No se pudo iniciar sesión");
@@ -223,11 +197,11 @@ form.addEventListener("submit", async (evento) => {
     }
 
     if (datos.requiereSeleccionRol) {
-      mostrarSelectorRol(datos.token, datos.roles);
+      mostrarSelectorRol(datos.roles);
       return;
     }
 
-    guardarSesionYRedirigir(datos.token, datos.usuario, datos.rolActivo);
+    sesionAbiertaYRedirigir();
   } catch (error) {
     setCargando(false);
     formMessage.classList.add("error");
@@ -239,11 +213,17 @@ form.addEventListener("submit", async (evento) => {
 // --- Botones sociales (Google / Facebook) ---
 // Navegación de página completa: OAuth necesita que el navegador
 // vaya realmente a Google/Facebook. El flujo continúa en
-// /auth/{proveedor}/callback -> auth/oauth-callback.blade.php, que
-// guarda el token en sessionStorage y redirige a /onboarding o /dashboard.
+// /auth/{proveedor}/callback (SocialAuthController), que abre la sesión
+// en el servidor y redirige a /onboarding o /dashboard (o de vuelta aquí
+// con el login pendiente si la cuenta tiene más de un rol).
 socialButtons.forEach((boton) => {
   boton.addEventListener("click", () => {
     const proveedor = boton.dataset.provider;
     window.location.href = appUrl(`/auth/${proveedor}/redirect`);
   });
 });
+
+// Login social con más de un rol: el servidor ya dejó el login pendiente y
+// volvió a esta página; se muestra el selector de inmediato.
+const rolesPendientes = obtenerRolesPendientes();
+if (rolesPendientes.length > 0) mostrarSelectorRol(rolesPendientes);

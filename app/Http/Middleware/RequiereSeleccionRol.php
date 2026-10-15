@@ -2,30 +2,34 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\SesionUsuario;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Protege POST /api/seleccionar-rol. El token limitado que emite login()
- * cuando el usuario tiene más de un rol solo trae la ability
- * 'seleccionar-rol' (nunca 'rol:cliente' ni 'rol:admin'), así que este
- * middleware es el único gate que deja pasar hacia ese endpoint — un
- * token real de sesión (rol:cliente / rol:admin) no debería poder
- * volver a llamarlo.
+ * Protege POST /api/seleccionar-rol. Esa ruta NO va detrás de 'auth:sanctum':
+ * en ese momento el usuario todavía no está autenticado, solo hay un login
+ * "pendiente" en la sesión (la contraseña ya fue verificada pero falta elegir
+ * con qué rol entrar; ver SesionUsuario::iniciar()). Este middleware es el
+ * único gate: si no hay un login pendiente vigente, no deja pasar.
  *
- * Va DESPUÉS de 'auth:sanctum' en la cadena (necesita $request->user()
- * ya resuelto). Mismo patrón que EsAdmin.
+ * Deja el usuario pendiente en $request->attributes['usuario_pendiente'] para
+ * que AuthController::seleccionarRol() lo use.
  */
 class RequiereSeleccionRol
 {
     public function handle(Request $request, Closure $next): Response
     {
-        $usuario = $request->user();
+        $usuario = SesionUsuario::pendiente($request);
 
-        if (! $usuario || ! $usuario->tokenCan('seleccionar-rol')) {
-            abort(403, 'Este token no requiere selección de rol.');
+        if (! $usuario) {
+            return response()->json([
+                'mensaje' => 'No hay un inicio de sesión pendiente. Vuelve a iniciar sesión.',
+            ], 403);
         }
+
+        $request->attributes->set('usuario_pendiente', $usuario);
 
         return $next($request);
     }
