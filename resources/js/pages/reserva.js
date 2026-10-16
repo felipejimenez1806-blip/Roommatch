@@ -12,6 +12,7 @@
 
 import { API_BASE, appUrl } from "../core/config.js";
 import { requerirSesion, obtenerUsuario, cabecerasAutenticadas, manejarNoAutorizado } from "../core/auth.js";
+import { esc } from "../core/html.js";
 
 // Página privada: sin sesión no hay nada que hacer aquí.
 requerirSesion();
@@ -101,13 +102,13 @@ function renderReglas(c) {
   return `
     <div class="res-rules-grid">
       ${reglas.map(([campo, icono, siTexto, noTexto]) => `
-        <div class="res-rule-item${c[campo] ? "" : " is-restricted"}">
-          <span class="res-rule-icon">${icono}</span> ${c[campo] ? siTexto : noTexto}
+        <div class="res-rule-item${esc(c[campo] ? "" : " is-restricted")}">
+          <span class="res-rule-icon">${esc(icono)}</span> ${esc(c[campo] ? siTexto : noTexto)}
         </div>`).join("")}
     </div>
     <div class="res-schedule-row">
-      <div class="res-schedule-item"><span>Horario de entrada</span>${c.horario_entrada || "Sin restricción"}</div>
-      ${c.horario_silencio ? `<div class="res-schedule-item"><span>Horario de silencio</span>${c.horario_silencio}</div>` : ""}
+      <div class="res-schedule-item"><span>Horario de entrada</span>${esc(c.horario_entrada || "Sin restricción")}</div>
+      ${c.horario_silencio ? `<div class="res-schedule-item"><span>Horario de silencio</span>${esc(c.horario_silencio)}</div>` : ""}
     </div>`;
 }
 
@@ -130,7 +131,7 @@ async function cargarReserva() {
       contenedor.innerHTML = `
         <div class="res-not-found">
           <p>Esta es tu propia publicación, así que no puedes solicitar una reserva sobre ella.</p>
-          <a href="${appUrl('/mis-publicaciones')}">← Ir a Mis publicaciones</a>
+          <a href="${esc(appUrl('/mis-publicaciones'))}">← Ir a Mis publicaciones</a>
         </div>`;
       return;
     }
@@ -141,7 +142,7 @@ async function cargarReserva() {
     contenedor.innerHTML = `
       <div class="res-not-found">
         <p>No encontramos esta publicación. Puede que ya no esté disponible.</p>
-        <a href="${appUrl('/habitaciones')}">← Volver a la búsqueda</a>
+        <a href="${esc(appUrl('/habitaciones'))}">← Volver a la búsqueda</a>
       </div>`;
   }
 }
@@ -155,11 +156,11 @@ function renderReserva(item) {
   const imagenPrincipal = (item.imagenes && item.imagenes[0]) || item.img || "";
 
   contenedor.innerHTML = `
-    <a class="res-back" href="${appUrl(`/publicacion/${item.id}`)}" title="Volver a la publicación">&larr;</a>
+    <a class="res-back" href="${esc(appUrl(`/publicacion/${item.id}`))}" title="Volver a la publicación">&larr;</a>
 
     <div class="res-heading">
       <div class="res-title">Solicitar reserva</div>
-      <div class="res-subtitle">${item.titulo} · ${item.zona}, ${item.ciudad}</div>
+      <div class="res-subtitle">${esc(item.titulo)} · ${esc(item.zona)}, ${esc(item.ciudad)}</div>
     </div>
 
     <div class="res-body">
@@ -173,7 +174,7 @@ function renderReserva(item) {
             <div class="res-amenities-title">Este espacio incluye</div>
             <div class="res-amenities-grid">
               ${iconosDisponibles.map(([, icono, texto]) => `
-                <div class="res-amenity-item"><span class="res-amenity-icon">${icono}</span> ${texto}</div>
+                <div class="res-amenity-item"><span class="res-amenity-icon">${esc(icono)}</span> ${esc(texto)}</div>
               `).join("")}
             </div>
             <hr class="res-divider"/>
@@ -182,7 +183,7 @@ function renderReserva(item) {
           <div class="res-field-row">
             <div class="res-field">
               <label for="fechaVisita">Fecha de visita al inmueble</label>
-              <input type="date" id="fechaVisita" min="${hoyISO()}"/>
+              <input type="date" id="fechaVisita" min="${esc(hoyISO())}"/>
               <div class="res-field-error" id="err-fechaVisita">Selecciona una fecha para la visita.</div>
             </div>
             <div class="res-field">
@@ -196,9 +197,9 @@ function renderReserva(item) {
                 <div class="res-hora-panel" id="horaVisitaPanel" hidden>
                   ${generarGruposHorario().map((grupo) => `
                     <div class="res-hora-group">
-                      <p class="res-hora-group-title">${grupo.titulo}</p>
+                      <p class="res-hora-group-title">${esc(grupo.titulo)}</p>
                       <div class="res-hora-grid">
-                        ${grupo.bloques.map((h) => `<button type="button" class="res-hora-chip" data-hora="${h}">${formatHora12(h)}</button>`).join("")}
+                        ${grupo.bloques.map((h) => `<button type="button" class="res-hora-chip" data-hora="${esc(h)}">${esc(formatHora12(h))}</button>`).join("")}
                       </div>
                     </div>`).join("")}
                 </div>
@@ -225,13 +226,13 @@ function renderReserva(item) {
           <div class="res-step-title"><span class="res-step-number">2</span> Tus datos</div>
           <div class="res-field">
             <label for="nombre">Nombre completo</label>
-            <input type="text" id="nombre" placeholder="Ej. María López" value="${usuarioActual?.nombre || ""}"/>
+            <input type="text" id="nombre" placeholder="Ej. María López" value="${esc(usuarioActual?.nombre || "")}"/>
             <div class="res-field-error" id="err-nombre">Ingresa tu nombre completo.</div>
           </div>
           <div class="res-field-row">
             <div class="res-field">
               <label for="correo">Correo electrónico</label>
-              <input type="email" id="correo" placeholder="correo@ejemplo.com" value="${usuarioActual?.correo || usuarioActual?.email || ""}"/>
+              <input type="email" id="correo" placeholder="correo@ejemplo.com" value="${esc(usuarioActual?.correo || usuarioActual?.email || "")}"/>
               <div class="res-field-error" id="err-correo">Ingresa un correo válido.</div>
             </div>
             <div class="res-field">
@@ -252,11 +253,11 @@ function renderReserva(item) {
 
       <div class="res-sidebar">
         <div class="res-summary-card">
-          <img class="res-summary-img" src="${imagenPrincipal}" alt="${item.titulo}"/>
+          <img class="res-summary-img" src="${esc(imagenPrincipal)}" alt="${esc(item.titulo)}"/>
           <div class="res-summary-body">
-            <div class="res-summary-title">${item.titulo}</div>
-            <div class="res-summary-rating">${estrellas(item.rating)}</div>
-            <div class="res-summary-location">${item.direccion}, ${item.zona}, ${item.ciudad}</div>
+            <div class="res-summary-title">${esc(item.titulo)}</div>
+            <div class="res-summary-rating">${esc(estrellas(item.rating))}</div>
+            <div class="res-summary-location">${esc(item.direccion)}, ${esc(item.zona)}, ${esc(item.ciudad)}</div>
 
             <div class="res-summary-row is-empty" id="resumenFecha">
               <span>Fecha de visita</span><span>Sin definir</span>
@@ -269,9 +270,9 @@ function renderReserva(item) {
             </div>
 
             <div class="res-price-breakdown">
-              <div class="res-price-row"><span>Precio mensual</span><span>${formatCOP(item.precio)}</span></div>
-              <div class="res-price-row"><span>Depósito de garantía</span><span>${formatCOP(deposito)}</span></div>
-              <div class="res-price-total"><span>Costo total estimado</span><span>${formatCOP(item.precio + deposito)}</span></div>
+              <div class="res-price-row"><span>Precio mensual</span><span>${esc(formatCOP(item.precio))}</span></div>
+              <div class="res-price-row"><span>Depósito de garantía</span><span>${esc(formatCOP(deposito))}</span></div>
+              <div class="res-price-total"><span>Costo total estimado</span><span>${esc(formatCOP(item.precio + deposito))}</span></div>
             </div>
 
             <button type="button" class="res-cta" id="enviarSolicitudBtn">Enviar solicitud de reserva</button>

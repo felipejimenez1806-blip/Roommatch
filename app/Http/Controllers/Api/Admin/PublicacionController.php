@@ -5,7 +5,11 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Notificacion;
 use App\Models\Publicacion;
+use App\Services\ModeracionAuditor;
+use App\Services\SesionUsuario;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\Rule;
 
 class PublicacionController extends Controller
 {
@@ -20,6 +24,9 @@ class PublicacionController extends Controller
      */
     public function index(Request $request)
     {
+        // Compartido por el panel admin y el de moderación.
+        Gate::authorize('ver-publicaciones-moderacion');
+
         $estado = $request->input('estado', 'activas');
 
         $query = Publicacion::query();
@@ -59,8 +66,13 @@ class PublicacionController extends Controller
     /**
      * DELETE /api/admin/publicaciones/{publicacion}
      * A diferencia de Api\PublicacionController::destroy() (el del dueño),
-     * este NO verifica propietario: el admin puede eliminar cualquier
+     * este NO verifica propietario: el equipo de moderación (admin o
+     * moderador, ver PublicacionPolicy::bajar) puede bajar cualquier
      * publicación por contenido inapropiado o falso.
+     *
+     * 'motivo': obligatorio para un moderador (queda en la auditoría y se le
+     * muestra al dueño); opcional para un administrador, igual que al
+     * bloquear un usuario.
      *
      * Borrado lógico (soft delete): $publicacion->delete() ya NO ejecuta
      * un DELETE físico, solo marca deleted_at. El ON DELETE CASCADE de la
@@ -70,8 +82,21 @@ class PublicacionController extends Controller
      * publicación sobreviven con id_publicacion en null (ver migración
      * de reporte, FK con 'set null').
      */
-    public function destroy(Publicacion $publicacion)
+    public function destroy(Request $request, Publicacion $publicacion)
     {
+        Gate::authorize('bajar', $publicacion);
+
+        $datos = $request->validate([
+            'motivo' => [
+                Rule::requiredIf(SesionUsuario::rolActivo() === 'moderador'),
+                'nullable', 'string', 'min:5', 'max:255',
+            ],
+        ], [
+            'motivo.required' => 'Indica el motivo por el que bajas la publicación.',
+            'motivo.min' => 'El motivo debe tener al menos 5 caracteres.',
+        ]);
+        $motivo = $datos['motivo'] ?? null;
+
         $pendientes = $publicacion->reservas()->where('estado_reserva', 'pendiente')->get();
 
         foreach ($pendientes as $reserva) {
@@ -80,7 +105,7 @@ class PublicacionController extends Controller
             Notificacion::create([
                 'id_usuario' => $reserva->id_usuario,
                 'tipo' => 'reserva_rechazada',
-                'mensaje' => "\"{$publicacion->titulo}\" fue eliminada por un administrador, así que tu solicitud de reserva fue rechazada automáticamente.",
+                'mensaje' => "\"{$publicacion->titulo}\" fue dada de baja por el equipo de moderación, así que tu solicitud de reserva fue rechazada automáticamente.",
                 'objetivo_titulo' => $publicacion->titulo,
                 'link' => '/perfil#panelReservas',
                 'leida' => false,
@@ -88,6 +113,15 @@ class PublicacionController extends Controller
         }
 
         $publicacion->delete(); // soft delete: solo marca deleted_at, el registro sigue en BD
+
+        Notificacion::notificarPublicacionBajada($publicacion, $motivo);
+
+        ModeracionAuditor::registrar('publicacion_bajada', 'publicacion', $publicacion->id_publicacion, $publicacion->titulo, [
+            'via' => 'panel',
+            'motivo' => $motivo,
+            'reservas_rechazadas' => $pendientes->count(),
+            'id_propietario' => $publicacion->id_usuario,
+        ]);
 
         return response()->json(['mensaje' => 'Publicación eliminada.']);
     }
@@ -108,7 +142,11 @@ class PublicacionController extends Controller
             return response()->json(['mensaje' => 'Esta publicación no está eliminada.'], 422);
         }
 
+        Gate::authorize('restaurar', $publicacion);
+
         $publicacion->restore();
+
+        ModeracionAuditor::registrar('publicacion_restaurada', 'publicacion', $publicacion->id_publicacion, $publicacion->titulo);
 
         return response()->json(['mensaje' => 'Publicación restaurada.']);
     }

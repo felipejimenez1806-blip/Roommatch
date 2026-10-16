@@ -19,11 +19,13 @@ class Reporte extends Model
         'id_usuario_reporta', 'tipo', 'id_publicacion', 'id_persona',
         'id_usuario_reportado', 'objetivo_titulo', 'motivo', 'descripcion',
         'estado_reporte', 'id_administrador', 'fecha_gestion',
+        'id_escalado_por', 'nota_escalado', 'fecha_escalado',
     ];
 
     protected $casts = [
         'fecha_reporte' => 'datetime',
         'fecha_gestion' => 'datetime',
+        'fecha_escalado' => 'datetime',
     ];
 
     public function autor()
@@ -46,13 +48,25 @@ class Reporte extends Model
         return $this->belongsTo(Usuario::class, 'id_usuario_reportado', 'id_usuario');
     }
 
+    /** Quien lo gestionó (resolvió o descartó): un administrador o un moderador. */
     public function administrador()
     {
         return $this->belongsTo(Usuario::class, 'id_administrador', 'id_usuario');
     }
 
+    /** Moderador que lo escaló a un administrador. */
+    public function escaladoPor()
+    {
+        return $this->belongsTo(Usuario::class, 'id_escalado_por', 'id_usuario');
+    }
+
     public function scopePendientes($query)
     {
         return $query->where('estado_reporte', 'pendiente');
+    }
+
+    public function scopeEscalados($query)
+    {
+        return $query->where('estado_reporte', 'escalado');
     }
 }

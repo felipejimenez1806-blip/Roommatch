@@ -14,6 +14,7 @@
 
 import { API_BASE, appUrl } from "../core/config.js";
 import { requerirSesion, obtenerUsuario, cabecerasAutenticadas, manejarNoAutorizado } from "../core/auth.js";
+import { esc } from "../core/html.js";
 
 // Página privada: sin sesión no hay nada que hacer aquí.
 requerirSesion();
@@ -98,7 +99,7 @@ async function cargarCita() {
       contenedor.innerHTML = `
         <div class="cr-not-found">
           <p>Este es tu propio perfil de roomie, así que no puedes agendarte una cita contigo mismo/a.</p>
-          <a href="${appUrl('/mis-publicaciones')}">← Ir a Mis publicaciones</a>
+          <a href="${esc(appUrl('/mis-publicaciones'))}">← Ir a Mis publicaciones</a>
         </div>`;
       return;
     }
@@ -109,7 +110,7 @@ async function cargarCita() {
     contenedor.innerHTML = `
       <div class="cr-not-found">
         <p>No encontramos este perfil. Puede que ya no esté disponible.</p>
-        <a href="${appUrl('/roomies')}">← Volver a la búsqueda</a>
+        <a href="${esc(appUrl('/roomies'))}">← Volver a la búsqueda</a>
       </div>`;
   }
 }
@@ -120,11 +121,11 @@ function renderCita(item) {
   const primerNombre = item.nombre.split(" ")[0];
 
   contenedor.innerHTML = `
-    <a class="cr-back" href="${appUrl(`/roomie/${item.id}`)}" title="Volver al perfil">&larr;</a>
+    <a class="cr-back" href="${esc(appUrl(`/roomie/${item.id}`))}" title="Volver al perfil">&larr;</a>
 
     <div class="cr-heading">
       <div class="cr-title">Agendar cita</div>
-      <div class="cr-subtitle">Con ${item.nombre} · ${item.zona}, ${item.ciudad}</div>
+      <div class="cr-subtitle">Con ${esc(item.nombre)} · ${esc(item.zona)}, ${esc(item.ciudad)}</div>
     </div>
 
     <div class="cr-body">
@@ -142,7 +143,7 @@ function renderCita(item) {
           <div class="cr-field-row">
             <div class="cr-field">
               <label for="fechaCita">Fecha propuesta</label>
-              <input type="date" id="fechaCita" min="${hoyISO()}"/>
+              <input type="date" id="fechaCita" min="${esc(hoyISO())}"/>
               <div class="cr-field-error" id="err-fechaCita">Selecciona una fecha para la cita.</div>
             </div>
             <div class="cr-field">
@@ -156,9 +157,9 @@ function renderCita(item) {
                 <div class="cr-hora-panel" id="horaCitaPanel" hidden>
                   ${generarGruposHorario().map((grupo) => `
                     <div class="cr-hora-group">
-                      <p class="cr-hora-group-title">${grupo.titulo}</p>
+                      <p class="cr-hora-group-title">${esc(grupo.titulo)}</p>
                       <div class="cr-hora-grid">
-                        ${grupo.bloques.map((h) => `<button type="button" class="cr-hora-chip" data-hora="${h}">${formatHora12(h)}</button>`).join("")}
+                        ${grupo.bloques.map((h) => `<button type="button" class="cr-hora-chip" data-hora="${esc(h)}">${esc(formatHora12(h))}</button>`).join("")}
                       </div>
                     </div>`).join("")}
                 </div>
@@ -185,7 +186,7 @@ function renderCita(item) {
           </div>
 
           <div class="cr-field">
-            <label for="mensaje">Mensaje para ${primerNombre} (opcional)</label>
+            <label for="mensaje">Mensaje para ${esc(primerNombre)} (opcional)</label>
             <textarea id="mensaje" placeholder="Cuéntale brevemente por qué te gustaría conocerlo/a y visitar el sitio juntos..."></textarea>
           </div>
         </div>
@@ -195,13 +196,13 @@ function renderCita(item) {
           <div class="cr-step-title"><span class="cr-step-number">2</span> Tus datos de contacto</div>
           <div class="cr-field">
             <label for="nombre">Nombre completo</label>
-            <input type="text" id="nombre" placeholder="Ej. María López" value="${usuarioActual?.nombre || ""}"/>
+            <input type="text" id="nombre" placeholder="Ej. María López" value="${esc(usuarioActual?.nombre || "")}"/>
             <div class="cr-field-error" id="err-nombre">Ingresa tu nombre completo.</div>
           </div>
           <div class="cr-field-row">
             <div class="cr-field">
               <label for="correo">Correo electrónico</label>
-              <input type="email" id="correo" placeholder="correo@ejemplo.com" value="${usuarioActual?.correo || usuarioActual?.email || ""}"/>
+              <input type="email" id="correo" placeholder="correo@ejemplo.com" value="${esc(usuarioActual?.correo || usuarioActual?.email || "")}"/>
               <div class="cr-field-error" id="err-correo">Ingresa un correo válido.</div>
             </div>
             <div class="cr-field">
@@ -217,14 +218,14 @@ function renderCita(item) {
       <div class="cr-sidebar">
         <div class="cr-summary-card">
           <div class="cr-summary-img-wrap">
-            <img class="cr-summary-img" src="${item.img || ""}" alt="${item.nombre}"/>
+            <img class="cr-summary-img" src="${esc(item.img || "")}" alt="${esc(item.nombre)}"/>
           </div>
           <div class="cr-summary-body">
-            <div class="cr-summary-title">${item.nombre}</div>
-            <div class="cr-summary-rating">${palabraCalificacion(item.rating)} · ${item.rating}/10</div>
-            <div class="cr-summary-location">Busca en ${item.zona}, ${item.ciudad}</div>
+            <div class="cr-summary-title">${esc(item.nombre)}</div>
+            <div class="cr-summary-rating">${esc(palabraCalificacion(item.rating))} · ${esc(item.rating)}/10</div>
+            <div class="cr-summary-location">Busca en ${esc(item.zona)}, ${esc(item.ciudad)}</div>
 
-            <div class="cr-summary-row"><span>Presupuesto</span><span>${formatCOP(item.presupuesto)}</span></div>
+            <div class="cr-summary-row"><span>Presupuesto</span><span>${esc(formatCOP(item.presupuesto))}</span></div>
 
             <div class="cr-summary-row is-empty" id="resumenFecha">
               <span>Fecha</span><span>Sin definir</span>

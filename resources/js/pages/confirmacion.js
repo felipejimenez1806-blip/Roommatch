@@ -11,6 +11,7 @@
 
 import { API_BASE, appUrl } from "../core/config.js";
 import { requerirSesion, cabecerasAutenticadas } from "../core/auth.js";
+import { esc } from "../core/html.js";
 
 // Página privada: sin sesión no hay nada que hacer aquí.
 requerirSesion();
@@ -79,7 +80,7 @@ function mostrarNoEncontrada(contenedor) {
   contenedor.innerHTML = `
     <div class="conf-not-found">
       <p>No encontramos esta solicitud. Puede que ya haya sido cancelada.</p>
-      <a href="${appUrl('/habitaciones')}">← Volver a la búsqueda</a>
+      <a href="${esc(appUrl('/habitaciones'))}">← Volver a la búsqueda</a>
     </div>`;
 }
 
@@ -94,14 +95,14 @@ function renderConfirmacion(reserva) {
     <div class="conf-body">
       <div class="conf-left">
         <div class="conf-card">
-          <img class="conf-card-img" src="${imagenPrincipal}" alt="${item.titulo}"/>
+          <img class="conf-card-img" src="${esc(imagenPrincipal)}" alt="${esc(item.titulo)}"/>
           <div class="conf-card-body">
-            <div class="conf-card-title">${item.titulo}</div>
-            <div class="conf-card-rating">${estrellas(item.rating)}</div>
-            <div class="conf-card-location">${item.direccion}, ${item.zona}, ${item.ciudad}</div>
-            <div class="conf-card-row"><span>Fecha de visita</span><span>${formatFechaCorta(reserva.fecha_visita)}</span></div>
-            <div class="conf-card-row"><span>Hora de visita</span><span>${formatHora12(reserva.hora_visita) || "Sin definir"}</span></div>
-            <div class="conf-card-row"><span>Duración estimada</span><span>${ETIQUETAS_DURACION[reserva.duracion_estimada] || "Sin definir"}</span></div>
+            <div class="conf-card-title">${esc(item.titulo)}</div>
+            <div class="conf-card-rating">${esc(estrellas(item.rating))}</div>
+            <div class="conf-card-location">${esc(item.direccion)}, ${esc(item.zona)}, ${esc(item.ciudad)}</div>
+            <div class="conf-card-row"><span>Fecha de visita</span><span>${esc(formatFechaCorta(reserva.fecha_visita))}</span></div>
+            <div class="conf-card-row"><span>Hora de visita</span><span>${esc(formatHora12(reserva.hora_visita) || "Sin definir")}</span></div>
+            <div class="conf-card-row"><span>Duración estimada</span><span>${esc(ETIQUETAS_DURACION[reserva.duracion_estimada] || "Sin definir")}</span></div>
           </div>
         </div>
       </div>
@@ -113,21 +114,21 @@ function renderConfirmacion(reserva) {
           Le avisamos al anfitrión sobre tu interés. Te contactaremos por correo en cuanto la confirme o la rechace.
         </p>
 
-        <div class="conf-trip-heading">Tu visita queda programada para el ${formatFechaCorta(reserva.fecha_visita)}${reserva.hora_visita ? ` a las ${formatHora12(reserva.hora_visita)}` : ""}</div>
+        <div class="conf-trip-heading">Tu visita queda programada para el ${esc(formatFechaCorta(reserva.fecha_visita))}${esc(reserva.hora_visita ? ` a las ${formatHora12(reserva.hora_visita)}` : "")}</div>
 
         <div class="conf-detail">
           <span class="conf-detail-icon">📅</span>
-          <div><strong>Fecha y hora de visita</strong><br>${formatFechaCorta(reserva.fecha_visita)}${reserva.hora_visita ? ` · ${formatHora12(reserva.hora_visita)}` : ""}</div>
+          <div><strong>Fecha y hora de visita</strong><br>${esc(formatFechaCorta(reserva.fecha_visita))}${esc(reserva.hora_visita ? ` · ${formatHora12(reserva.hora_visita)}` : "")}</div>
         </div>
         <div class="conf-detail">
           <span class="conf-detail-icon">⏳</span>
-          <div><strong>Duración estimada de estadía</strong><br>${ETIQUETAS_DURACION[reserva.duracion_estimada] || "Sin definir"}</div>
+          <div><strong>Duración estimada de estadía</strong><br>${esc(ETIQUETAS_DURACION[reserva.duracion_estimada] || "Sin definir")}</div>
         </div>
 
-        <div class="conf-info-row"><span>Dirección</span><span>${item.direccion}</span></div>
-        <div class="conf-info-row"><span>Anfitrión</span><span>${nombreAnfitrion}</span></div>
+        <div class="conf-info-row"><span>Dirección</span><span>${esc(item.direccion)}</span></div>
+        <div class="conf-info-row"><span>Anfitrión</span><span>${esc(nombreAnfitrion)}</span></div>
 
-        <div class="conf-price-row"><span>Costo mensual estimado</span><span>${formatCOP(item.precio)}</span></div>
+        <div class="conf-price-row"><span>Costo mensual estimado</span><span>${esc(formatCOP(item.precio))}</span></div>
 
         <div class="conf-buttons">
           <button type="button" class="conf-btn-solid" id="contactarBtn">Contactar al propietario</button>
@@ -148,7 +149,8 @@ function contactarPropietario(item) {
     return;
   }
   const mensaje = encodeURIComponent(`Hola, vi tu publicación "${item.titulo}" en RoomMatch y quisiera más información.`);
-  window.open(`https://wa.me/${telefono}?text=${mensaje}`, "_blank");
+  // Solo dígitos en la ruta: el teléfono viene de otro usuario y no debe poder alterar la URL.
+  window.open(`https://wa.me/${String(telefono).replace(/\D/g, "")}?text=${mensaje}`, "_blank", "noopener");
 }
 
 // ---------- CANCELAR LA SOLICITUD (modal propio, sin confirm() ni alert()) ----------
@@ -159,7 +161,7 @@ function cancelarSolicitud(reserva) {
     <div class="cc-modal">
       <div class="cc-modal-icon is-warning">❓</div>
       <div class="cc-modal-title">¿Cancelar esta solicitud?</div>
-      <p class="cc-modal-text">Le avisaremos al anfitrión que ya no te interesa la visita del ${formatFechaCorta(reserva.fecha_visita)}${reserva.hora_visita ? ` a las ${formatHora12(reserva.hora_visita)}` : ""}.</p>
+      <p class="cc-modal-text">Le avisaremos al anfitrión que ya no te interesa la visita del ${esc(formatFechaCorta(reserva.fecha_visita))}${esc(reserva.hora_visita ? ` a las ${formatHora12(reserva.hora_visita)}` : "")}.</p>
       <div class="cc-modal-buttons">
         <button type="button" class="cc-modal-btn-outline" id="ccMantenerBtn">No, mantener</button>
         <button type="button" class="cc-modal-btn-danger" id="ccConfirmarBtn">Sí, cancelar</button>

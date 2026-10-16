@@ -20,8 +20,13 @@ return new class extends Migration
             $table->string('motivo', 150)
                 ->comment('Ver MOTIVOS_REPORTE_PUBLICACION / MOTIVOS_REPORTE_ROOMIE en perfil.js');
             $table->text('descripcion')->nullable();
-            $table->enum('estado_reporte', ['pendiente', 'resuelto', 'descartado'])->default('pendiente');
-            $table->unsignedInteger('id_administrador')->nullable()->comment('Admin que lo gestionó');
+            // 'escalado': un moderador lo pasó a un administrador (p. ej. porque
+            // la acción necesaria es bloquear a un usuario, que solo hace el admin).
+            $table->enum('estado_reporte', ['pendiente', 'escalado', 'resuelto', 'descartado'])->default('pendiente');
+            $table->unsignedInteger('id_administrador')->nullable()->comment('Admin o moderador que lo gestionó (resolvió o descartó)');
+            $table->unsignedInteger('id_escalado_por')->nullable()->comment('Moderador que lo escaló a un administrador');
+            $table->string('nota_escalado', 500)->nullable()->comment('Motivo del escalamiento, escrito por el moderador');
+            $table->dateTime('fecha_escalado')->nullable();
             $table->dateTime('fecha_reporte')->useCurrent();
             $table->dateTime('fecha_gestion')->nullable();
 
@@ -46,12 +51,16 @@ return new class extends Migration
             $table->foreign('id_administrador', 'fk_rep_admin')
                 ->references('id_usuario')->on('usuario')
                 ->onDelete('set null')->onUpdate('cascade');
+            $table->foreign('id_escalado_por', 'fk_rep_escalado_por')
+                ->references('id_usuario')->on('usuario')
+                ->onDelete('set null')->onUpdate('cascade');
 
             $table->index('id_usuario_reporta', 'idx_rep_usuario_reporta');
             $table->index('id_publicacion', 'idx_rep_publicacion');
             $table->index('id_persona', 'idx_rep_persona');
             $table->index('id_usuario_reportado', 'idx_rep_usuario_reportado');
             $table->index('id_administrador', 'idx_rep_admin');
+            $table->index('id_escalado_por', 'idx_rep_escalado_por');
             $table->index('estado_reporte', 'idx_rep_estado');
         });
     }

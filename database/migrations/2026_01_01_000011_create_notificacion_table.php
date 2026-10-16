@@ -22,6 +22,9 @@ return new class extends Migration
                 'reporte_resuelto',
                 'reporte_descartado',
                 'mensaje_contacto_nuevo',
+                'reporte_escalado',
+                'reporte_devuelto',
+                'publicacion_bajada',
             ]);
             $table->string('mensaje', 500);
             $table->string('objetivo_titulo', 255)->nullable();

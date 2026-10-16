@@ -13,7 +13,10 @@
 
   Sesión (cookie de Laravel; el JS nunca ve un token):
     user            Usuario con sesión (Usuario::paraFrontend()) o null.
-    rolActivo       'cliente' | 'admin' | null — el rol con el que entró.
+    rolActivo       'cliente' | 'moderador' | 'admin' | null — el rol con el que entró.
+    permisos        Permisos del rol activo (App\Support\Permisos::MAPA), p. ej.
+                    ['gestionar-reportes', 'escalar-reportes', ...]. SOLO sirve
+                    para mostrar u ocultar botones: el servidor valida cada acción.
     rolesPendientes Si la contraseña ya fue verificada pero falta elegir con
                     qué rol entrar (cuenta con más de un rol, p. ej. tras un
                     login social), los roles a elegir; [] en otro caso.
@@ -24,13 +27,16 @@
         $usuarioSesion->loadMissing('roles');
     }
 @endphp
+{{-- Js::from (y no @json) a propósito: escapa < > & ' " dentro del JSON, así que un
+     nombre o dirección con "</script>" o "<!--" no puede cerrar este <script>. --}}
 <script>
   window.APP = Object.freeze({
-    baseUrl: @json(rtrim(url('/'), '/')),
-    apiBase: @json(url('/api')),
-    basePath: @json(rtrim(parse_url(url('/'), PHP_URL_PATH) ?? '', '/')),
-    user: @json($usuarioSesion ? $usuarioSesion->paraFrontend() : null),
-    rolActivo: @json($usuarioSesion ? session(\App\Services\SesionUsuario::ROL_ACTIVO) : null),
-    rolesPendientes: @json($usuarioSesion ? [] : \App\Services\SesionUsuario::rolesPendientes(request())),
+    baseUrl: {{ \Illuminate\Support\Js::from(rtrim(url('/'), '/')) }},
+    apiBase: {{ \Illuminate\Support\Js::from(url('/api')) }},
+    basePath: {{ \Illuminate\Support\Js::from(rtrim(parse_url(url('/'), PHP_URL_PATH) ?? '', '/')) }},
+    user: {{ \Illuminate\Support\Js::from($usuarioSesion ? $usuarioSesion->paraFrontend() : null) }},
+    rolActivo: {{ \Illuminate\Support\Js::from($usuarioSesion ? session(\App\Services\SesionUsuario::ROL_ACTIVO) : null) }},
+    permisos: {{ \Illuminate\Support\Js::from($usuarioSesion ? \App\Support\Permisos::delRolActivo() : []) }},
+    rolesPendientes: {{ \Illuminate\Support\Js::from($usuarioSesion ? [] : \App\Services\SesionUsuario::rolesPendientes(request())) }},
   });
 </script>

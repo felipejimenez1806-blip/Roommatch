@@ -11,7 +11,8 @@ use Symfony\Component\HttpFoundation\Response;
 /**
  * Páginas de administración (/admin/*). Reemplaza a partials/admin-guard:
  *  - sin sesión -> /login
- *  - con sesión pero no activa como administrador -> /dashboard
+ *  - con sesión pero no activa como administrador -> /dashboard (o /moderador
+ *    si está navegando como moderador)
  *
  * Mira el rol ACTIVO de la sesión, no solo si el usuario tiene el rol
  * admin: un usuario con ambos roles puede estar navegando como cliente.
@@ -29,7 +30,8 @@ class ZonaAdmin
         }
 
         if (SesionUsuario::rolActivo() !== 'admin' || ! $usuario->esAdmin()) {
-            return redirect()->route('dashboard');
+            // Un moderador que entra a /admin vuelve a su propio panel.
+            return redirect()->route(SesionUsuario::rolActivo() === 'moderador' ? 'moderador' : 'dashboard');
         }
 
         $respuesta = $next($request);

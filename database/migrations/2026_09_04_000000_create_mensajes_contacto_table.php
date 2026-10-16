@@ -22,14 +22,16 @@ return new class extends Migration
             $table->unsignedInteger('id_usuario')->nullable()
                 ->comment('Remitente si tenía sesión iniciada. NULL = visitante sin cuenta');
             $table->unsignedInteger('id_administrador')->nullable()
-                ->comment('Admin que atendió el mensaje');
+                ->comment('Admin o moderador que atendió el mensaje');
             $table->string('nombre', 100);
             $table->string('correo', 150);
             $table->string('asunto', 30);
             $table->text('mensaje');
             $table->boolean('atendido')->default(false);
             $table->dateTime('fecha_atencion')->nullable()
-                ->comment('Cuándo lo atendió el administrador');
+                ->comment('Cuándo lo atendió el administrador o moderador');
+            $table->text('respuesta')->nullable()
+                ->comment('Texto de la respuesta enviada por correo al remitente. NULL = se marcó atendido sin responder por correo');
             $table->timestamps();
 
             $table->foreign('id_usuario', 'fk_contacto_usuario')

@@ -10,6 +10,7 @@
 
 import { API_BASE, appUrl } from "../core/config.js";
 import { requerirSesion, obtenerUsuario, cabecerasAutenticadas, manejarNoAutorizado } from "../core/auth.js";
+import { esc } from "../core/html.js";
 
 requerirSesion();
 const usuarioActual = obtenerUsuario();
@@ -72,7 +73,7 @@ async function cargarCitasRecibidas() {
 // ---------- RENDER PRINCIPAL ----------
 function render() {
   mpPage.innerHTML = `
-    <a class="mp-back-link" href="${appUrl('/dashboard')}">&larr; Volver al inicio</a>
+    <a class="mp-back-link" href="${esc(appUrl('/dashboard'))}">&larr; Volver al inicio</a>
     <h1 class="mp-title">Mis publicaciones</h1>
     <p class="mp-subtitle">Gestiona tus espacios y responde a las solicitudes que recibas</p>
 
@@ -98,7 +99,7 @@ function renderPublicaciones() {
     lista.innerHTML = `
       <div class="mp-empty">
         Todavía no has publicado ningún espacio.
-        <br/><a href="${appUrl('/crear-publicacion?tipo=espacio')}">Crear mi primera publicación</a>
+        <br/><a href="${esc(appUrl('/crear-publicacion?tipo=espacio'))}">Crear mi primera publicación</a>
       </div>`;
     return;
   }
@@ -112,45 +113,45 @@ function renderPublicaciones() {
     card.className = "mp-pub-card";
     card.innerHTML = `
       <div class="mp-pub-head">
-        <img class="mp-pub-img" src="${pub.img || ""}" alt="${pub.titulo}"/>
+        <img class="mp-pub-img" src="${esc(pub.img || "")}" alt="${esc(pub.titulo)}"/>
         <div class="mp-pub-body">
-          <p class="mp-pub-title">${pub.titulo}</p>
-          <p class="mp-pub-sub">${pub.tipo_espacio} · ${pub.zona}, ${pub.ciudad}</p>
-          <span class="mp-pub-price">${formatCOP(pub.precio)} / mes</span>
-          <select class="mp-estado-select is-${pub.estado_inmueble}" data-estado-select="${pub.id}">
+          <p class="mp-pub-title">${esc(pub.titulo)}</p>
+          <p class="mp-pub-sub">${esc(pub.tipo_espacio)} · ${esc(pub.zona)}, ${esc(pub.ciudad)}</p>
+          <span class="mp-pub-price">${esc(formatCOP(pub.precio))} / mes</span>
+          <select class="mp-estado-select is-${esc(pub.estado_inmueble)}" data-estado-select="${esc(pub.id)}">
             ${Object.entries(ETIQUETAS_ESTADO_INMUEBLE).map(([valor, etiqueta]) => `
-              <option value="${valor}"${pub.estado_inmueble === valor ? " selected" : ""}>${etiqueta}</option>
+              <option value="${esc(valor)}"${esc(pub.estado_inmueble === valor ? " selected" : "")}>${esc(etiqueta)}</option>
             `).join("")}
           </select>
         </div>
         <div class="mp-pub-actions">
-          <a class="mp-view-link" href="${appUrl(`/publicacion/${pub.id}`)}">Ver publicación</a>
-          <a class="mp-view-link" href="${appUrl(`/crear-publicacion?id=${pub.id}`)}">Editar</a>
-          <button type="button" class="mp-delete-btn" data-eliminar="${pub.id}">Eliminar</button>
+          <a class="mp-view-link" href="${esc(appUrl(`/publicacion/${pub.id}`))}">Ver publicación</a>
+          <a class="mp-view-link" href="${esc(appUrl(`/crear-publicacion?id=${pub.id}`))}">Editar</a>
+          <button type="button" class="mp-delete-btn" data-eliminar="${esc(pub.id)}">Eliminar</button>
         </div>
       </div>
 
       <div class="mp-requests">
-        <p class="mp-requests-title">Solicitudes de reserva (${solicitudes.length})</p>
+        <p class="mp-requests-title">Solicitudes de reserva (${esc(solicitudes.length)})</p>
         ${solicitudes.length
           ? solicitudes.map((reserva) => `
-            <div class="mp-request-row" id="request-reserva-${reserva.id}" data-request-row="${reserva.id}">
+            <div class="mp-request-row" id="request-reserva-${esc(reserva.id)}" data-request-row="${esc(reserva.id)}">
               <div class="mp-request-body">
-                <div class="mp-request-name">${reserva.contacto_nombre || "Sin nombre"}</div>
+                <div class="mp-request-name">${esc(reserva.contacto_nombre || "Sin nombre")}</div>
                 <div class="mp-request-meta">
-                  Visita: ${formatFechaCorta(reserva.fecha_visita)}${reserva.hora_visita ? ` · ${formatHora12(reserva.hora_visita)}` : ""}
-                  · ${ETIQUETAS_DURACION[reserva.duracion] || ""} · ${formatCOP(reserva.monto_total)}
+                  Visita: ${esc(formatFechaCorta(reserva.fecha_visita))}${esc(reserva.hora_visita ? ` · ${formatHora12(reserva.hora_visita)}` : "")}
+                  · ${esc(ETIQUETAS_DURACION[reserva.duracion] || "")} · ${esc(formatCOP(reserva.monto_total))}
                 </div>
                 <div class="mp-request-contact">
-                  ${reserva.contacto_correo ? `<a href="mailto:${reserva.contacto_correo}">${reserva.contacto_correo}</a>` : ""}
-                  ${reserva.contacto_telefono ? ` · ${reserva.contacto_telefono}` : ""}
+                  ${reserva.contacto_correo ? `<a href="mailto:${esc(reserva.contacto_correo)}">${esc(reserva.contacto_correo)}</a>` : ""}
+                  ${esc(reserva.contacto_telefono ? ` · ${reserva.contacto_telefono}` : "")}
                 </div>
               </div>
               <div class="mp-request-actions">
-                <span class="mp-badge is-${reserva.estado}" data-badge="${reserva.id}">${ETIQUETAS_BADGE[reserva.estado] || reserva.estado}</span>
+                <span class="mp-badge is-${esc(reserva.estado)}" data-badge="${esc(reserva.id)}">${esc(ETIQUETAS_BADGE[reserva.estado] || reserva.estado)}</span>
                 <div class="mp-request-buttons">
-                  <button type="button" class="mp-btn-mini is-aceptar${reserva.estado === "aceptada" ? " is-current" : ""}" data-accion="aceptada" data-id="${reserva.id}">Aceptar</button>
-                  <button type="button" class="mp-btn-mini is-rechazar${reserva.estado === "rechazada" ? " is-current" : ""}" data-accion="rechazada" data-id="${reserva.id}">Rechazar</button>
+                  <button type="button" class="mp-btn-mini is-aceptar${esc(reserva.estado === "aceptada" ? " is-current" : "")}" data-accion="aceptada" data-id="${esc(reserva.id)}">Aceptar</button>
+                  <button type="button" class="mp-btn-mini is-rechazar${esc(reserva.estado === "rechazada" ? " is-current" : "")}" data-accion="rechazada" data-id="${esc(reserva.id)}">Rechazar</button>
                 </div>
               </div>
             </div>`).join("")
@@ -210,10 +211,10 @@ function manejarCambioEstado(pub, nuevoEstado, selectEl) {
   overlay.innerHTML = `
     <div class="mp-modal">
       <div class="mp-modal-icon">⚠️</div>
-      <div class="mp-modal-title">¿Marcar "${pub.titulo}" como ${ETIQUETAS_ESTADO_INMUEBLE[nuevoEstado].toLowerCase()}?</div>
+      <div class="mp-modal-title">¿Marcar "${esc(pub.titulo)}" como ${esc(ETIQUETAS_ESTADO_INMUEBLE[nuevoEstado].toLowerCase())}?</div>
       <p class="mp-modal-text">
-        Tiene ${pendientes} solicitud${pendientes === 1 ? "" : "es"} de reserva pendiente${pendientes === 1 ? "" : "s"}.
-        Se rechazará${pendientes === 1 ? "" : "n"} automáticamente y se avisará a quien las envió.
+        Tiene ${esc(pendientes)} solicitud${esc(pendientes === 1 ? "" : "es")} de reserva pendiente${esc(pendientes === 1 ? "" : "s")}.
+        Se rechazará${esc(pendientes === 1 ? "" : "n")} automáticamente y se avisará a quien las envió.
       </p>
       <div class="mp-modal-buttons">
         <button type="button" class="mp-modal-btn-outline" id="mpEstadoMantenerBtn">Cancelar</button>
@@ -259,8 +260,8 @@ function confirmarEliminarPublicacion(pub, cantidadSolicitudes) {
       <div class="mp-modal-icon">🗑️</div>
       <div class="mp-modal-title">¿Eliminar esta publicación?</div>
       <p class="mp-modal-text">
-        "${pub.titulo}" dejará de verse en el inicio.
-        ${cantidadSolicitudes ? `Tiene ${cantidadSolicitudes} solicitud${cantidadSolicitudes === 1 ? "" : "es"} de reserva asociada${cantidadSolicitudes === 1 ? "" : "s"} pendiente${cantidadSolicitudes === 1 ? "" : "s"}, que se rechazarán automáticamente y se avisará a quien las envió.` : "Esta acción no se puede deshacer."}
+        "${esc(pub.titulo)}" dejará de verse en el inicio.
+        ${esc(cantidadSolicitudes ? `Tiene ${cantidadSolicitudes} solicitud${cantidadSolicitudes === 1 ? "" : "es"} de reserva asociada${cantidadSolicitudes === 1 ? "" : "s"} pendiente${cantidadSolicitudes === 1 ? "" : "s"}, que se rechazarán automáticamente y se avisará a quien las envió.` : "Esta acción no se puede deshacer.")}
       </p>
       <div class="mp-modal-buttons">
         <button type="button" class="mp-modal-btn-outline" id="mpMantenerBtn">Cancelar</button>
@@ -292,7 +293,7 @@ function renderRoomie() {
     bloque.innerHTML = `
       <div class="mp-empty">
         Todavía no te has publicado como roomie.
-        <br/><a href="${appUrl('/crear-perfil-roomie')}">Crear mi perfil de roomie</a>
+        <br/><a href="${esc(appUrl('/crear-perfil-roomie'))}">Crear mi perfil de roomie</a>
       </div>`;
     return;
   }
@@ -300,45 +301,45 @@ function renderRoomie() {
   bloque.innerHTML = `
     <div class="mp-pub-card">
       <div class="mp-pub-head">
-        <img class="mp-pub-img" src="${miPerfilRoomie.img || ""}" alt="${usuarioActual.nombre || "Mi perfil"}"/>
+        <img class="mp-pub-img" src="${esc(miPerfilRoomie.img || "")}" alt="${esc(usuarioActual.nombre || "Mi perfil")}"/>
         <div class="mp-pub-body">
-          <p class="mp-pub-title">${usuarioActual.nombre || "Mi perfil de roomie"}</p>
-          <p class="mp-pub-sub">${miPerfilRoomie.zona || ""}${miPerfilRoomie.zona && miPerfilRoomie.ciudad ? ", " : ""}${miPerfilRoomie.ciudad || ""}</p>
-          <select class="mp-estado-select is-${miPerfilRoomie.estado_busqueda}" id="mpEstadoRoomieSelect">
+          <p class="mp-pub-title">${esc(usuarioActual.nombre || "Mi perfil de roomie")}</p>
+          <p class="mp-pub-sub">${esc(miPerfilRoomie.zona || "")}${esc(miPerfilRoomie.zona && miPerfilRoomie.ciudad ? ", " : "")}${esc(miPerfilRoomie.ciudad || "")}</p>
+          <select class="mp-estado-select is-${esc(miPerfilRoomie.estado_busqueda)}" id="mpEstadoRoomieSelect">
             ${Object.entries(ETIQUETAS_ESTADO_BUSQUEDA).map(([valor, etiqueta]) => `
-              <option value="${valor}"${miPerfilRoomie.estado_busqueda === valor ? " selected" : ""}>${etiqueta}</option>
+              <option value="${esc(valor)}"${esc(miPerfilRoomie.estado_busqueda === valor ? " selected" : "")}>${esc(etiqueta)}</option>
             `).join("")}
           </select>
         </div>
         <div class="mp-pub-actions">
-          <a class="mp-view-link" href="${appUrl(`/roomie/${miPerfilRoomie.id}`)}">Ver perfil</a>
-          <a class="mp-view-link" href="${appUrl('/crear-perfil-roomie')}">Editar</a>
+          <a class="mp-view-link" href="${esc(appUrl(`/roomie/${miPerfilRoomie.id}`))}">Ver perfil</a>
+          <a class="mp-view-link" href="${esc(appUrl('/crear-perfil-roomie'))}">Editar</a>
           <button type="button" class="mp-delete-btn" id="mpEliminarRoomieBtn">Eliminar</button>
         </div>
       </div>
 
       <div class="mp-requests">
-        <p class="mp-requests-title">Solicitudes de cita (${citasRecibidas.length})</p>
+        <p class="mp-requests-title">Solicitudes de cita (${esc(citasRecibidas.length)})</p>
         ${citasRecibidas.length
           ? citasRecibidas.map((cita) => `
-            <div class="mp-request-row" id="request-cita-${cita.id}" data-request-row="${cita.id}">
+            <div class="mp-request-row" id="request-cita-${esc(cita.id)}" data-request-row="${esc(cita.id)}">
               <div class="mp-request-body">
-                <div class="mp-request-name">${cita.solicitante || "Sin nombre"}</div>
+                <div class="mp-request-name">${esc(cita.solicitante || "Sin nombre")}</div>
                 <div class="mp-request-meta">
-                  Cita: ${formatFechaCorta(cita.fecha_cita)}${cita.hora_cita ? ` · ${formatHora12(cita.hora_cita)}` : ""}
-                  · ${ETIQUETAS_TIPO_ENCUENTRO[cita.tipo_encuentro] || ""} · ${cita.lugar_encuentro || ""}
+                  Cita: ${esc(formatFechaCorta(cita.fecha_cita))}${esc(cita.hora_cita ? ` · ${formatHora12(cita.hora_cita)}` : "")}
+                  · ${esc(ETIQUETAS_TIPO_ENCUENTRO[cita.tipo_encuentro] || "")} · ${esc(cita.lugar_encuentro || "")}
                 </div>
-                ${cita.mensaje ? `<div class="mp-request-contact">"${cita.mensaje}"</div>` : ""}
+                ${cita.mensaje ? `<div class="mp-request-contact">"${esc(cita.mensaje)}"</div>` : ""}
                 <div class="mp-request-contact">
-                  ${cita.contactoCorreo ? `<a href="mailto:${cita.contactoCorreo}">${cita.contactoCorreo}</a>` : ""}
-                  ${cita.contactoTelefono ? ` · ${cita.contactoTelefono}` : ""}
+                  ${cita.contactoCorreo ? `<a href="mailto:${esc(cita.contactoCorreo)}">${esc(cita.contactoCorreo)}</a>` : ""}
+                  ${esc(cita.contactoTelefono ? ` · ${cita.contactoTelefono}` : "")}
                 </div>
               </div>
               <div class="mp-request-actions">
-                <span class="mp-badge is-${cita.estado}" data-badge="${cita.id}">${ETIQUETAS_BADGE[cita.estado] || cita.estado}</span>
+                <span class="mp-badge is-${esc(cita.estado)}" data-badge="${esc(cita.id)}">${esc(ETIQUETAS_BADGE[cita.estado] || cita.estado)}</span>
                 <div class="mp-request-buttons">
-                  <button type="button" class="mp-btn-mini is-aceptar${cita.estado === "aceptada" ? " is-current" : ""}" data-accion-cita="aceptada" data-id="${cita.id}">Aceptar</button>
-                  <button type="button" class="mp-btn-mini is-rechazar${cita.estado === "rechazada" ? " is-current" : ""}" data-accion-cita="rechazada" data-id="${cita.id}">Rechazar</button>
+                  <button type="button" class="mp-btn-mini is-aceptar${esc(cita.estado === "aceptada" ? " is-current" : "")}" data-accion-cita="aceptada" data-id="${esc(cita.id)}">Aceptar</button>
+                  <button type="button" class="mp-btn-mini is-rechazar${esc(cita.estado === "rechazada" ? " is-current" : "")}" data-accion-cita="rechazada" data-id="${esc(cita.id)}">Rechazar</button>
                 </div>
               </div>
             </div>`).join("")
@@ -392,10 +393,10 @@ function manejarCambioEstadoRoomie(nuevoEstado, selectEl) {
   overlay.innerHTML = `
     <div class="mp-modal">
       <div class="mp-modal-icon">⚠️</div>
-      <div class="mp-modal-title">¿Marcar tu perfil como ${ETIQUETAS_ESTADO_BUSQUEDA[nuevoEstado].toLowerCase()}?</div>
+      <div class="mp-modal-title">¿Marcar tu perfil como ${esc(ETIQUETAS_ESTADO_BUSQUEDA[nuevoEstado].toLowerCase())}?</div>
       <p class="mp-modal-text">
-        Tienes ${pendientes} solicitud${pendientes === 1 ? "" : "es"} de cita pendiente${pendientes === 1 ? "" : "s"}.
-        Se rechazará${pendientes === 1 ? "" : "n"} automáticamente y se avisará a quien las envió.
+        Tienes ${esc(pendientes)} solicitud${esc(pendientes === 1 ? "" : "es")} de cita pendiente${esc(pendientes === 1 ? "" : "s")}.
+        Se rechazará${esc(pendientes === 1 ? "" : "n")} automáticamente y se avisará a quien las envió.
       </p>
       <div class="mp-modal-buttons">
         <button type="button" class="mp-modal-btn-outline" id="mpEstadoRoomieMantenerBtn">Cancelar</button>
@@ -426,7 +427,7 @@ function confirmarEliminarPerfilRoomie(cantidadCitas) {
       <div class="mp-modal-title">¿Eliminar tu perfil de roomie?</div>
       <p class="mp-modal-text">
         Dejarás de aparecer en la búsqueda de roomies.
-        ${cantidadCitas ? `Tiene ${cantidadCitas} solicitud${cantidadCitas === 1 ? "" : "es"} de cita asociada${cantidadCitas === 1 ? "" : "s"} pendiente${cantidadCitas === 1 ? "" : "s"}, que se rechazarán automáticamente y se avisará a quien las envió.` : "Esta acción no se puede deshacer."}
+        ${esc(cantidadCitas ? `Tiene ${cantidadCitas} solicitud${cantidadCitas === 1 ? "" : "es"} de cita asociada${cantidadCitas === 1 ? "" : "s"} pendiente${cantidadCitas === 1 ? "" : "s"}, que se rechazarán automáticamente y se avisará a quien las envió.` : "Esta acción no se puede deshacer.")}
       </p>
       <div class="mp-modal-buttons">
         <button type="button" class="mp-modal-btn-outline" id="mpRoomieMantenerBtn">Cancelar</button>

@@ -1,4 +1,5 @@
 import { API_BASE, appUrl } from "../core/config.js";
+import { esc } from "../core/html.js";
 
 const RESULTADOS_POR_PAGINA = 6;
 
@@ -72,18 +73,18 @@ async function cargarResultados() {
     lista.innerHTML = data.map((item) => `
       <div class="room-card">
         <div class="room-card-img-wrap">
-          <img src="${item.img}" alt="${item.tipo_espacio} en ${item.zona}"/>
-          <span class="room-card-badge">${item.rating}</span>
+          <img src="${esc(item.img)}" alt="${esc(item.tipo_espacio)} en ${esc(item.zona)}"/>
+          <span class="room-card-badge">${esc(item.rating)}</span>
         </div>
         <div class="room-card-body">
-          <div class="room-card-type">${item.tipo_espacio}</div>
-          <div class="room-card-zone">${item.zona}, ${item.ciudad}</div>
+          <div class="room-card-type">${esc(item.tipo_espacio)}</div>
+          <div class="room-card-zone">${esc(item.zona)}, ${esc(item.ciudad)}</div>
           <div class="room-card-tags">
-            ${item.tags.map((t) => `<span class="room-card-tag">${t}</span>`).join("")}
+            ${item.tags.map((t) => `<span class="room-card-tag">${esc(t)}</span>`).join("")}
           </div>
           <div class="room-card-footer">
-            <div class="room-card-price">${formatCOP(item.precio)}<span>por mes</span></div>
-            <a class="room-card-btn" href="${appUrl(`/publicacion/${item.id}`)}">Ver publicación</a>
+            <div class="room-card-price">${esc(formatCOP(item.precio))}<span>por mes</span></div>
+            <a class="room-card-btn" href="${esc(appUrl(`/publicacion/${item.id}`))}">Ver publicación</a>
           </div>
         </div>
       </div>`).join("");

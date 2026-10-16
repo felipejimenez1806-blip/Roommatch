@@ -41,6 +41,46 @@ document.getElementById("admLogoutBtn").addEventListener("click", () => {
   window.RoommatchNav.cerrarSesion();
 });
 
+// ------------------------------------------------------------
+// Helpers de la Fase "moderador"
+// ------------------------------------------------------------
+
+// Todo texto que escribe un usuario y se pinta con innerHTML debe pasar por
+// esc(). Aquí se aplica en las secciones de Reportes, Mensajes y Auditoría.
+function esc(valor) {
+  return String(valor ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+// Petición para ACCIONES (resolver, escalar, responder...). A diferencia del
+// manejarNoAutorizado de arriba, un 403 NO expulsa al dashboard: ahora una
+// Policy puede negar una acción concreta (p. ej. "este reporte ya fue
+// gestionado") sin que la cuenta haya perdido el rol; se muestra su mensaje.
+// Devuelve { ok, status, datos } o null si la sesión venció.
+async function peticionAccion(ruta, { metodo = "PATCH", cuerpo } = {}) {
+  const respuesta = await fetch(`${API_BASE}${ruta}`, {
+    method: metodo,
+    credentials: "same-origin",
+    headers: cabecerasAutenticadas(cuerpo !== undefined),
+    ...(cuerpo !== undefined ? { body: JSON.stringify(cuerpo) } : {}),
+  });
+  if (manejarSesionInvalida(respuesta)) return null;
+  const datos = await respuesta.json().catch(() => ({}));
+  return { ok: respuesta.ok, status: respuesta.status, datos };
+}
+
+function textoError(res, porDefecto) {
+  if (res?.datos?.errors) {
+    const primero = Object.values(res.datos.errors)[0];
+    if (Array.isArray(primero) && primero[0]) return primero[0];
+  }
+  return res?.datos?.mensaje || porDefecto;
+}
+
 // ============================================================
 // "USAR TAMBIÉN COMO CLIENTE" (Fase 4 - ajuste)
 // ------------------------------------------------------------
@@ -71,6 +111,27 @@ function inicializarUsarComoClienteAdmin() {
   btn.addEventListener("click", () => window.RoommatchNav.abrirModalUsarComoCliente());
 }
 inicializarUsarComoClienteAdmin();
+
+// "Cambiar de rol" (Ingresar como…) para quien tiene más de un rol: el
+// navbar de cliente no existe en /admin, así que se inyecta aquí y se
+// reutiliza el modal de nav.js (pide contraseña al pasar a moderador).
+function inicializarCambiarRolAdmin() {
+  if ((usuarioActual.roles || []).length < 2) return;
+
+  const logoutBtn = document.getElementById("admLogoutBtn");
+  if (!logoutBtn || !window.RoommatchNav?.abrirModalCambiarRol) return;
+
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.id = "admCambiarRolBtn";
+  btn.className = logoutBtn.className;
+  btn.textContent = "Cambiar de rol";
+  btn.style.marginBottom = "8px";
+
+  logoutBtn.insertAdjacentElement("beforebegin", btn);
+  btn.addEventListener("click", () => window.RoommatchNav.abrirModalCambiarRol());
+}
+inicializarCambiarRolAdmin();
 
 // ============================================================
 // HELPERS GENERALES
@@ -159,19 +220,33 @@ async function renderUsuarios() {
   empty.hidden = true;
 
   body.innerHTML = lista.map((u) => {
-    const avatar = u.fotoPerfil ? `<img src="${u.fotoPerfil}" alt="${u.nombre}"/>` : inicial(u.nombre);
-    const esAdmin = u.tipoUsuario === "admin";
-    const tipoClase = esAdmin ? "is-admin" : "is-cliente";
-    const tipoLabel = esAdmin ? "Administrador" : "Cliente";
+    const avatar = u.fotoPerfil ? `<img src="${esc(u.fotoPerfil)}" alt="${esc(u.nombre)}"/>` : esc(inicial(u.nombre));
+    const roles = u.roles || [];
+    const esAdmin = roles.includes("admin");
+    const esModerador = roles.includes("moderador");
+    const nombreAttr = esc(u.nombre);
 
-    // Fase 3: promover/revocar admin. Un admin nunca se puede bloquear
-    // (ver UsuarioController::bloquear), así que esa fila solo ofrece
-    // "Revocar admin"; una fila que no es admin ofrece "Promover a
-    // admin" además del bloquear/desbloquear de siempre.
+    // Una cuenta puede tener varios roles a la vez: un badge por cada uno.
+    const badgesRol = [
+      esAdmin ? `<span class="adm-tipo-badge is-admin">Administrador</span>` : "",
+      esModerador ? `<span class="adm-tipo-badge is-moderador">Moderador</span>` : "",
+      roles.includes("cliente") ? `<span class="adm-tipo-badge is-cliente">Cliente</span>` : "",
+    ].join(" ");
+
+    // Promover/revocar admin (Fase 3) y moderador. Un admin nunca se puede
+    // bloquear (ver UsuarioController::bloquear), así que su fila no ofrece
+    // bloquear. Solo los administradores ven este panel, y el servidor
+    // vuelve a exigir el permiso en cada una de estas rutas.
+    const botonModerador = esModerador
+      ? `<button type="button" class="adm-row-btn" data-revocar-mod="${u.id}" data-nombre="${nombreAttr}">Revocar moderador</button>`
+      : `<button type="button" class="adm-row-btn" data-promover-mod="${u.id}" data-nombre="${nombreAttr}">Promover a moderador</button>`;
+
     const accionesHtml = esAdmin
-      ? `<button type="button" class="adm-row-btn is-danger" data-revocar-admin="${u.id}" data-nombre="${u.nombre}">Revocar admin</button>`
-      : `<button type="button" class="adm-row-btn" data-promover-admin="${u.id}" data-nombre="${u.nombre}">Promover a admin</button>
-         <button type="button" class="adm-row-btn ${u.bloqueado ? "" : "is-danger"}" data-toggle-bloqueo="${u.id}" data-bloqueado="${u.bloqueado}" data-nombre="${u.nombre}">
+      ? `${botonModerador}
+         <button type="button" class="adm-row-btn is-danger" data-revocar-admin="${u.id}" data-nombre="${nombreAttr}">Revocar admin</button>`
+      : `${botonModerador}
+         <button type="button" class="adm-row-btn" data-promover-admin="${u.id}" data-nombre="${nombreAttr}">Promover a admin</button>
+         <button type="button" class="adm-row-btn ${u.bloqueado ? "" : "is-danger"}" data-toggle-bloqueo="${u.id}" data-bloqueado="${u.bloqueado}" data-nombre="${nombreAttr}">
            ${u.bloqueado ? "Desbloquear" : "Bloquear"}
          </button>`;
 
@@ -180,12 +255,12 @@ async function renderUsuarios() {
         <td data-label="Usuario">
           <div class="adm-user-cell">
             <span class="adm-user-avatar">${avatar}</span>
-            <span class="adm-user-name">${u.nombre || "Sin nombre"}</span>
+            <span class="adm-user-name">${esc(u.nombre || "Sin nombre")}</span>
           </div>
         </td>
-        <td data-label="Correo">${u.email || "—"}</td>
-        <td data-label="Tipo"><span class="adm-tipo-badge ${tipoClase}">${tipoLabel}</span></td>
-        <td data-label="Teléfono">${u.telefono || "—"}</td>
+        <td data-label="Correo">${esc(u.email || "—")}</td>
+        <td data-label="Tipo">${badgesRol}</td>
+        <td data-label="Teléfono">${esc(u.telefono || "—")}</td>
         <td data-label="Estado">
           <span class="prf-badge ${u.bloqueado ? "is-bloqueado" : "is-activo"}">${u.bloqueado ? "Bloqueado" : "Activo"}</span>
         </td>
@@ -214,6 +289,16 @@ async function renderUsuarios() {
       confirmarRevocarAdmin(Number(btn.dataset.revocarAdmin), btn.dataset.nombre);
     });
   });
+  body.querySelectorAll("[data-promover-mod]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      abrirModalPromoverModerador(Number(btn.dataset.promoverMod), btn.dataset.nombre);
+    });
+  });
+  body.querySelectorAll("[data-revocar-mod]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      confirmarRevocarModerador(Number(btn.dataset.revocarMod), btn.dataset.nombre);
+    });
+  });
 }
 
 async function desbloquearUsuario(id, nombre) {
@@ -227,7 +312,7 @@ async function desbloquearUsuario(id, nombre) {
 function abrirModalBloqueo(id, nombre) {
   abrirModal(`
     <button class="adm-modal-close" type="button" id="admModalCloseBtn">&times;</button>
-    <p class="adm-modal-title">Bloquear a ${nombre}</p>
+    <p class="adm-modal-title">Bloquear a ${esc(nombre)}</p>
     <textarea class="adm-modal-textarea" id="admMotivoBloqueo" placeholder="Motivo del bloqueo (ej. incumplimiento de las normas de la comunidad)..."></textarea>
     <div class="adm-modal-buttons">
       <button type="button" class="adm-row-btn" id="admCancelarBloqueo">Cancelar</button>
@@ -256,7 +341,7 @@ function abrirModalBloqueo(id, nombre) {
 function abrirModalPromoverAdmin(id, nombre) {
   abrirModal(`
     <button class="adm-modal-close" type="button" id="admModalCloseBtn">&times;</button>
-    <p class="adm-modal-title">Promover a ${nombre}</p>
+    <p class="adm-modal-title">Promover a ${esc(nombre)}</p>
     <p class="adm-modal-sub">Tendrá acceso completo al panel de administración. Confirma tu propia contraseña para autorizar esta acción.</p>
     <input type="password" class="adm-modal-textarea" id="admPasswordActualPromover" style="min-height:auto;" placeholder="Tu contraseña actual" autocomplete="off"/>
     <p class="admcta-error" id="admPromoverError" style="color:#c0261c;font-size:12.5px;margin:-8px 0 12px;"></p>
@@ -294,7 +379,7 @@ function abrirModalPromoverAdmin(id, nombre) {
 function confirmarRevocarAdmin(id, nombre) {
   abrirModal(`
     <button class="adm-modal-close" type="button" id="admModalCloseBtn">&times;</button>
-    <p class="adm-modal-title">¿Revocar el rol de administrador a ${nombre}?</p>
+    <p class="adm-modal-title">¿Revocar el rol de administrador a ${esc(nombre)}?</p>
     <p class="adm-modal-sub">Dejará de tener acceso al panel de administración.</p>
     <div class="adm-modal-buttons">
       <button type="button" class="adm-row-btn" id="admCancelarRevocar">Cancelar</button>
@@ -318,6 +403,63 @@ function confirmarRevocarAdmin(id, nombre) {
     mostrarToast(datos.mensaje || `Se revocó el rol de administrador a ${nombre}.`);
     renderUsuarios();
     renderResumen();
+  });
+}
+
+// ---------- Promover / revocar moderador ----------
+
+function abrirModalPromoverModerador(id, nombre) {
+  abrirModal(`
+    <button class="adm-modal-close" type="button" id="admModalCloseBtn">&times;</button>
+    <p class="adm-modal-title">Promover a ${esc(nombre)} a moderador</p>
+    <p class="adm-modal-sub">Podrá resolver reportes, bajar publicaciones y responder mensajes de contacto desde su propio panel. No podrá bloquear usuarios ni asignar roles. Conserva sus demás roles. Confirma tu contraseña para autorizar esta acción.</p>
+    <input type="password" class="adm-modal-textarea" id="admPasswordPromoverMod" style="min-height:auto;" placeholder="Tu contraseña actual" autocomplete="off"/>
+    <p class="admcta-error" id="admPromoverModError" style="color:#c0261c;font-size:12.5px;margin:-8px 0 12px;"></p>
+    <div class="adm-modal-buttons">
+      <button type="button" class="adm-row-btn" id="admCancelarPromoverMod">Cancelar</button>
+      <button type="button" class="adm-row-btn is-primary" id="admConfirmarPromoverMod">Promover a moderador</button>
+    </div>
+  `);
+  document.getElementById("admModalCloseBtn").addEventListener("click", cerrarModal);
+  document.getElementById("admCancelarPromoverMod").addEventListener("click", cerrarModal);
+  document.getElementById("admConfirmarPromoverMod").addEventListener("click", async () => {
+    const errorEl = document.getElementById("admPromoverModError");
+    const res = await peticionAccion(`/admin/usuarios/${id}/promover-moderador`, {
+      cuerpo: { password_actual: document.getElementById("admPasswordPromoverMod").value },
+    });
+    if (!res) return;
+    if (!res.ok) {
+      errorEl.textContent = textoError(res, "No se pudo promover al usuario.");
+      return;
+    }
+    cerrarModal();
+    mostrarToast(res.datos.mensaje || `${nombre} ahora es moderador.`);
+    renderUsuarios();
+    renderResumen();
+    renderAuditoria();
+  });
+}
+
+function confirmarRevocarModerador(id, nombre) {
+  abrirModal(`
+    <button class="adm-modal-close" type="button" id="admModalCloseBtn">&times;</button>
+    <p class="adm-modal-title">¿Revocar el rol de moderador a ${esc(nombre)}?</p>
+    <p class="adm-modal-sub">Dejará de tener acceso al panel de moderación. Sus demás roles no cambian.</p>
+    <div class="adm-modal-buttons">
+      <button type="button" class="adm-row-btn" id="admCancelarRevocarMod">Cancelar</button>
+      <button type="button" class="adm-row-btn is-danger" id="admConfirmarRevocarMod">Sí, revocar</button>
+    </div>
+  `);
+  document.getElementById("admModalCloseBtn").addEventListener("click", cerrarModal);
+  document.getElementById("admCancelarRevocarMod").addEventListener("click", cerrarModal);
+  document.getElementById("admConfirmarRevocarMod").addEventListener("click", async () => {
+    const res = await peticionAccion(`/admin/usuarios/${id}/revocar-moderador`);
+    if (!res) return;
+    cerrarModal();
+    mostrarToast(res.ok ? (res.datos.mensaje || `Se revocó el rol de moderador a ${nombre}.`) : textoError(res, "No se pudo revocar el rol."));
+    renderUsuarios();
+    renderResumen();
+    renderAuditoria();
   });
 }
 
@@ -367,20 +509,20 @@ async function renderPublicaciones() {
 
   grid.innerHTML = lista.map((p) => `
     <div class="adm-pub-card">
-      <img class="adm-pub-img" src="${p.img || ""}" alt="${p.titulo}"/>
+      <img class="adm-pub-img" src="${esc(p.img || "")}" alt="${esc(p.titulo)}"/>
       <div class="adm-pub-body">
         <div class="adm-pub-title">
-          ${p.titulo}
+          ${esc(p.titulo)}
           ${p.eliminada ? `<span class="prf-badge is-bloqueado" style="margin-left:6px;">Eliminada</span>` : ""}
         </div>
-        <div class="adm-pub-sub">${p.zona} · ${p.ciudad} · ★ ${p.rating ?? "—"}</div>
+        <div class="adm-pub-sub">${esc(p.zona)} · ${esc(p.ciudad)} · ★ ${esc(p.rating ?? "—")}</div>
         <div class="adm-pub-price">${formatCOP(p.precio)}</div>
-        <div class="adm-pub-owner">Propietario: ${p.propietario || "—"}</div>
+        <div class="adm-pub-owner">Propietario: ${esc(p.propietario || "—")}</div>
         <div class="adm-pub-actions">
           ${p.eliminada
-            ? `<button type="button" class="adm-row-btn is-primary" data-restaurar-pub="${p.id}">Restaurar</button>`
-            : `<button type="button" class="adm-row-btn" data-ver-pub="${p.id}">Ver detalle</button>
-               <button type="button" class="adm-row-btn is-danger" data-eliminar-pub="${p.id}" data-titulo="${p.titulo}">Eliminar</button>`}
+            ? `<button type="button" class="adm-row-btn is-primary" data-restaurar-pub="${esc(p.id)}">Restaurar</button>`
+            : `<button type="button" class="adm-row-btn" data-ver-pub="${esc(p.id)}">Ver detalle</button>
+               <button type="button" class="adm-row-btn is-danger" data-eliminar-pub="${esc(p.id)}" data-titulo="${esc(p.titulo)}">Eliminar</button>`}
         </div>
       </div>
     </div>`).join("");
@@ -420,22 +562,22 @@ async function abrirModalPublicacion(id) {
 
   abrirModal(`
     <button class="adm-modal-close" type="button" id="admModalCloseBtn">&times;</button>
-    <p class="adm-modal-title">${p.titulo}</p>
-    <p class="adm-modal-sub">${p.direccion || ""} · ${p.zona}, ${p.ciudad}</p>
-    <img class="adm-modal-img" src="${(p.imagenes && p.imagenes[0]) || ""}" alt="${p.titulo}"/>
+    <p class="adm-modal-title">${esc(p.titulo)}</p>
+    <p class="adm-modal-sub">${esc(p.direccion || "")} · ${esc(p.zona)}, ${esc(p.ciudad)}</p>
+    <img class="adm-modal-img" src="${esc((p.imagenes && p.imagenes[0]) || "")}" alt="${esc(p.titulo)}"/>
     <dl class="adm-modal-grid">
       <dt>Precio</dt><dd>${formatCOP(p.precio)}</dd>
-      <dt>Tipo de espacio</dt><dd>${p.tipo_espacio || "—"}</dd>
-      <dt>Propietario</dt><dd>${p.propietario?.nombre || "—"}</dd>
-      <dt>Correo</dt><dd>${p.propietario?.correo || "—"}</dd>
-      <dt>Rating</dt><dd>★ ${p.rating ?? "—"} (${(p.resenas || []).length} reseñas)</dd>
-      <dt>Disponible desde</dt><dd>${p.fecha_disponible || "—"}</dd>
-      <dt>Amueblado</dt><dd>${c.amueblado ? "Sí" : "No"}</dd>
-      <dt>Baño privado</dt><dd>${c.bano_privado ? "Sí" : "No"}</dd>
-      <dt>Ambiente</dt><dd>${c.ambiente_hogar || "—"}</dd>
-      <dt>Nº habitantes</dt><dd>${c.numero_habitantes ?? "—"}</dd>
+      <dt>Tipo de espacio</dt><dd>${esc(p.tipo_espacio || "—")}</dd>
+      <dt>Propietario</dt><dd>${esc(p.propietario?.nombre || "—")}</dd>
+      <dt>Correo</dt><dd>${esc(p.propietario?.correo || "—")}</dd>
+      <dt>Rating</dt><dd>★ ${esc(p.rating ?? "—")} (${esc((p.resenas || []).length)} reseñas)</dd>
+      <dt>Disponible desde</dt><dd>${esc(p.fecha_disponible || "—")}</dd>
+      <dt>Amueblado</dt><dd>${esc(c.amueblado ? "Sí" : "No")}</dd>
+      <dt>Baño privado</dt><dd>${esc(c.bano_privado ? "Sí" : "No")}</dd>
+      <dt>Ambiente</dt><dd>${esc(c.ambiente_hogar || "—")}</dd>
+      <dt>Nº habitantes</dt><dd>${esc(c.numero_habitantes ?? "—")}</dd>
     </dl>
-    <p style="font-size:13.5px;color:#555;line-height:1.5;margin:0 0 18px;">${p.descripcion || ""}</p>
+    <p style="font-size:13.5px;color:#555;line-height:1.5;margin:0 0 18px;">${esc(p.descripcion || "")}</p>
     <div class="adm-modal-buttons">
       <button type="button" class="adm-row-btn" id="admCerrarDetallePub">Cerrar</button>
       <button type="button" class="adm-row-btn is-danger" id="admEliminarDesdeModal">Eliminar publicación</button>
@@ -453,7 +595,9 @@ function confirmarEliminarPublicacion(id, titulo) {
   abrirModal(`
     <button class="adm-modal-close" type="button" id="admModalCloseBtn">&times;</button>
     <p class="adm-modal-title">¿Eliminar esta publicación?</p>
-    <p class="adm-modal-sub">"${titulo}" dejará de verse en el sitio. El registro no se borra de la base de datos: puedes restaurarla después desde el filtro "Eliminadas" si fue un error.</p>
+    <p class="adm-modal-sub">"${esc(titulo)}" dejará de verse en el sitio y el propietario recibirá una notificación. El registro no se borra de la base de datos: puedes restaurarla después desde el filtro "Eliminadas" si fue un error.</p>
+    <textarea class="adm-modal-textarea" id="admMotivoEliminarPub" maxlength="255" placeholder="Motivo (opcional). Lo verá el propietario y queda en la auditoría."></textarea>
+    <p class="adm-modal-sub" id="admEliminarPubError" style="color:#c0261c;min-height:15px;margin-top:-6px;"></p>
     <div class="adm-modal-buttons">
       <button type="button" class="adm-row-btn" id="admCancelarEliminarPub">Cancelar</button>
       <button type="button" class="adm-row-btn is-danger" id="admConfirmarEliminarPub">Sí, eliminar</button>
@@ -462,13 +606,22 @@ function confirmarEliminarPublicacion(id, titulo) {
   document.getElementById("admModalCloseBtn").addEventListener("click", cerrarModal);
   document.getElementById("admCancelarEliminarPub").addEventListener("click", cerrarModal);
   document.getElementById("admConfirmarEliminarPub").addEventListener("click", async () => {
-    const respuesta = await fetch(`${API_BASE}/admin/publicaciones/${id}`, { method: "DELETE", headers: cabecerasAutenticadas(false) });
-    if (manejarNoAutorizado(respuesta)) return;
+    const motivo = document.getElementById("admMotivoEliminarPub").value.trim();
+    const res = await peticionAccion(`/admin/publicaciones/${id}`, {
+      metodo: "DELETE",
+      cuerpo: motivo ? { motivo } : {},
+    });
+    if (!res) return;
+    if (!res.ok) {
+      document.getElementById("admEliminarPubError").textContent = textoError(res, "No se pudo eliminar la publicación.");
+      return;
+    }
     cerrarModal();
     mostrarToast("Publicación eliminada.");
     renderPublicaciones();
     renderResumen();
     renderReportes();
+    renderAuditoria();
   });
 }
 
@@ -525,20 +678,20 @@ async function renderRoomies() {
 
   grid.innerHTML = lista.map((p) => `
     <div class="adm-pub-card">
-      <img class="adm-pub-img" src="${p.img || ""}" alt="${p.nombre}"/>
+      <img class="adm-pub-img" src="${esc(p.img || "")}" alt="${esc(p.nombre)}"/>
       <div class="adm-pub-body">
         <div class="adm-pub-title">
-          ${p.nombre}
+          ${esc(p.nombre)}
           ${p.eliminado ? `<span class="prf-badge is-bloqueado" style="margin-left:6px;">Eliminado</span>` : ""}
         </div>
-        <div class="adm-pub-sub">${p.ocupacion} · ${p.zona}, ${p.ciudad} · ★ ${p.rating ?? "—"}</div>
+        <div class="adm-pub-sub">${esc(p.ocupacion)} · ${esc(p.zona)}, ${esc(p.ciudad)} · ★ ${esc(p.rating ?? "—")}</div>
         <div class="adm-pub-price">${formatCOP(p.presupuesto)}</div>
-        <div class="adm-pub-owner">Edad: ${p.edad ?? "—"}</div>
+        <div class="adm-pub-owner">Edad: ${esc(p.edad ?? "—")}</div>
         <div class="adm-pub-actions">
           ${p.eliminado
-            ? `<button type="button" class="adm-row-btn is-primary" data-restaurar-roomie="${p.id}">Restaurar</button>`
-            : `<button type="button" class="adm-row-btn" data-ver-roomie="${p.id}">Ver perfil</button>
-               <button type="button" class="adm-row-btn is-danger" data-eliminar-roomie="${p.id}" data-nombre="${p.nombre}">Eliminar</button>`}
+            ? `<button type="button" class="adm-row-btn is-primary" data-restaurar-roomie="${esc(p.id)}">Restaurar</button>`
+            : `<button type="button" class="adm-row-btn" data-ver-roomie="${esc(p.id)}">Ver perfil</button>
+               <button type="button" class="adm-row-btn is-danger" data-eliminar-roomie="${esc(p.id)}" data-nombre="${esc(p.nombre)}">Eliminar</button>`}
         </div>
       </div>
     </div>`).join("");
@@ -589,22 +742,22 @@ async function abrirModalRoomie(id) {
 
   abrirModal(`
     <button class="adm-modal-close" type="button" id="admModalCloseBtn">&times;</button>
-    <p class="adm-modal-title">${p.nombre}</p>
-    <p class="adm-modal-sub">${p.ocupacion} · ${p.zona}, ${p.ciudad}</p>
-    <img class="adm-modal-img" src="${p.img || ""}" alt="${p.nombre}"/>
+    <p class="adm-modal-title">${esc(p.nombre)}</p>
+    <p class="adm-modal-sub">${esc(p.ocupacion)} · ${esc(p.zona)}, ${esc(p.ciudad)}</p>
+    <img class="adm-modal-img" src="${esc(p.img || "")}" alt="${esc(p.nombre)}"/>
     <dl class="adm-modal-grid">
-      <dt>Edad</dt><dd>${p.edad ?? "—"}</dd>
-      <dt>Género</dt><dd>${p.genero || "—"}</dd>
+      <dt>Edad</dt><dd>${esc(p.edad ?? "—")}</dd>
+      <dt>Género</dt><dd>${esc(p.genero || "—")}</dd>
       <dt>Presupuesto</dt><dd>${formatCOP(p.presupuesto)}</dd>
-      <dt>Estado de búsqueda</dt><dd>${ETIQUETAS_ESTADO_BUSQUEDA[p.estado_busqueda] || p.estado_busqueda || "—"}</dd>
-      <dt>Rating</dt><dd>★ ${p.rating ?? "—"} (${(p.resenas || []).length} reseñas)</dd>
-      <dt>Ambiente preferido</dt><dd>${c.ambiente_preferido || "—"}</dd>
-      <dt>Horario</dt><dd>${c.horario || "—"}</dd>
-      <dt>Busca mudarse</dt><dd>${c.fecha_mudanza || "—"}</dd>
-      <dt>Fumador</dt><dd>${c.fumador ? "Sí" : "No"}</dd>
-      <dt>Tiene mascota</dt><dd>${c.tiene_mascota ? "Sí" : "No"}</dd>
+      <dt>Estado de búsqueda</dt><dd>${esc(ETIQUETAS_ESTADO_BUSQUEDA[p.estado_busqueda] || p.estado_busqueda || "—")}</dd>
+      <dt>Rating</dt><dd>★ ${esc(p.rating ?? "—")} (${esc((p.resenas || []).length)} reseñas)</dd>
+      <dt>Ambiente preferido</dt><dd>${esc(c.ambiente_preferido || "—")}</dd>
+      <dt>Horario</dt><dd>${esc(c.horario || "—")}</dd>
+      <dt>Busca mudarse</dt><dd>${esc(c.fecha_mudanza || "—")}</dd>
+      <dt>Fumador</dt><dd>${esc(c.fumador ? "Sí" : "No")}</dd>
+      <dt>Tiene mascota</dt><dd>${esc(c.tiene_mascota ? "Sí" : "No")}</dd>
     </dl>
-    <p style="font-size:13.5px;color:#555;line-height:1.5;margin:0 0 18px;">${p.descripcion || ""}</p>
+    <p style="font-size:13.5px;color:#555;line-height:1.5;margin:0 0 18px;">${esc(p.descripcion || "")}</p>
     <div class="adm-modal-buttons">
       <button type="button" class="adm-row-btn" id="admCerrarDetalleRoomie">Cerrar</button>
       <button type="button" class="adm-row-btn is-danger" id="admEliminarRoomieDesdeModal">Eliminar perfil</button>
@@ -621,7 +774,7 @@ async function abrirModalRoomie(id) {
 function confirmarEliminarRoomie(id, nombre) {
   abrirModal(`
     <button class="adm-modal-close" type="button" id="admModalCloseBtn">&times;</button>
-    <p class="adm-modal-title">¿Eliminar el perfil de ${nombre}?</p>
+    <p class="adm-modal-title">¿Eliminar el perfil de ${esc(nombre)}?</p>
     <p class="adm-modal-sub">Dejará de verse en la búsqueda de roomies. El registro no se borra de la base de datos: puedes restaurarlo después desde el filtro "Eliminados" si fue un error.</p>
     <div class="adm-modal-buttons">
       <button type="button" class="adm-row-btn" id="admCancelarEliminarRoomie">Cancelar</button>
@@ -664,21 +817,26 @@ function inicializarRoomies() {
 // ============================================================
 let filtroReporteActual = "pendiente";
 
-function actualizarBadgeReportes(pendientes) {
+// Reportes que esperan acción del admin: los pendientes y los que un
+// moderador escaló.
+function actualizarBadgeReportes(total) {
   const badge = document.getElementById("admReportesBadge");
-  badge.hidden = pendientes === 0;
-  badge.textContent = pendientes;
+  badge.hidden = total === 0;
+  badge.textContent = total;
 }
+
+const ETIQUETAS_ESTADO_REPORTE = { pendiente: "Pendiente", escalado: "Escalado", resuelto: "Resuelto", descartado: "Descartado" };
+const ETIQUETAS_TIPO_REPORTE = { publicacion: "Publicación", persona: "Roomie", usuario: "Usuario" };
 
 async function renderReportes() {
   const cont = document.getElementById("admReportesList");
   const empty = document.getElementById("admReportesEmpty");
 
-  const respuesta = await fetch(`${API_BASE}/admin/reportes?estado=${filtroReporteActual}`, { headers: cabecerasAutenticadas(false) });
+  const respuesta = await fetch(`${API_BASE}/admin/reportes?estado=${encodeURIComponent(filtroReporteActual)}`, { headers: cabecerasAutenticadas(false) });
   if (manejarNoAutorizado(respuesta)) return;
   const datos = await respuesta.json();
   const reportes = datos.reportes || [];
-  actualizarBadgeReportes(datos.pendientes || 0);
+  actualizarBadgeReportes((datos.pendientes || 0) + (datos.escalados || 0));
 
   if (!reportes.length) {
     cont.innerHTML = "";
@@ -687,31 +845,38 @@ async function renderReportes() {
   }
   empty.hidden = true;
 
-  const ETIQUETAS_ESTADO = { pendiente: "Pendiente", resuelto: "Resuelto", descartado: "Descartado" };
-  const ETIQUETAS_TIPO = { publicacion: "Publicación", persona: "Roomie", usuario: "Usuario" };
+  cont.innerHTML = reportes.map((r) => {
+    const a = r.acciones || {};
+    const nota = r.estado === "escalado"
+      ? `<div class="adm-reporte-nota"><strong>Escalado${r.escalado_por ? ` por ${esc(r.escalado_por)}` : ""}${r.fecha_escalado ? ` · ${esc(formatFecha(r.fecha_escalado))}` : ""}:</strong> ${esc(r.nota_escalado || "Sin nota.")}</div>`
+      : "";
 
-  cont.innerHTML = reportes.map((r) => `
+    const lateral = (a.resolver || a.descartar || a.devolver)
+      ? `<div class="adm-reporte-actions">
+          ${a.resolver ? `<button type="button" class="adm-row-btn is-danger" data-resolver="${r.id}">Tomar acción</button>` : ""}
+          ${a.devolver ? `<button type="button" class="adm-row-btn" data-devolver="${r.id}">Devolver a moderación</button>` : ""}
+          ${a.descartar ? `<button type="button" class="adm-row-btn" data-descartar="${r.id}">Descartar</button>` : ""}
+        </div>`
+      : `<span class="adm-reporte-none">${r.gestionado_por ? `Gestionado por ${esc(r.gestionado_por)}` : "Sin acciones pendientes"}</span>`;
+
+    return `
     <div class="adm-reporte-card">
       <div class="adm-reporte-icon">
         <svg viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L14.7 3.86a2 2 0 0 0-3.4 0z"/></svg>
       </div>
       <div class="adm-reporte-body">
         <div class="adm-reporte-top">
-          <span class="adm-reporte-motivo">${r.motivo}</span>
-          <span class="adm-reporte-tipo">${ETIQUETAS_TIPO[r.tipo] || r.tipo}</span>
-          <span class="prf-badge is-${r.estado}">${ETIQUETAS_ESTADO[r.estado]}</span>
+          <span class="adm-reporte-motivo">${esc(r.motivo)}</span>
+          <span class="adm-reporte-tipo">${esc(ETIQUETAS_TIPO_REPORTE[r.tipo] || r.tipo)}</span>
+          <span class="prf-badge is-${esc(r.estado)}">${esc(ETIQUETAS_ESTADO_REPORTE[r.estado] || r.estado)}</span>
         </div>
-        <p class="adm-reporte-desc">${r.descripcion || ""}</p>
-        <div class="adm-reporte-meta">${ETIQUETAS_TIPO[r.tipo] || r.tipo}: ${r.objetivo_titulo || "—"} · Reportado por ${r.reportante} · ${formatFecha(r.fecha)}</div>
+        <p class="adm-reporte-desc">${esc(r.descripcion)}</p>
+        <div class="adm-reporte-meta">${esc(ETIQUETAS_TIPO_REPORTE[r.tipo] || r.tipo)}: ${esc(r.objetivo_titulo || "—")} · Reportado por ${esc(r.reportante)} · ${esc(formatFecha(r.fecha))}</div>
+        ${nota}
       </div>
-      <div class="adm-reporte-side">
-        ${r.estado === "pendiente" ? `
-          <div class="adm-reporte-actions">
-            <button type="button" class="adm-row-btn is-danger" data-resolver="${r.id}">Tomar acción</button>
-            <button type="button" class="adm-row-btn" data-descartar="${r.id}">Descartar</button>
-          </div>` : `<span class="adm-reporte-none">Sin acciones pendientes</span>`}
-      </div>
-    </div>`).join("");
+      <div class="adm-reporte-side">${lateral}</div>
+    </div>`;
+  }).join("");
 
   cont.querySelectorAll("[data-resolver]").forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -719,13 +884,26 @@ async function renderReportes() {
       if (r) abrirModalResolverReporte(r);
     });
   });
+  cont.querySelectorAll("[data-devolver]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const r = reportes.find((x) => x.id === Number(btn.dataset.devolver));
+      if (r) abrirModalDevolverReporte(r);
+    });
+  });
   cont.querySelectorAll("[data-descartar]").forEach((btn) => {
     btn.addEventListener("click", async () => {
-      const respuesta = await fetch(`${API_BASE}/admin/reportes/${btn.dataset.descartar}/descartar`, { method: "PATCH", headers: cabecerasAutenticadas(false) });
-      if (manejarNoAutorizado(respuesta)) return;
+      btn.disabled = true;
+      const res = await peticionAccion(`/admin/reportes/${btn.dataset.descartar}/descartar`);
+      if (!res) return;
+      if (!res.ok) {
+        mostrarToast(textoError(res, "No se pudo descartar el reporte."));
+        btn.disabled = false;
+        return;
+      }
       mostrarToast("Reporte descartado.");
       renderReportes();
       renderResumen();
+      renderAuditoria();
     });
   });
 }
@@ -741,8 +919,10 @@ function abrirModalResolverReporte(r) {
   abrirModal(`
     <button class="adm-modal-close" type="button" id="admModalCloseBtn">&times;</button>
     <p class="adm-modal-title">Resolver reporte</p>
-    <p class="adm-modal-sub">${r.motivo} — ${r.objetivo_titulo || "—"}</p>
-    <p style="font-size:13.5px;color:#555;line-height:1.5;margin:0 0 18px;">${r.descripcion || ""}</p>
+    <p class="adm-modal-sub">${esc(r.motivo)} — ${esc(r.objetivo_titulo || "—")}</p>
+    <p style="font-size:13.5px;color:#555;line-height:1.5;margin:0 0 18px;">${esc(r.descripcion)}</p>
+    ${r.estado === "escalado" && r.nota_escalado ? `<div class="adm-reporte-nota" style="margin:0 0 14px;"><strong>Nota del moderador${r.escalado_por ? ` (${esc(r.escalado_por)})` : ""}:</strong> ${esc(r.nota_escalado)}</div>` : ""}
+    <p class="adm-modal-sub" id="admResolverError" style="color:#c0261c;min-height:15px;"></p>
     <div class="adm-modal-buttons">
       <button type="button" class="adm-row-btn" id="admCancelarResolver">Cancelar</button>
       <button type="button" class="adm-row-btn is-danger" id="admAplicarAccion">${accionLabel}</button>
@@ -750,9 +930,15 @@ function abrirModalResolverReporte(r) {
   `);
   document.getElementById("admModalCloseBtn").addEventListener("click", cerrarModal);
   document.getElementById("admCancelarResolver").addEventListener("click", cerrarModal);
-  document.getElementById("admAplicarAccion").addEventListener("click", async () => {
-    const respuesta = await fetch(`${API_BASE}/admin/reportes/${r.id}/resolver`, { method: "PATCH", headers: cabecerasAutenticadas(false) });
-    if (manejarNoAutorizado(respuesta)) return;
+  document.getElementById("admAplicarAccion").addEventListener("click", async (e) => {
+    e.currentTarget.disabled = true;
+    const res = await peticionAccion(`/admin/reportes/${r.id}/resolver`);
+    if (!res) return;
+    if (!res.ok) {
+      document.getElementById("admResolverError").textContent = textoError(res, "No se pudo resolver el reporte.");
+      e.currentTarget.disabled = false;
+      return;
+    }
     cerrarModal();
     mostrarToast("Reporte resuelto.");
     renderReportes();
@@ -760,6 +946,39 @@ function abrirModalResolverReporte(r) {
     renderRoomies();
     renderUsuarios();
     renderResumen();
+    renderAuditoria();
+  });
+}
+
+function abrirModalDevolverReporte(r) {
+  abrirModal(`
+    <button class="adm-modal-close" type="button" id="admModalCloseBtn">&times;</button>
+    <p class="adm-modal-title">Devolver a moderación</p>
+    <p class="adm-modal-sub">${esc(r.motivo)} — ${esc(r.objetivo_titulo || "—")}. El reporte vuelve a "Pendientes" y el moderador que lo escaló recibe tu nota.</p>
+    <textarea class="adm-modal-textarea" id="admNotaDevolver" maxlength="300" placeholder="Nota para el moderador (opcional)..."></textarea>
+    <p class="adm-modal-sub" id="admDevolverError" style="color:#c0261c;min-height:15px;margin-top:-6px;"></p>
+    <div class="adm-modal-buttons">
+      <button type="button" class="adm-row-btn" id="admCancelarDevolver">Cancelar</button>
+      <button type="button" class="adm-row-btn is-primary" id="admConfirmarDevolver">Devolver reporte</button>
+    </div>
+  `);
+  document.getElementById("admModalCloseBtn").addEventListener("click", cerrarModal);
+  document.getElementById("admCancelarDevolver").addEventListener("click", cerrarModal);
+  document.getElementById("admConfirmarDevolver").addEventListener("click", async (e) => {
+    e.currentTarget.disabled = true;
+    const nota = document.getElementById("admNotaDevolver").value.trim();
+    const res = await peticionAccion(`/admin/reportes/${r.id}/devolver`, { cuerpo: nota ? { nota } : {} });
+    if (!res) return;
+    if (!res.ok) {
+      document.getElementById("admDevolverError").textContent = textoError(res, "No se pudo devolver el reporte.");
+      e.currentTarget.disabled = false;
+      return;
+    }
+    cerrarModal();
+    mostrarToast("Reporte devuelto a moderación.");
+    renderReportes();
+    renderResumen();
+    renderAuditoria();
   });
 }
 
@@ -794,7 +1013,7 @@ async function renderMensajes() {
   const cont = document.getElementById("admMensajesList");
   const empty = document.getElementById("admMensajesEmpty");
 
-  const respuesta = await fetch(`${API_BASE}/admin/mensajes-contacto?estado=${filtroMensajeActual}`, { headers: cabecerasAutenticadas(false) });
+  const respuesta = await fetch(`${API_BASE}/admin/mensajes-contacto?estado=${encodeURIComponent(filtroMensajeActual)}`, { headers: cabecerasAutenticadas(false) });
   if (manejarNoAutorizado(respuesta)) return;
   const datos = await respuesta.json();
   const mensajes = datos.mensajes || [];
@@ -814,28 +1033,78 @@ async function renderMensajes() {
       </div>
       <div class="adm-reporte-body">
         <div class="adm-reporte-top">
-          <span class="adm-reporte-motivo">${m.nombre}</span>
-          <span class="adm-reporte-tipo">${m.asunto_label}</span>
+          <span class="adm-reporte-motivo">${esc(m.nombre)}</span>
+          <span class="adm-reporte-tipo">${esc(m.asunto_label)}</span>
           <span class="prf-badge ${m.atendido ? "is-resuelto" : "is-pendiente"}">${m.atendido ? "Atendido" : "Pendiente"}</span>
         </div>
-        <p class="adm-reporte-desc">${m.mensaje}</p>
-        <div class="adm-reporte-meta">${m.correo} · ${formatFecha(m.fecha)}</div>
+        <p class="adm-reporte-desc">${esc(m.mensaje)}</p>
+        <div class="adm-reporte-meta">${esc(m.correo)} · ${esc(formatFecha(m.fecha))}${m.atendido && m.atendido_por ? ` · Atendido por ${esc(m.atendido_por)}` : ""}</div>
+        ${m.respuesta ? `<div class="adm-reporte-nota"><strong>Respuesta enviada:</strong> ${esc(m.respuesta)}</div>` : ""}
       </div>
       <div class="adm-reporte-side">
         ${!m.atendido ? `
           <div class="adm-reporte-actions">
-            <button type="button" class="adm-row-btn is-primary" data-atender="${m.id}">Marcar atendido</button>
+            <button type="button" class="adm-row-btn is-primary" data-responder="${m.id}">Responder por correo</button>
+            <button type="button" class="adm-row-btn" data-atender="${m.id}">Marcar atendido</button>
           </div>` : `<span class="adm-reporte-none">Sin acciones pendientes</span>`}
       </div>
     </div>`).join("");
 
+  cont.querySelectorAll("[data-responder]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const m = mensajes.find((x) => x.id === Number(btn.dataset.responder));
+      if (m) abrirModalResponderMensaje(m);
+    });
+  });
   cont.querySelectorAll("[data-atender]").forEach((btn) => {
     btn.addEventListener("click", async () => {
-      const respuesta = await fetch(`${API_BASE}/admin/mensajes-contacto/${btn.dataset.atender}/atender`, { method: "PATCH", headers: cabecerasAutenticadas(false) });
-      if (manejarNoAutorizado(respuesta)) return;
-      mostrarToast("Mensaje marcado como atendido.");
+      const res = await peticionAccion(`/admin/mensajes-contacto/${btn.dataset.atender}/atender`);
+      if (!res) return;
+      mostrarToast(res.ok ? "Mensaje marcado como atendido." : textoError(res, "No se pudo marcar el mensaje."));
       renderMensajes();
+      renderAuditoria();
     });
+  });
+}
+
+function abrirModalResponderMensaje(m) {
+  abrirModal(`
+    <button class="adm-modal-close" type="button" id="admModalCloseBtn">&times;</button>
+    <p class="adm-modal-title">Responder a ${esc(m.nombre)}</p>
+    <p class="adm-modal-sub">${esc(m.asunto_label)} · ${esc(m.correo)}</p>
+    <div class="adm-reporte-nota" style="margin:0 0 14px;"><strong>Su mensaje:</strong> ${esc(m.mensaje)}</div>
+    <textarea class="adm-modal-textarea" id="admTextoRespuesta" maxlength="5000" style="min-height:140px;" placeholder="Escribe la respuesta (mínimo 10 caracteres). Se enviará por correo a ${esc(m.correo)}."></textarea>
+    <p class="adm-modal-sub" id="admResponderError" style="color:#c0261c;min-height:15px;margin-top:-6px;"></p>
+    <div class="adm-modal-buttons">
+      <button type="button" class="adm-row-btn" id="admCancelarResponder">Cancelar</button>
+      <button type="button" class="adm-row-btn is-primary" id="admEnviarRespuesta">Enviar respuesta</button>
+    </div>
+  `);
+  document.getElementById("admModalCloseBtn").addEventListener("click", cerrarModal);
+  document.getElementById("admCancelarResponder").addEventListener("click", cerrarModal);
+  document.getElementById("admEnviarRespuesta").addEventListener("click", async (e) => {
+    const texto = document.getElementById("admTextoRespuesta").value.trim();
+    const errorEl = document.getElementById("admResponderError");
+    if (texto.length < 10) {
+      errorEl.textContent = "La respuesta debe tener al menos 10 caracteres.";
+      return;
+    }
+    const btn = e.currentTarget;
+    btn.disabled = true;
+    btn.textContent = "Enviando...";
+    const res = await peticionAccion(`/admin/mensajes-contacto/${m.id}/responder`, { metodo: "POST", cuerpo: { respuesta: texto } });
+    if (!res) return;
+    if (!res.ok) {
+      errorEl.textContent = textoError(res, "No se pudo enviar la respuesta.");
+      btn.disabled = false;
+      btn.textContent = "Enviar respuesta";
+      if (res.status === 409) renderMensajes();
+      return;
+    }
+    cerrarModal();
+    mostrarToast("Respuesta enviada por correo.");
+    renderMensajes();
+    renderAuditoria();
   });
 }
 
@@ -849,6 +1118,96 @@ function inicializarMensajes() {
     });
   });
   renderMensajes();
+}
+
+// ============================================================
+// AUDITORÍA (solo lectura)
+// ------------------------------------------------------------
+// Registro de lo que hacen moderadores y administradores (tabla
+// accion_moderacion). Lo alimenta el servidor en cada acción; aquí solo se
+// consulta, con filtros y paginación (GET /api/admin/auditoria).
+// ============================================================
+let paginaAuditoria = 1;
+let etiquetasAuditoriaCargadas = false;
+
+function resumirDetalleAuditoria(detalle) {
+  if (!detalle || typeof detalle !== "object") return "—";
+  const partes = Object.entries(detalle)
+    .filter(([, v]) => v !== null && v !== "" && typeof v !== "object")
+    .map(([k, v]) => `<span class="adm-audit-kv"><b>${esc(k.replace(/_/g, " "))}:</b> ${esc(v)}</span>`);
+  return partes.length ? partes.join(" ") : "—";
+}
+
+async function renderAuditoria() {
+  const body = document.getElementById("admAuditoriaBody");
+  if (!body) return;
+  const empty = document.getElementById("admAuditoriaEmpty");
+
+  const params = new URLSearchParams({ page: String(paginaAuditoria) });
+  const accion = document.getElementById("admAuditoriaAccion").value;
+  const rol = document.getElementById("admAuditoriaRol").value;
+  const q = document.getElementById("admAuditoriaSearch").value.trim();
+  const desde = document.getElementById("admAuditoriaDesde").value;
+  const hasta = document.getElementById("admAuditoriaHasta").value;
+  if (accion) params.set("accion", accion);
+  if (rol) params.set("rol", rol);
+  if (q) params.set("q", q);
+  if (desde) params.set("desde", desde);
+  if (hasta) params.set("hasta", hasta);
+
+  const res = await peticionAccion(`/admin/auditoria?${params}`, { metodo: "GET" });
+  if (!res) return;
+  if (!res.ok) {
+    body.innerHTML = "";
+    empty.hidden = false;
+    empty.textContent = textoError(res, "No se pudo cargar la auditoría.");
+    return;
+  }
+
+  const datos = res.datos;
+
+  if (!etiquetasAuditoriaCargadas) {
+    const select = document.getElementById("admAuditoriaAccion");
+    select.insertAdjacentHTML("beforeend", Object.entries(datos.etiquetas || {})
+      .map(([clave, etiqueta]) => `<option value="${esc(clave)}">${esc(etiqueta)}</option>`).join(""));
+    etiquetasAuditoriaCargadas = true;
+  }
+
+  const filas = datos.acciones || [];
+  document.getElementById("admAuditoriaPagina").textContent = `Página ${datos.pagina} de ${datos.ultima_pagina} · ${datos.total} registros`;
+  document.getElementById("admAuditoriaPrev").disabled = datos.pagina <= 1;
+  document.getElementById("admAuditoriaNext").disabled = datos.pagina >= datos.ultima_pagina;
+
+  if (!filas.length) {
+    body.innerHTML = "";
+    empty.hidden = false;
+    empty.textContent = "No hay acciones registradas con esos filtros.";
+    return;
+  }
+  empty.hidden = true;
+
+  body.innerHTML = filas.map((f) => `
+    <tr>
+      <td data-label="Fecha">${esc(new Date(f.fecha).toLocaleString("es-CO", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }))}</td>
+      <td data-label="Quién">${esc(f.actor)} <span class="adm-tipo-badge ${f.rol === "admin" ? "is-admin" : "is-moderador"}">${f.rol === "admin" ? "Admin" : "Moderador"}</span></td>
+      <td data-label="Acción">${esc(f.accion_label)}</td>
+      <td data-label="Sobre">${esc(f.entidad_titulo || "—")}</td>
+      <td data-label="Detalle">${resumirDetalleAuditoria(f.detalle)}</td>
+    </tr>`).join("");
+}
+
+function inicializarAuditoria() {
+  if (!document.getElementById("admAuditoriaBody")) return;
+
+  const recargar = () => { paginaAuditoria = 1; renderAuditoria(); };
+  ["admAuditoriaAccion", "admAuditoriaRol", "admAuditoriaDesde", "admAuditoriaHasta"].forEach((id) => {
+    document.getElementById(id).addEventListener("change", recargar);
+  });
+  document.getElementById("admAuditoriaSearch").addEventListener("input", debounce(recargar, 300));
+  document.getElementById("admAuditoriaPrev").addEventListener("click", () => { paginaAuditoria = Math.max(1, paginaAuditoria - 1); renderAuditoria(); });
+  document.getElementById("admAuditoriaNext").addEventListener("click", () => { paginaAuditoria += 1; renderAuditoria(); });
+
+  renderAuditoria();
 }
 
 // ============================================================
@@ -926,10 +1285,12 @@ async function renderResumen() {
     { label: "Usuarios registrados", value: s.usuarios_registrados },
     { label: "Clientes", value: s.clientes },
     { label: "Administradores", value: s.administradores },
+    { label: "Moderadores", value: s.moderadores },
     { label: "Usuarios bloqueados", value: s.usuarios_bloqueados, alert: s.usuarios_bloqueados > 0 },
     { label: "Publicaciones activas", value: s.publicaciones_activas },
     { label: "Roomies publicados", value: s.roomies_publicados },
     { label: "Reportes pendientes", value: s.reportes_pendientes, alert: s.reportes_pendientes > 0 },
+    { label: "Reportes escalados por moderación", value: s.reportes_escalados, alert: s.reportes_escalados > 0 },
     { label: "Mensajes de contacto pendientes", value: s.mensajes_contacto_pendientes, alert: s.mensajes_contacto_pendientes > 0 },
   ];
 
@@ -951,4 +1312,5 @@ inicializarPublicaciones();
 inicializarRoomies();
 inicializarReportes();
 inicializarMensajes();
+inicializarAuditoria();
 activarPanelPorHash();

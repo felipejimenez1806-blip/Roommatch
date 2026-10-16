@@ -16,6 +16,7 @@
 
 import { API_BASE, appUrl } from "../core/config.js";
 import { requerirSesion, obtenerUsuario, cabecerasAutenticadas, manejarNoAutorizado } from "../core/auth.js";
+import { esc } from "../core/html.js";
 
 // ---------- LOCALIDADES DE BOGOTÁ ----------
 // Mismo listado que crear-publicacion.js, para que "zona" sea consistente
@@ -122,18 +123,18 @@ const cprPage = document.getElementById("cprPage");
 // ============================================================
 function campoTexto({ key, label, placeholder = "", tipo = "text", hint = "" }) {
   return `
-    <div class="cp-field" data-field="${key}">
-      <label for="cpr_${key}">${label}</label>
-      <input id="cpr_${key}" type="${tipo}" data-bind="${key}" placeholder="${placeholder}" value="${(estado[key] ?? "").toString().replace(/"/g, "&quot;")}"/>
-      ${hint ? `<p class="cp-field-hint">${hint}</p>` : ""}
+    <div class="cp-field" data-field="${esc(key)}">
+      <label for="cpr_${esc(key)}">${esc(label)}</label>
+      <input id="cpr_${esc(key)}" type="${esc(tipo)}" data-bind="${esc(key)}" placeholder="${esc(placeholder)}" value="${esc((estado[key] ?? "").toString())}"/>
+      ${hint ? `<p class="cp-field-hint">${esc(hint)}</p>` : ""}
       <p class="cp-field-error" data-error></p>
     </div>`;
 }
 function campoTextarea({ key, label, placeholder = "" }) {
   return `
-    <div class="cp-field" data-field="${key}">
-      <label for="cpr_${key}">${label}</label>
-      <textarea id="cpr_${key}" data-bind="${key}" placeholder="${placeholder}">${estado[key] ?? ""}</textarea>
+    <div class="cp-field" data-field="${esc(key)}">
+      <label for="cpr_${esc(key)}">${esc(label)}</label>
+      <textarea id="cpr_${esc(key)}" data-bind="${esc(key)}" placeholder="${esc(placeholder)}">${esc(estado[key] ?? "")}</textarea>
       <p class="cp-field-error" data-error></p>
     </div>`;
 }
@@ -146,22 +147,22 @@ function campoSelect({ key, label, opciones, placeholder = "Selecciona una opci�
   const textoActual = opcionSeleccionada ? opcionSeleccionada[1] : placeholder;
 
   const itemPlaceholder = `
-    <li class="cp-select-option cp-select-option--placeholder${!valorActual ? " is-selected" : ""}" role="option" tabindex="-1" data-value="" data-placeholder>
-      ${placeholder}
+    <li class="cp-select-option cp-select-option--placeholder${esc(!valorActual ? " is-selected" : "")}" role="option" tabindex="-1" data-value="" data-placeholder>
+      ${esc(placeholder)}
     </li>`;
 
   const itemsOpciones = opciones.map(([v, txt]) => `
-    <li class="cp-select-option${valorActual === v ? " is-selected" : ""}" role="option" tabindex="-1" data-value="${v.toString().replace(/"/g, "&quot;")}">
-      <span>${txt}</span>
+    <li class="cp-select-option${esc(valorActual === v ? " is-selected" : "")}" role="option" tabindex="-1" data-value="${esc(v.toString())}">
+      <span>${esc(txt)}</span>
       <svg class="cp-select-check" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
     </li>`).join("");
 
   return `
-    <div class="cp-field" data-field="${key}">
-      <label id="cpr_${key}_label">${label}</label>
-      <div class="cp-select" data-select="${key}">
-        <button type="button" class="cp-select-trigger" id="cpr_${key}" data-select-trigger aria-haspopup="listbox" aria-expanded="false" aria-labelledby="cpr_${key}_label">
-          <span class="cp-select-value${opcionSeleccionada ? "" : " is-placeholder"}" data-select-value>${textoActual}</span>
+    <div class="cp-field" data-field="${esc(key)}">
+      <label id="cpr_${esc(key)}_label">${esc(label)}</label>
+      <div class="cp-select" data-select="${esc(key)}">
+        <button type="button" class="cp-select-trigger" id="cpr_${esc(key)}" data-select-trigger aria-haspopup="listbox" aria-expanded="false" aria-labelledby="cpr_${esc(key)}_label">
+          <span class="cp-select-value${esc(opcionSeleccionada ? "" : " is-placeholder")}" data-select-value>${esc(textoActual)}</span>
           <svg class="cp-select-chevron" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
         </button>
         <ul class="cp-select-menu" role="listbox" data-select-menu hidden>
@@ -175,9 +176,9 @@ function campoSelect({ key, label, opciones, placeholder = "Selecciona una opci�
 function toggleRow(key, label) {
   return `
     <div class="cp-toggle-row">
-      <span class="cp-toggle-label">${label}</span>
+      <span class="cp-toggle-label">${esc(label)}</span>
       <label class="cp-switch">
-        <input type="checkbox" data-bind-toggle="${key}" ${estado[key] ? "checked" : ""}/>
+        <input type="checkbox" data-bind-toggle="${esc(key)}" ${esc(estado[key] ? "checked" : "")}/>
         <span class="cp-switch-track"></span>
       </label>
     </div>`;
@@ -299,12 +300,12 @@ function renderProgreso() {
   const idx = pasoActual - 1;
   const pct = (idx / (PASOS.length - 1)) * 100;
   return `
-    <div class="cp-progress-bar"><div class="cp-progress-bar-fill" style="width:${pct}%"></div></div>
+    <div class="cp-progress-bar"><div class="cp-progress-bar-fill" style="width:${esc(pct)}%"></div></div>
     <div class="cp-progress">
       ${PASOS.map((p, i) => `
-        <div class="cp-progress-step ${i === idx ? "is-active" : ""} ${i < idx ? "is-done" : ""}">
-          <span class="cp-progress-dot">${i < idx ? "✓" : i + 1}</span>
-          <span class="cp-progress-label">${PASO_LABELS[p]}</span>
+        <div class="cp-progress-step ${esc(i === idx ? "is-active" : "")} ${esc(i < idx ? "is-done" : "")}">
+          <span class="cp-progress-dot">${esc(i < idx ? "✓" : i + 1)}</span>
+          <span class="cp-progress-label">${esc(PASO_LABELS[p])}</span>
         </div>`).join("")}
     </div>`;
 }
@@ -315,7 +316,7 @@ function renderProgreso() {
 function renderBasico() {
   cprPage.innerHTML = `
     ${renderProgreso()}
-    <h1 class="cp-step-title">${modoEdicion ? "Edita tu información" : "Cuéntanos sobre ti"}</h1>
+    <h1 class="cp-step-title">${esc(modoEdicion ? "Edita tu información" : "Cuéntanos sobre ti")}</h1>
     <p class="cp-step-subtitle">Esta información aparecerá en tu perfil público de roomie</p>
 
     <div class="cp-field-row">
@@ -340,7 +341,7 @@ function renderBasico() {
     ${campoTextarea({ key: "descripcion", label: "Descripción", placeholder: "Cuéntale a otros roomies quién eres, tu rutina y qué buscas en un lugar para vivir" })}
 
     <div class="cp-nav">
-      <a class="cp-btn cp-btn-ghost" href="${appUrl(modoEdicion ? "/mis-publicaciones" : "/perfil")}">Cancelar</a>
+      <a class="cp-btn cp-btn-ghost" href="${esc(appUrl(modoEdicion ? "/mis-publicaciones" : "/perfil"))}">Cancelar</a>
       <button type="button" class="cp-btn cp-btn-primary" id="cprNext">Siguiente</button>
     </div>`;
 
@@ -523,7 +524,7 @@ function pintarFotoCircle() {
   if (estado.foto) {
     circle.classList.add("has-photo");
     circle.innerHTML = `
-      <img src="${estado.foto}" alt="Foto de perfil"/>
+      <img src="${esc(estado.foto)}" alt="Foto de perfil"/>
       <button type="button" class="cpr-photo-remove" id="cprQuitarFoto" title="Quitar foto">✕</button>`;
     circle.onclick = null;
     document.getElementById("cprQuitarFoto").addEventListener("click", (e) => {
@@ -576,17 +577,17 @@ function renderResumen() {
   cprPage.innerHTML = `
     ${renderProgreso()}
     <h1 class="cp-step-title">Revisa tu perfil</h1>
-    <p class="cp-step-subtitle">${modoEdicion ? "Revisa los cambios antes de guardarlos" : "Así te verán otros roomies antes de publicarlo"}</p>
+    <p class="cp-step-subtitle">${esc(modoEdicion ? "Revisa los cambios antes de guardarlos" : "Así te verán otros roomies antes de publicarlo")}</p>
 
     <div class="cpr-summary-card">
       <div class="cpr-summary-avatar-wrap">
-        <img src="${estado.foto}" alt="Foto de perfil"/>
-        <span class="cpr-summary-badge">${modoEdicion ? "Editado" : "Nuevo"}</span>
+        <img src="${esc(estado.foto)}" alt="Foto de perfil"/>
+        <span class="cpr-summary-badge">${esc(modoEdicion ? "Editado" : "Nuevo")}</span>
       </div>
       <div class="cpr-summary-body">
-        <p class="cpr-summary-title">${usuarioActual.nombre || "Tu perfil"} <span style="color:#888;font-weight:600;">· ${estado.edad} años</span></p>
-        <p class="cpr-summary-sub">${estado.ocupacion} · Busca en ${estado.zona}, ${estado.ciudad}</p>
-        <p class="cpr-summary-price">${formatCOP(estado.presupuesto)} <span style="color:#888;font-weight:600;font-size:12px;">presupuesto/mes</span></p>
+        <p class="cpr-summary-title">${esc(usuarioActual.nombre || "Tu perfil")} <span style="color:#888;font-weight:600;">· ${esc(estado.edad)} años</span></p>
+        <p class="cpr-summary-sub">${esc(estado.ocupacion)} · Busca en ${esc(estado.zona)}, ${esc(estado.ciudad)}</p>
+        <p class="cpr-summary-price">${esc(formatCOP(estado.presupuesto))} <span style="color:#888;font-weight:600;font-size:12px;">presupuesto/mes</span></p>
       </div>
     </div>
 
@@ -594,7 +595,7 @@ function renderResumen() {
 
     <div class="cp-nav">
       <button type="button" class="cp-btn cp-btn-ghost" id="cprBack">Atrás</button>
-      <button type="button" class="cp-btn cp-btn-primary" id="cprPublicar">${modoEdicion ? "Guardar cambios" : "Publicar perfil"}</button>
+      <button type="button" class="cp-btn cp-btn-primary" id="cprPublicar">${esc(modoEdicion ? "Guardar cambios" : "Publicar perfil")}</button>
     </div>`;
 
   document.getElementById("cprBack").addEventListener("click", () => { pasoActual = 4; renderPasoActual(); });
@@ -674,10 +675,10 @@ function renderExito() {
       <div class="cp-success-icon">
         <svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
       </div>
-      <h1>${modoEdicion ? "¡Tu perfil fue actualizado!" : "¡Tu perfil de roomie fue publicado!"}</h1>
-      <p>${modoEdicion ? "Los cambios ya son visibles" : "Ya apareces"} en Roomies para que te encuentren en ${estado.zona}, ${estado.ciudad}.</p>
+      <h1>${esc(modoEdicion ? "¡Tu perfil fue actualizado!" : "¡Tu perfil de roomie fue publicado!")}</h1>
+      <p>${esc(modoEdicion ? "Los cambios ya son visibles" : "Ya apareces")} en Roomies para que te encuentren en ${esc(estado.zona)}, ${esc(estado.ciudad)}.</p>
       <div class="cp-nav" style="justify-content:center; border-top:none; padding-top:0; gap:12px;">
-        <a class="cp-btn cp-btn-primary" href="${appUrl('/perfil')}">Ir a mi perfil</a>
+        <a class="cp-btn cp-btn-primary" href="${esc(appUrl('/perfil'))}">Ir a mi perfil</a>
       </div>
     </div>`;
   // TODO: cuando exista la ruta de detalle público (perfil-roomie), agregar

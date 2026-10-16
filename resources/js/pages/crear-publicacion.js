@@ -10,6 +10,7 @@
 
 import { API_BASE, appUrl } from "../core/config.js";
 import { requerirSesion, obtenerUsuario, cabecerasAutenticadas, manejarNoAutorizado } from "../core/auth.js";
+import { esc } from "../core/html.js";
 
 // ---------- LOCALIDADES DE BOGOTÁ ----------
 const LOCALIDADES_BOGOTA = [
@@ -123,18 +124,18 @@ const cpPage = document.getElementById("cpPage");
 // ============================================================
 function campoTexto({ key, label, placeholder = "", tipo = "text", hint = "" }) {
   return `
-    <div class="cp-field" data-field="${key}">
-      <label for="cp_${key}">${label}</label>
-      <input id="cp_${key}" type="${tipo}" data-bind="${key}" placeholder="${placeholder}" value="${(estado[key] ?? "").toString().replace(/"/g, "&quot;")}"/>
-      ${hint ? `<p class="cp-field-hint">${hint}</p>` : ""}
+    <div class="cp-field" data-field="${esc(key)}">
+      <label for="cp_${esc(key)}">${esc(label)}</label>
+      <input id="cp_${esc(key)}" type="${esc(tipo)}" data-bind="${esc(key)}" placeholder="${esc(placeholder)}" value="${esc((estado[key] ?? "").toString())}"/>
+      ${hint ? `<p class="cp-field-hint">${esc(hint)}</p>` : ""}
       <p class="cp-field-error" data-error></p>
     </div>`;
 }
 function campoTextarea({ key, label, placeholder = "" }) {
   return `
-    <div class="cp-field" data-field="${key}">
-      <label for="cp_${key}">${label}</label>
-      <textarea id="cp_${key}" data-bind="${key}" placeholder="${placeholder}">${estado[key] ?? ""}</textarea>
+    <div class="cp-field" data-field="${esc(key)}">
+      <label for="cp_${esc(key)}">${esc(label)}</label>
+      <textarea id="cp_${esc(key)}" data-bind="${esc(key)}" placeholder="${esc(placeholder)}">${esc(estado[key] ?? "")}</textarea>
       <p class="cp-field-error" data-error></p>
     </div>`;
 }
@@ -147,22 +148,22 @@ function campoSelect({ key, label, opciones, placeholder = "Selecciona una opci�
   const textoActual = opcionSeleccionada ? opcionSeleccionada[1] : placeholder;
 
   const itemPlaceholder = `
-    <li class="cp-select-option cp-select-option--placeholder${!valorActual ? " is-selected" : ""}" role="option" tabindex="-1" data-value="" data-placeholder>
-      ${placeholder}
+    <li class="cp-select-option cp-select-option--placeholder${esc(!valorActual ? " is-selected" : "")}" role="option" tabindex="-1" data-value="" data-placeholder>
+      ${esc(placeholder)}
     </li>`;
 
   const itemsOpciones = opciones.map(([v, txt]) => `
-    <li class="cp-select-option${valorActual === v ? " is-selected" : ""}" role="option" tabindex="-1" data-value="${v.toString().replace(/"/g, "&quot;")}">
-      <span>${txt}</span>
+    <li class="cp-select-option${esc(valorActual === v ? " is-selected" : "")}" role="option" tabindex="-1" data-value="${esc(v.toString())}">
+      <span>${esc(txt)}</span>
       <svg class="cp-select-check" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
     </li>`).join("");
 
   return `
-    <div class="cp-field" data-field="${key}">
-      <label id="cp_${key}_label">${label}</label>
-      <div class="cp-select" data-select="${key}">
-        <button type="button" class="cp-select-trigger" id="cp_${key}" data-select-trigger aria-haspopup="listbox" aria-expanded="false" aria-labelledby="cp_${key}_label">
-          <span class="cp-select-value${opcionSeleccionada ? "" : " is-placeholder"}" data-select-value>${textoActual}</span>
+    <div class="cp-field" data-field="${esc(key)}">
+      <label id="cp_${esc(key)}_label">${esc(label)}</label>
+      <div class="cp-select" data-select="${esc(key)}">
+        <button type="button" class="cp-select-trigger" id="cp_${esc(key)}" data-select-trigger aria-haspopup="listbox" aria-expanded="false" aria-labelledby="cp_${esc(key)}_label">
+          <span class="cp-select-value${esc(opcionSeleccionada ? "" : " is-placeholder")}" data-select-value>${esc(textoActual)}</span>
           <svg class="cp-select-chevron" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
         </button>
         <ul class="cp-select-menu" role="listbox" data-select-menu hidden>
@@ -176,9 +177,9 @@ function campoSelect({ key, label, opciones, placeholder = "Selecciona una opci�
 function toggleRow(key, label) {
   return `
     <div class="cp-toggle-row">
-      <span class="cp-toggle-label">${label}</span>
+      <span class="cp-toggle-label">${esc(label)}</span>
       <label class="cp-switch">
-        <input type="checkbox" data-bind-toggle="${key}" ${estado[key] ? "checked" : ""}/>
+        <input type="checkbox" data-bind-toggle="${esc(key)}" ${esc(estado[key] ? "checked" : "")}/>
         <span class="cp-switch-track"></span>
       </label>
     </div>`;
@@ -327,12 +328,12 @@ function renderProgreso() {
   const idx = pasoActual - 1;
   const pct = (idx / (PASOS.length - 1)) * 100;
   return `
-    <div class="cp-progress-bar"><div class="cp-progress-bar-fill" style="width:${pct}%"></div></div>
+    <div class="cp-progress-bar"><div class="cp-progress-bar-fill" style="width:${esc(pct)}%"></div></div>
     <div class="cp-progress">
       ${PASOS.map((p, i) => `
-        <div class="cp-progress-step ${i === idx ? "is-active" : ""} ${i < idx ? "is-done" : ""}">
-          <span class="cp-progress-dot">${i < idx ? "✓" : i + 1}</span>
-          <span class="cp-progress-label">${PASO_LABELS[p]}</span>
+        <div class="cp-progress-step ${esc(i === idx ? "is-active" : "")} ${esc(i < idx ? "is-done" : "")}">
+          <span class="cp-progress-dot">${esc(i < idx ? "✓" : i + 1)}</span>
+          <span class="cp-progress-label">${esc(PASO_LABELS[p])}</span>
         </div>`).join("")}
     </div>`;
 }
@@ -343,7 +344,7 @@ function renderProgreso() {
 function renderBasico() {
   cpPage.innerHTML = `
     ${renderProgreso()}
-    <h1 class="cp-step-title">${modoEdicion ? "Edita la información básica" : "Información básica"}</h1>
+    <h1 class="cp-step-title">${esc(modoEdicion ? "Edita la información básica" : "Información básica")}</h1>
     <p class="cp-step-subtitle">Cuéntanos qué vas a publicar y dónde está</p>
 
     ${campoSelect({ key: "tipo_espacio", label: "Tipo de espacio", opciones: [["Habitación", "Habitación"], ["Apartamento", "Apartamento"], ["Casa", "Casa"], ["Estudio", "Estudio"]] })}
@@ -370,7 +371,7 @@ function renderBasico() {
     ${campoTextarea({ key: "descripcion", label: "Descripción", placeholder: "Cuenta cómo es el espacio, el ambiente y a quién le puede interesar" })}
 
     <div class="cp-nav">
-      <a class="cp-btn cp-btn-ghost" href="${appUrl(modoEdicion ? "/mis-publicaciones" : "/dashboard")}">Cancelar</a>
+      <a class="cp-btn cp-btn-ghost" href="${esc(appUrl(modoEdicion ? "/mis-publicaciones" : "/dashboard"))}">Cancelar</a>
       <button type="button" class="cp-btn cp-btn-primary" id="cpNext">Siguiente</button>
     </div>`;
 
@@ -549,7 +550,7 @@ function renderFotos() {
   cpPage.innerHTML = `
     ${renderProgreso()}
     <h1 class="cp-step-title">Fotos del espacio</h1>
-    <p class="cp-step-subtitle">Sube hasta ${MAX_FOTOS} fotos. La primera será la portada.</p>
+    <p class="cp-step-subtitle">Sube hasta ${esc(MAX_FOTOS)} fotos. La primera será la portada.</p>
 
     <div class="cp-photos-grid" id="cpPhotosGrid"></div>
     <input type="file" id="cpFotoInput" accept="image/png, image/jpeg, image/webp" multiple hidden/>
@@ -578,9 +579,9 @@ function pintarGridFotos() {
   const grid = document.getElementById("cpPhotosGrid");
   const slots = estado.imagenes.map((src, i) => `
     <div class="cp-photo-slot">
-      <img src="${src}" alt="Foto ${i + 1}"/>
+      <img src="${esc(src)}" alt="Foto ${esc(i + 1)}"/>
       ${i === 0 ? '<span class="cp-photo-cover-tag">Portada</span>' : ""}
-      <button type="button" class="cp-photo-remove" data-remove-foto="${i}" title="Quitar foto">✕</button>
+      <button type="button" class="cp-photo-remove" data-remove-foto="${esc(i)}" title="Quitar foto">✕</button>
     </div>`).join("");
 
   const addBtn = estado.imagenes.length < MAX_FOTOS ? `
@@ -656,16 +657,16 @@ function renderResumen() {
   cpPage.innerHTML = `
     ${renderProgreso()}
     <h1 class="cp-step-title">Revisa tu publicación</h1>
-    <p class="cp-step-subtitle">${modoEdicion ? "Revisa los cambios antes de guardarlos" : "Así se verá antes de publicarla"}</p>
+    <p class="cp-step-subtitle">${esc(modoEdicion ? "Revisa los cambios antes de guardarlos" : "Así se verá antes de publicarla")}</p>
 
     <div class="cp-summary-card">
-      <img class="cp-summary-img" src="${estado.imagenes[0] || ""}" alt="${estado.titulo}"/>
+      <img class="cp-summary-img" src="${esc(estado.imagenes[0] || "")}" alt="${esc(estado.titulo)}"/>
       <div class="cp-summary-body">
-        <p class="cp-summary-title">${estado.titulo}</p>
-        <p class="cp-summary-sub">${estado.tipo_espacio} · ${estado.zona}, ${estado.ciudad}</p>
-        <p class="cp-summary-price">${formatCOP(estado.precio)} / mes</p>
+        <p class="cp-summary-title">${esc(estado.titulo)}</p>
+        <p class="cp-summary-sub">${esc(estado.tipo_espacio)} · ${esc(estado.zona)}, ${esc(estado.ciudad)}</p>
+        <p class="cp-summary-price">${esc(formatCOP(estado.precio))} / mes</p>
         <ul class="cp-summary-list">
-          ${etiquetasActivas.map((k) => `<li>${ETIQUETAS_RESUMEN[k]}</li>`).join("") || "<li>Sin características marcadas</li>"}
+          ${etiquetasActivas.map((k) => `<li>${esc(ETIQUETAS_RESUMEN[k])}</li>`).join("") || "<li>Sin características marcadas</li>"}
         </ul>
       </div>
     </div>
@@ -674,7 +675,7 @@ function renderResumen() {
 
     <div class="cp-nav">
       <button type="button" class="cp-btn cp-btn-ghost" id="cpBack">Atrás</button>
-      <button type="button" class="cp-btn cp-btn-primary" id="cpPublicar">${modoEdicion ? "Guardar cambios" : "Publicar"}</button>
+      <button type="button" class="cp-btn cp-btn-primary" id="cpPublicar">${esc(modoEdicion ? "Guardar cambios" : "Publicar")}</button>
     </div>`;
 
   document.getElementById("cpBack").addEventListener("click", () => { pasoActual = 4; renderPasoActual(); });
@@ -767,10 +768,10 @@ function renderExito() {
       <div class="cp-success-icon">
         <svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
       </div>
-      <h1>${modoEdicion ? "¡Publicación actualizada!" : "¡Publicación creada!"}</h1>
-      <p>Tu publicación ${modoEdicion ? "ya refleja los cambios" : "ya está visible"} para otros usuarios.</p>
+      <h1>${esc(modoEdicion ? "¡Publicación actualizada!" : "¡Publicación creada!")}</h1>
+      <p>Tu publicación ${esc(modoEdicion ? "ya refleja los cambios" : "ya está visible")} para otros usuarios.</p>
       <div class="cp-nav" style="justify-content:center; border-top:none; padding-top:0; gap:12px;">
-        <a class="cp-btn cp-btn-primary" href="${appUrl('/mis-publicaciones')}">Ir a mis publicaciones</a>
+        <a class="cp-btn cp-btn-primary" href="${esc(appUrl('/mis-publicaciones'))}">Ir a mis publicaciones</a>
       </div>
     </div>`;
 }

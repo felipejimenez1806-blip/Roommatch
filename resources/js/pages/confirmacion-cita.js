@@ -11,6 +11,7 @@
 
 import { API_BASE, appUrl } from "../core/config.js";
 import { requerirSesion, cabecerasAutenticadas } from "../core/auth.js";
+import { esc } from "../core/html.js";
 
 // Página privada: sin sesión no hay nada que hacer aquí.
 requerirSesion();
@@ -80,7 +81,7 @@ function mostrarNoEncontrada(contenedor) {
   contenedor.innerHTML = `
     <div class="conf-not-found">
       <p>No encontramos esta cita. Puede que ya haya sido cancelada.</p>
-      <a href="${appUrl('/roomies')}">← Volver a la búsqueda</a>
+      <a href="${esc(appUrl('/roomies'))}">← Volver a la búsqueda</a>
     </div>`;
 }
 
@@ -94,13 +95,13 @@ function renderConfirmacion(cita) {
     <div class="conf-body">
       <div class="conf-left">
         <div class="conf-card has-avatar">
-          <img class="conf-card-img is-avatar" src="${item.img || ""}" alt="${item.nombre}"/>
+          <img class="conf-card-img is-avatar" src="${esc(item.img || "")}" alt="${esc(item.nombre)}"/>
           <div class="conf-card-body">
-            <div class="conf-card-title">${item.nombre}</div>
-            <div class="conf-card-rating">${palabraCalificacion(item.rating)} · ${item.rating}/10</div>
-            <div class="conf-card-location">Busca en ${item.zona}, ${item.ciudad}</div>
-            <div class="conf-card-row"><span>Fecha</span><span>${formatFechaCorta(cita.fecha_cita)}</span></div>
-            <div class="conf-card-row"><span>Hora</span><span>${formatHora12(cita.hora_cita)}</span></div>
+            <div class="conf-card-title">${esc(item.nombre)}</div>
+            <div class="conf-card-rating">${esc(palabraCalificacion(item.rating))} · ${esc(item.rating)}/10</div>
+            <div class="conf-card-location">Busca en ${esc(item.zona)}, ${esc(item.ciudad)}</div>
+            <div class="conf-card-row"><span>Fecha</span><span>${esc(formatFechaCorta(cita.fecha_cita))}</span></div>
+            <div class="conf-card-row"><span>Hora</span><span>${esc(formatHora12(cita.hora_cita))}</span></div>
           </div>
         </div>
       </div>
@@ -109,30 +110,30 @@ function renderConfirmacion(cita) {
         <div class="conf-icon">✓</div>
         <div class="conf-title">Tu solicitud de cita fue enviada</div>
         <p class="conf-lead">
-          Le avisamos a ${primerNombre} sobre tu interés en conocerse. Te contactaremos por correo en cuanto confirme o proponga otro horario.
+          Le avisamos a ${esc(primerNombre)} sobre tu interés en conocerse. Te contactaremos por correo en cuanto confirme o proponga otro horario.
         </p>
 
-        <div class="conf-trip-heading">Su encuentro queda propuesto para el ${formatFechaCorta(cita.fecha_cita)}</div>
+        <div class="conf-trip-heading">Su encuentro queda propuesto para el ${esc(formatFechaCorta(cita.fecha_cita))}</div>
 
         <div class="conf-detail">
           <span class="conf-detail-icon">📅</span>
-          <div><strong>Fecha y hora</strong><br>${formatFechaCorta(cita.fecha_cita)} · ${formatHora12(cita.hora_cita)}</div>
+          <div><strong>Fecha y hora</strong><br>${esc(formatFechaCorta(cita.fecha_cita))} · ${esc(formatHora12(cita.hora_cita))}</div>
         </div>
         <div class="conf-detail">
           <span class="conf-detail-icon">📍</span>
-          <div><strong>${ETIQUETAS_TIPO_ENCUENTRO[cita.tipo_encuentro] || "Punto de encuentro"}</strong><br>${cita.lugar_encuentro}</div>
+          <div><strong>${esc(ETIQUETAS_TIPO_ENCUENTRO[cita.tipo_encuentro] || "Punto de encuentro")}</strong><br>${esc(cita.lugar_encuentro)}</div>
         </div>
         ${cita.mensaje ? `
         <div class="conf-detail">
           <span class="conf-detail-icon">💬</span>
-          <div><strong>Tu mensaje</strong><br>${cita.mensaje}</div>
+          <div><strong>Tu mensaje</strong><br>${esc(cita.mensaje)}</div>
         </div>` : ""}
 
-        <div class="conf-info-row"><span>Con quién</span><span>${item.nombre}</span></div>
-        <div class="conf-info-row"><span>Presupuesto declarado</span><span>${formatCOP(item.presupuesto)}</span></div>
+        <div class="conf-info-row"><span>Con quién</span><span>${esc(item.nombre)}</span></div>
+        <div class="conf-info-row"><span>Presupuesto declarado</span><span>${esc(formatCOP(item.presupuesto))}</span></div>
 
         <div class="conf-buttons">
-          <button type="button" class="conf-btn-solid" id="contactarBtn">💬 Contactar a ${primerNombre}</button>
+          <button type="button" class="conf-btn-solid" id="contactarBtn">💬 Contactar a ${esc(primerNombre)}</button>
           <button type="button" class="conf-btn-outline" id="cancelarCitaBtn">Cancelar cita</button>
         </div>
       </div>
@@ -151,7 +152,8 @@ function contactarRoomie(item) {
   const mensaje = encodeURIComponent(
     `Hola ${item.nombre.split(" ")[0]}, vi tu perfil en RoomMatch y me gustaría que nos conozcamos para visitar juntos el lugar que compartiríamos.`
   );
-  window.open(`https://wa.me/${item.telefono}?text=${mensaje}`, "_blank");
+  // Solo dígitos en la ruta: el teléfono viene de otro usuario y no debe poder alterar la URL.
+  window.open(`https://wa.me/${String(item.telefono).replace(/\D/g, "")}?text=${mensaje}`, "_blank", "noopener");
 }
 
 // ---------- CANCELAR LA CITA (modal propio, sin confirm() ni alert()) ----------
@@ -162,7 +164,7 @@ function confirmarCancelacion(item, cita) {
     <div class="cc-modal">
       <div class="cc-modal-icon is-warning">❓</div>
       <div class="cc-modal-title">¿Cancelar esta cita?</div>
-      <p class="cc-modal-text">Le avisaremos a ${item.nombre.split(" ")[0]} que ya no podrás asistir al encuentro del ${formatFechaCorta(cita.fecha_cita)}.</p>
+      <p class="cc-modal-text">Le avisaremos a ${esc(item.nombre.split(" ")[0])} que ya no podrás asistir al encuentro del ${esc(formatFechaCorta(cita.fecha_cita))}.</p>
       <div class="cc-modal-buttons">
         <button type="button" class="cc-modal-btn-outline" id="ccMantenerBtn">No, mantener</button>
         <button type="button" class="cc-modal-btn-danger" id="ccConfirmarBtn">Sí, cancelar</button>

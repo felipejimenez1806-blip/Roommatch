@@ -33,7 +33,7 @@ export function obtenerUsuario() {
   return usuarioEnMemoria;
 }
 
-/** Rol con el que se inició la sesión actual: "cliente" | "admin" | null. */
+/** Rol con el que se inició la sesión actual: "cliente" | "moderador" | "admin" | null. */
 export function obtenerRolActivo() {
   return rolActivoEnMemoria;
 }
@@ -46,6 +46,14 @@ export function haySesion() {
 /** Roles entre los que debe elegir un login que quedó a medias (OAuth). */
 export function obtenerRolesPendientes() {
   return window.APP?.rolesPendientes ?? [];
+}
+
+/**
+ * ¿El rol activo tiene este permiso? (p. ej. tienePermiso("bloquear-usuarios")).
+ * Solo para mostrar u ocultar controles: el servidor valida cada acción.
+ */
+export function tienePermiso(permiso) {
+  return (window.APP?.permisos ?? []).includes(permiso);
 }
 
 // ============================================================
@@ -199,9 +207,9 @@ export function seleccionarRol(rol) {
   return enviarJson("/seleccionar-rol", { cuerpo: { rol } });
 }
 
-/** POST /cambiar-rol. Pasar a admin exige la contraseña actual. */
+/** POST /cambiar-rol. Pasar a admin o a moderador exige la contraseña actual. */
 export function cambiarRol(rol, password) {
-  const cuerpo = rol === "admin" ? { rol, password } : { rol };
+  const cuerpo = rol === "admin" || rol === "moderador" ? { rol, password } : { rol };
   return enviarJson("/cambiar-rol", { cuerpo });
 }
 

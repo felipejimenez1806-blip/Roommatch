@@ -32,10 +32,12 @@ class AdminController extends Controller
             'usuarios_registrados' => Usuario::count(),
             'clientes' => Usuario::clientes()->count(),
             'administradores' => Usuario::admins()->count(),
+            'moderadores' => Usuario::moderadores()->count(),
             'usuarios_bloqueados' => Usuario::bloqueados()->count(),
             'publicaciones_activas' => Publicacion::count(),
             'roomies_publicados' => PersonaRoomie::count(),
             'reportes_pendientes' => Reporte::pendientes()->count(),
+            'reportes_escalados' => Reporte::escalados()->count(),
             'mensajes_contacto_pendientes' => MensajeContacto::where('atendido', false)->count(),
         ]);
     }

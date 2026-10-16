@@ -9,6 +9,7 @@
 
 import { API_BASE, appUrl } from "../core/config.js";
 import { requerirSesion, obtenerUsuario, cabecerasAutenticadas, manejarNoAutorizado } from "../core/auth.js";
+import { esc } from "../core/html.js";
 
 // ---------- PROTECCIÓN DE SESIÓN ----------
 // Verificación optimista con la sesión local (evita un
@@ -117,18 +118,18 @@ function renderListings(items) {
     card.dataset.id = item.id;
     card.innerHTML = `
       <div class="recom-img-wrap">
-        <img src="${item.img}" alt="${item.tipo_espacio} ${item.zona}"/>
-        <span class="recom-badge">${item.rating}</span>
-        <button class="recom-fav${favorites.has(item.id) ? " is-fav" : ""}" data-id="${item.id}">
-          ${favorites.has(item.id) ? "♥" : "♡"}
+        <img src="${esc(item.img)}" alt="${esc(item.tipo_espacio)} ${esc(item.zona)}"/>
+        <span class="recom-badge">${esc(item.rating)}</span>
+        <button class="recom-fav${esc(favorites.has(item.id) ? " is-fav" : "")}" data-id="${esc(item.id)}">
+          ${esc(favorites.has(item.id) ? "♥" : "♡")}
         </button>
       </div>
       <div class="recom-body">
-        <div class="recom-type">${item.tipo_espacio}</div>
-        <div class="recom-zone">${item.zona}</div>
+        <div class="recom-type">${esc(item.tipo_espacio)}</div>
+        <div class="recom-zone">${esc(item.zona)}</div>
         <div class="recom-price">
-          ${formatCOP(item.precio)}
-          <button class="arrow-btn" data-id="${item.id}">&#8594;</button>
+          ${esc(formatCOP(item.precio))}
+          <button class="arrow-btn" data-id="${esc(item.id)}">&#8594;</button>
         </div>
       </div>`;
     grid.appendChild(card);
