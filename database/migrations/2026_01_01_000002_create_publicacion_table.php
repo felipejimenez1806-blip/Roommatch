@@ -31,6 +31,10 @@ return new class extends Migration
             $table->foreign('id_usuario', 'fk_pub_usuario')
                 ->references('id_usuario')->on('usuario')
                 ->onDelete('cascade')->onUpdate('cascade');
+            // zona = nombre exacto de una localidad del catálogo (ver create_localidad_table)
+            $table->foreign('zona', 'fk_pub_localidad')
+                ->references('nombre')->on('localidad')
+                ->onDelete('restrict')->onUpdate('cascade');
 
             $table->index('id_usuario', 'idx_pub_usuario');
             $table->index('zona', 'idx_pub_zona');

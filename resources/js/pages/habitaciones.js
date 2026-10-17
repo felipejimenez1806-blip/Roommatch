@@ -135,7 +135,7 @@ function refrescarConDebounce() {
 }
 
 // ---------- EVENTOS ----------
-document.getElementById("filtroZona").addEventListener("input", refrescarConDebounce);
+document.getElementById("filtroZona").addEventListener("change", () => { paginaActual = 1; cargarResultados(); });
 document.getElementById("precioMin").addEventListener("input", refrescarConDebounce);
 document.getElementById("precioMax").addEventListener("input", refrescarConDebounce);
 document.querySelectorAll(".filtroTipo").forEach((c) => c.addEventListener("change", () => { paginaActual = 1; cargarResultados(); }));
@@ -149,9 +149,14 @@ document.getElementById("limpiarFiltrosBtn").addEventListener("click", limpiarFi
 
 // ---------- INICIALIZACIÓN ----------
 const parametrosURL = new URLSearchParams(window.location.search);
+// Llegada desde "Lugares populares" (?localidad=suba) o con el nombre exacto
+// (?zona=Suba). Solo se preselecciona si existe en el select cerrado.
+const selectZona = document.getElementById("filtroZona");
+const slugDesdeURL = parametrosURL.get("localidad");
 const zonaDesdeURL = parametrosURL.get("zona");
-if (zonaDesdeURL) {
-  document.getElementById("filtroZona").value = zonaDesdeURL;
-}
+const opcionInicial =
+  (slugDesdeURL && Array.from(selectZona.options).find((o) => o.dataset.slug === slugDesdeURL)) ||
+  (zonaDesdeURL && Array.from(selectZona.options).find((o) => o.value === zonaDesdeURL));
+if (opcionInicial) selectZona.value = opcionInicial.value;
 
 cargarResultados();

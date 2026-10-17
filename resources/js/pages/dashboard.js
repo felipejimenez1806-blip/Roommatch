@@ -19,10 +19,8 @@ requerirSesion();
 const usuario = obtenerUsuario();
 
 // ---------- ESTADO ----------
-const CANTIDAD_RECOMENDADOS = 5;
 let listings = [];
 let favorites = new Set();
-let activeZoneFilter = new URLSearchParams(window.location.search).get("zona") || null;
 
 // ---------- HELPERS ----------
 function formatCOP(n) {
@@ -48,20 +46,10 @@ async function cargarDestacadas() {
   return datos.data;
 }
 
-// Zona seleccionada (clic en "Lugares populares"): las 5 MEJORES
-// publicaciones de esa zona puntual, sin importar si compiten o no
-// con el top global. Reusa el endpoint de listado con los filtros
-// zona + orden=rating que ya soporta PublicacionController::index.
-async function cargarPorZona(zona) {
-  const parametros = new URLSearchParams({ zona, orden: "rating" });
-  const respuesta = await fetch(`${API_BASE}/publicaciones?${parametros}`);
-  const datos = await respuesta.json();
-  return datos.data.slice(0, CANTIDAD_RECOMENDADOS);
-}
-
-// Trae el conjunto correcto según haya o no una zona activa.
+// Los "Lugares populares" ya no filtran esta sección: cada tarjeta es un
+// enlace a /habitaciones?localidad=... (ver partials/lugares-populares).
 async function cargarListings() {
-  return activeZoneFilter ? cargarPorZona(activeZoneFilter) : cargarDestacadas();
+  return cargarDestacadas();
 }
 
 async function cargarFavoritos() {
@@ -152,9 +140,8 @@ function renderListings(items) {
 }
 
 // ---------- FILTRO DE TEXTO (dentro del dataset ya cargado) ----------
-// La zona YA NO se filtra aquí en memoria: cambia qué se carga desde
-// el servidor (ver cargarListings/seleccionarZona). Este filtro solo
-// aplica la búsqueda de texto sobre lo que esté cargado en `listings`.
+// Este filtro solo aplica la búsqueda de texto sobre lo que esté cargado
+// en `listings` (la zona se elige desde los enlaces de Lugares populares).
 function applyFilters() {
   const query = normalize(document.getElementById("searchInput").value.trim());
 
@@ -173,37 +160,11 @@ function clearAllFilters() {
   applyFilters();
 }
 
-// ---------- SELECCIÓN DE ZONA (recarga desde el servidor) ----------
-async function seleccionarZona(zona) {
-  const grid = document.getElementById("recomGrid");
-  grid.innerHTML = `<p class="results-count">Cargando...</p>`;
-
-  listings = await cargarListings();
-  document.getElementById("searchInput").value = "";
-  renderListings(listings);
-}
-
-// ---------- BÚSQUEDA (input + botón) ----------
 document.getElementById("searchInput").addEventListener("input", applyFilters);
 document.getElementById("searchInput").addEventListener("keydown", e => {
   if (e.key === "Enter") applyFilters();
 });
 document.getElementById("searchBtn").addEventListener("click", applyFilters);
-
-// ---------- LUGARES POPULARES: click trae el top 5 real de esa zona ----------
-document.querySelectorAll(".lugar-card").forEach(card => {
-  card.addEventListener("click", () => {
-    const zone = card.dataset.zone;
-    const isActive = activeZoneFilter === zone;
-
-    document.querySelectorAll(".lugar-card").forEach(c => c.classList.remove("active-zone"));
-    activeZoneFilter = isActive ? null : zone;
-    if (activeZoneFilter) card.classList.add("active-zone");
-
-    seleccionarZona(activeZoneFilter);
-    document.getElementById("recomSection").scrollIntoView({ behavior: "smooth", block: "start" });
-  });
-});
 
 // ---------- SALUDO DEL HERO ----------
 document.getElementById("heroGreeting").textContent = `Hola, ${primerNombre(usuario.nombre)} 👋`;
@@ -218,11 +179,5 @@ document.getElementById("heroGreeting").textContent = `Hola, ${primerNombre(usua
   listings = publicaciones;
   favorites = new Set(idsFavoritos);
 
-  if (activeZoneFilter) {
-    document.querySelectorAll(".lugar-card").forEach(c => {
-      if (c.dataset.zone === activeZoneFilter) c.classList.add("active-zone");
-    });
-    document.getElementById("recomSection").scrollIntoView({ behavior: "smooth", block: "start" });
-  }
   renderListings(listings);
 })();

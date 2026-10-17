@@ -16,7 +16,12 @@
 
     <div class="filter-block">
       <label class="filter-label" for="filtroZona">Zona o localidad</label>
-      <input type="text" id="filtroZona" placeholder="Ej: Chapinero, Suba..."/>
+      <select id="filtroZona">
+        <option value="">Todas las localidades</option>
+        @foreach ($localidades as $loc)
+          <option value="{{ $loc['nombre'] }}" data-slug="{{ $loc['slug'] }}">{{ $loc['nombre'] }}</option>
+        @endforeach
+      </select>
     </div>
 
     <div class="filter-block">

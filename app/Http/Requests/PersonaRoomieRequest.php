@@ -2,40 +2,12 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Localidad;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class PersonaRoomieRequest extends FormRequest
 {
-    /**
-     * Localidades de Bogotá permitidas para el campo "zona".
-     * Misma lista que App\Http\Requests\PublicacionRequest::LOCALIDADES_BOGOTA
-     * y que el <select> del wizard en crear-perfil-roomie.js — si se agrega
-     * o quita una localidad, hay que sincronizar las tres.
-     */
-    public const LOCALIDADES_BOGOTA = [
-        'Antonio Nariño',
-        'Barrios Unidos',
-        'Bosa',
-        'Chapinero',
-        'Ciudad Bolívar',
-        'Engativá',
-        'Fontibón',
-        'Kennedy',
-        'La Candelaria',
-        'Los Mártires',
-        'Puente Aranda',
-        'Rafael Uribe Uribe',
-        'San Cristóbal',
-        'Santa Fe',
-        'Suba',
-        'Sumapaz',
-        'Teusaquillo',
-        'Tunjuelito',
-        'Usaquén',
-        'Usme',
-    ];
-
     public function authorize(): bool
     {
         return true; // la autorización de "es el dueño" se resuelve en el controlador
@@ -60,7 +32,8 @@ class PersonaRoomieRequest extends FormRequest
             'edad' => ['required', 'integer', 'min:18', 'max:99'],
             'genero' => ['required', 'in:Mujer,Hombre,Otro'],
             'ocupacion' => ['required', 'in:Estudiante,Profesional,Freelance,Otro'],
-            'zona' => ['required', 'string', Rule::in(self::LOCALIDADES_BOGOTA)],
+            // Catálogo cerrado: debe ser EXACTAMENTE el nombre de una fila de `localidad`.
+            'zona' => ['required', 'string', Rule::in(Localidad::nombres())],
             'ciudad' => ['nullable', 'string', 'max:100'],
             'presupuesto' => ['required', 'numeric', 'gt:0'],
             'telefono_contacto' => ['required', 'string', 'min:10', 'max:20'],

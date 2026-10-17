@@ -24,41 +24,7 @@
 <!-- LUGARES POPULARES -->
 <div class="section" id="popularesSection">
   <p class="section-title">Lugares populares</p>
-  <div class="lugares-grid">
-
-    <div class="lugar-card tall" data-zone="Chapinero">
-      <img src="https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=600&q=80" alt="Chapinero" style="height:270px"/>
-      <span class="lugar-label">Chapinero</span>
-    </div>
-
-    <div style="display:flex;flex-direction:column;gap:10px;">
-      <div class="lugar-card short" data-zone="Kennedy">
-        <img src="https://images.unsplash.com/photo-1560185007-c5ca9d2c014d?w=400&q=80" alt="Kennedy"/>
-        <span class="lugar-label">Kennedy</span>
-      </div>
-      <div class="lugar-card short" data-zone="Santa Fe">
-        <img src="https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=400&q=80" alt="Santa Fe"/>
-        <span class="lugar-label">Santa Fe</span>
-      </div>
-    </div>
-
-    <div class="lugar-card tall" data-zone="Puente Aranda">
-      <img src="https://images.unsplash.com/photo-1584132967334-10e028bd69f7?w=600&q=80" alt="Puente Aranda" style="height:270px"/>
-      <span class="lugar-label">Puente Aranda</span>
-    </div>
-
-    <div style="display:flex;flex-direction:column;gap:10px;">
-      <div class="lugar-card short" data-zone="Suba">
-        <img src="https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=400&q=80" alt="Suba"/>
-        <span class="lugar-label">Suba</span>
-      </div>
-      <div class="lugar-card short" data-zone="Teusaquillo">
-        <img src="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&q=80" alt="Teusaquillo"/>
-        <span class="lugar-label">Teusaquillo</span>
-      </div>
-    </div>
-
-  </div>
+  @include('partials.lugares-populares')
 </div>
 
 <!-- RECOMENDADOS -->

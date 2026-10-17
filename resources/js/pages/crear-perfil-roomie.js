@@ -14,36 +14,15 @@
 // La sesión (token/usuario) se maneja en core/auth.js.
 // ============================================================
 
-import { API_BASE, appUrl } from "../core/config.js";
+import { API_BASE, appUrl, LOCALIDADES } from "../core/config.js";
 import { requerirSesion, obtenerUsuario, cabecerasAutenticadas, manejarNoAutorizado } from "../core/auth.js";
 import { esc } from "../core/html.js";
 
 // ---------- LOCALIDADES DE BOGOTÁ ----------
-// Mismo listado que crear-publicacion.js, para que "zona" sea consistente
-// entre publicaciones y perfiles de roomie (y se pueda cruzar/filtrar por
-// localidad exacta en vez de texto libre).
-const LOCALIDADES_BOGOTA = [
-  "Antonio Nariño",
-  "Barrios Unidos",
-  "Bosa",
-  "Chapinero",
-  "Ciudad Bolívar",
-  "Engativá",
-  "Fontibón",
-  "Kennedy",
-  "La Candelaria",
-  "Los Mártires",
-  "Puente Aranda",
-  "Rafael Uribe Uribe",
-  "San Cristóbal",
-  "Santa Fe",
-  "Suba",
-  "Sumapaz",
-  "Teusaquillo",
-  "Tunjuelito",
-  "Usaquén",
-  "Usme",
-];
+// Mismo catálogo que crear-publicacion.js (tabla `localidad`, vía
+// window.APP.localidades), para que "zona" sea consistente entre publicaciones
+// y perfiles de roomie y se pueda cruzar/filtrar por localidad exacta.
+const LOCALIDADES_BOGOTA = LOCALIDADES.map((l) => l.nombre);
 
 // ---------- PROTECCIÓN DE SESIÓN ----------
 requerirSesion();

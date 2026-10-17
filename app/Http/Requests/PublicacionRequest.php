@@ -2,39 +2,12 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Localidad;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class PublicacionRequest extends FormRequest
 {
-    /**
-     * Localidades de Bogotá permitidas para el campo "zona".
-     * Única fuente de verdad en el backend (el <select> del wizard
-     * en crear-publicacion.js debe mantenerse sincronizado con esta lista).
-     */
-    public const LOCALIDADES_BOGOTA = [
-        'Antonio Nariño',
-        'Barrios Unidos',
-        'Bosa',
-        'Chapinero',
-        'Ciudad Bolívar',
-        'Engativá',
-        'Fontibón',
-        'Kennedy',
-        'La Candelaria',
-        'Los Mártires',
-        'Puente Aranda',
-        'Rafael Uribe Uribe',
-        'San Cristóbal',
-        'Santa Fe',
-        'Suba',
-        'Sumapaz',
-        'Teusaquillo',
-        'Tunjuelito',
-        'Usaquén',
-        'Usme',
-    ];
-
     public function authorize(): bool
     {
         return true; // el guard de "es tuya o no" se hace en el controller
@@ -45,7 +18,8 @@ class PublicacionRequest extends FormRequest
         return [
             'tipo_espacio' => ['required', 'in:Habitación,Apartamento,Casa,Estudio'],
             'titulo' => ['required', 'string', 'min:5', 'max:200'],
-            'zona' => ['required', 'string', Rule::in(self::LOCALIDADES_BOGOTA)],
+            // Catálogo cerrado: debe ser EXACTAMENTE el nombre de una fila de `localidad`.
+            'zona' => ['required', 'string', Rule::in(Localidad::nombres())],
             'ciudad' => ['nullable', 'string', 'max:100'],
             'direccion' => ['required', 'string', 'min:3', 'max:255'],
             'precio' => ['required', 'numeric', 'min:1'],

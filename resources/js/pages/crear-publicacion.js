@@ -8,33 +8,14 @@
 //   - Ya NO depende de data.js (guardarPublicacionExtra, etc.)
 // ============================================================
 
-import { API_BASE, appUrl } from "../core/config.js";
+import { API_BASE, appUrl, LOCALIDADES } from "../core/config.js";
 import { requerirSesion, obtenerUsuario, cabecerasAutenticadas, manejarNoAutorizado } from "../core/auth.js";
 import { esc } from "../core/html.js";
 
 // ---------- LOCALIDADES DE BOGOTÁ ----------
-const LOCALIDADES_BOGOTA = [
-  "Antonio Nariño",
-  "Barrios Unidos",
-  "Bosa",
-  "Chapinero",
-  "Ciudad Bolívar",
-  "Engativá",
-  "Fontibón",
-  "Kennedy",
-  "La Candelaria",
-  "Los Mártires",
-  "Puente Aranda",
-  "Rafael Uribe Uribe",
-  "San Cristóbal",
-  "Santa Fe",
-  "Suba",
-  "Sumapaz",
-  "Teusaquillo",
-  "Tunjuelito",
-  "Usaquén",
-  "Usme",
-];
+// Vienen de la tabla `localidad` (window.APP.localidades); el backend valida
+// contra esa misma tabla, así que "zona" siempre coincide exactamente.
+const LOCALIDADES_BOGOTA = LOCALIDADES.map((l) => l.nombre);
 
 // ---------- PROTECCIÓN DE SESIÓN ----------
 requerirSesion();

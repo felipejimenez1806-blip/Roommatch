@@ -17,6 +17,8 @@
     permisos        Permisos del rol activo (App\Support\Permisos::MAPA), p. ej.
                     ['gestionar-reportes', 'escalar-reportes', ...]. SOLO sirve
                     para mostrar u ocultar botones: el servidor valida cada acción.
+    localidades     Catálogo cerrado de localidades de Bogotá ([{nombre, slug}], tabla
+                    `localidad`). Alimenta los <select> de zona de los wizards.
     rolesPendientes Si la contraseña ya fue verificada pero falta elegir con
                     qué rol entrar (cuenta con más de un rol, p. ej. tras un
                     login social), los roles a elegir; [] en otro caso.
@@ -38,5 +40,6 @@
     rolActivo: {{ \Illuminate\Support\Js::from($usuarioSesion ? session(\App\Services\SesionUsuario::ROL_ACTIVO) : null) }},
     permisos: {{ \Illuminate\Support\Js::from($usuarioSesion ? \App\Support\Permisos::delRolActivo() : []) }},
     rolesPendientes: {{ \Illuminate\Support\Js::from($usuarioSesion ? [] : \App\Services\SesionUsuario::rolesPendientes(request())) }},
+    localidades: {{ \Illuminate\Support\Js::from(\App\Models\Localidad::todas()) }},
   });
 </script>

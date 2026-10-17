@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CitaController;
 use App\Http\Controllers\Api\ContactoController;
 use App\Http\Controllers\Api\FavoritoController;
+use App\Http\Controllers\Api\LocalidadController;
 use App\Http\Controllers\Api\NotificacionController;
 use App\Http\Controllers\Api\PersonaRoomieController;
 use App\Http\Controllers\Api\PublicacionController;
@@ -72,6 +73,11 @@ Route::post('/password/restablecer', [PasswordResetController::class, 'restablec
 // Limitada a 5 intentos por minuto por IP para evitar spam.
 Route::post('/contacto', [ContactoController::class, 'store'])
     ->middleware('throttle:5,1');
+
+// Pública (el index la usa sin sesión). Se registra antes que cualquier ruta
+// con {parametro} para que 'populares' no se interprete como un id.
+Route::get('/localidades/populares', [LocalidadController::class, 'populares'])
+    ->middleware('throttle:60,1');
 
 Route::get('/publicaciones', [PublicacionController::class, 'index']);
 Route::get('/publicaciones/destacadas', [PublicacionController::class, 'destacadas']);
