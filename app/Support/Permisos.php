@@ -28,6 +28,8 @@ class Permisos
             'escalar-reportes',             // pasar un reporte a un administrador
             'ver-publicaciones-moderacion', // listar publicaciones desde el panel
             'bajar-publicaciones',          // bajar (soft delete) y restaurar publicaciones
+            'ver-roomies-moderacion',       // listar perfiles de roomie desde el panel
+            'bajar-roomies',                // bajar (soft delete) y restaurar perfiles de roomie
             'responder-mensajes',           // responder los mensajes de Contáctanos
         ],
 
@@ -35,6 +37,8 @@ class Permisos
             'gestionar-reportes',
             'ver-publicaciones-moderacion',
             'bajar-publicaciones',
+            'ver-roomies-moderacion',
+            'bajar-roomies',
             'responder-mensajes',
             // Solo administradores:
             'gestionar-escalados',          // resolver reportes escalados o devolverlos al moderador

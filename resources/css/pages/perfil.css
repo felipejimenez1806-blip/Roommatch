@@ -404,13 +404,18 @@
   display: block;
   position: relative;
 }
+/* Toda la tarjeta (foto + datos) es un enlace a la publicación/roomie.
+   El corazón queda fuera del <a>, posicionado sobre la tarjeta. */
+.prf-fav-link { display: block; color: inherit; text-decoration: none; }
+.prf-fav-card { transition: box-shadow .15s, border-color .15s; }
+.prf-fav-card:hover { border-color: #1a9ecf; box-shadow: 0 4px 14px rgba(26,158,207,.15); }
 .prf-fav-img-wrap { position: relative; }
 .prf-fav-card img { width: 100%; height: 140px; object-fit: cover; display: block; }
 .prf-fav-remove {
   position: absolute; top: 8px; right: 8px;
   width: 30px; height: 30px; border-radius: 50%;
   background: rgba(255,255,255,.92); border: none;
-  font-size: 15px; cursor: pointer; color: #e03;
+  font-size: 15px; cursor: pointer; color: #e03; z-index: 2;
   display: flex; align-items: center; justify-content: center;
 }
 .prf-fav-body { padding: 12px 14px; }

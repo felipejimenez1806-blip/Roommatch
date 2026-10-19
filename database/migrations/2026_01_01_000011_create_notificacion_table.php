@@ -25,6 +25,7 @@ return new class extends Migration
                 'reporte_escalado',
                 'reporte_devuelto',
                 'publicacion_bajada',
+                'persona_bajada',
             ]);
             $table->string('mensaje', 500);
             $table->string('objetivo_titulo', 255)->nullable();

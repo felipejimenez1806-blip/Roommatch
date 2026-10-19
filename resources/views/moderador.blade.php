@@ -43,6 +43,24 @@
   <div class="prf-empty" id="modPubsEmpty" hidden>No hay publicaciones que coincidan con la búsqueda.</div>
 </section>
 
+<!-- ROOMIES -->
+<section class="prf-panel" id="modPanelRoomies">
+  <h1 class="prf-title">Roomies</h1>
+  <p class="prf-subtitle">Revisa los perfiles de roomie publicados y baja los que incumplan las normas. Un perfil bajado se puede restaurar.</p>
+
+  <div class="adm-toolbar">
+    <input class="adm-search" id="modRoomiesSearch" type="text" placeholder="Buscar por nombre o zona..." autocomplete="off"/>
+    <div class="prf-subtabs" id="modRoomiesFiltros">
+      <button class="prf-subtab active" data-filtro="activos" type="button">Activos</button>
+      <button class="prf-subtab" data-filtro="eliminados" type="button">Bajados</button>
+      <button class="prf-subtab" data-filtro="todos" type="button">Todos</button>
+    </div>
+  </div>
+
+  <div class="adm-pubs-grid" id="modRoomiesGrid"></div>
+  <div class="prf-empty" id="modRoomiesEmpty" hidden>No hay perfiles de roomie que coincidan con la búsqueda.</div>
+</section>
+
 <!-- MENSAJES DE CONTACTO -->
 <section class="prf-panel" id="modPanelMensajes">
   <h1 class="prf-title">Mensajes de contacto</h1>

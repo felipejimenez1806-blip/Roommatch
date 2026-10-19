@@ -1,9 +1,9 @@
 // ============================================================
 // ROOMMATCH – PANEL DE MODERACIÓN
 // ------------------------------------------------------------
-// Tres secciones: Reportes (resolver, descartar, ESCALAR a un
-// administrador), Publicaciones (ver, bajar con motivo, restaurar) y
-// Mensajes de contacto (responder por correo). Mismas clases CSS que el
+// Cuatro secciones: Reportes (resolver, descartar, ESCALAR a un
+// administrador), Publicaciones y Roomies (ver, bajar con motivo,
+// restaurar) y Mensajes de contacto (responder por correo). Mismas clases CSS que el
 // panel de administración (admin.css), así que se ve igual.
 //
 // Seguridad: esta pantalla solo MUESTRA u OCULTA botones según lo que el
@@ -266,6 +266,7 @@ function abrirModalResolver(r) {
     mostrarToast("Reporte resuelto.");
     renderReportes();
     renderPublicaciones();
+    renderRoomies();
   });
 }
 
@@ -451,6 +452,164 @@ function abrirModalBajar(id, titulo) {
 }
 
 // ============================================================
+// ROOMIES
+// ------------------------------------------------------------
+// Mismo patrón que Publicaciones: activos / bajados / todos, ver perfil,
+// bajar con motivo obligatorio y restaurar. Reutiliza las clases
+// .adm-pub-* (son genéricas) y el endpoint público GET /api/roomies/{id}
+// para el detalle.
+// ============================================================
+let busquedaRoomieActual = "";
+let filtroRoomieActual = "activos"; // 'activos' | 'eliminados' | 'todos'
+
+const ETIQUETAS_ESTADO_BUSQUEDA = {
+  buscando: "Buscando roomie",
+  ya_encontro: "Ya encontró roomie",
+  pausado: "Búsqueda pausada",
+};
+
+async function renderRoomies() {
+  const grid = document.getElementById("modRoomiesGrid");
+  const empty = document.getElementById("modRoomiesEmpty");
+
+  const params = new URLSearchParams({ estado: filtroRoomieActual });
+  if (busquedaRoomieActual) params.set("q", busquedaRoomieActual);
+
+  const res = await api(`/admin/roomies?${params}`);
+  if (!res) return;
+  if (!res.ok) {
+    grid.innerHTML = "";
+    empty.hidden = false;
+    empty.textContent = mensajeDeError(res, "No se pudieron cargar los perfiles de roomie.");
+    return;
+  }
+
+  const lista = res.datos.personas || [];
+  if (!lista.length) {
+    grid.innerHTML = "";
+    empty.hidden = false;
+    empty.textContent = filtroRoomieActual === "eliminados"
+      ? "No hay perfiles de roomie bajados."
+      : "No se encontraron perfiles de roomie.";
+    return;
+  }
+  empty.hidden = true;
+
+  grid.innerHTML = lista.map((p) => `
+    <div class="adm-pub-card">
+      <img class="adm-pub-img" src="${esc(p.img || "")}" alt="${esc(p.nombre)}"/>
+      <div class="adm-pub-body">
+        <div class="adm-pub-title">
+          ${esc(p.nombre)}
+          ${p.eliminado ? `<span class="prf-badge is-bloqueado" style="margin-left:6px;">Bajado</span>` : ""}
+        </div>
+        <div class="adm-pub-sub">${esc(p.ocupacion)} · ${esc(p.zona)}, ${esc(p.ciudad)} · ★ ${esc(p.rating ?? "—")}</div>
+        <div class="adm-pub-price">${esc(formatCOP(p.presupuesto))}</div>
+        <div class="adm-pub-owner">Edad: ${esc(p.edad ?? "—")}</div>
+        <div class="adm-pub-actions">
+          ${p.eliminado
+            ? `<button type="button" class="adm-row-btn is-primary" data-restaurar-roomie="${p.id}">Restaurar</button>`
+            : `<button type="button" class="adm-row-btn" data-ver-roomie="${p.id}">Ver perfil</button>
+               <button type="button" class="adm-row-btn is-danger" data-bajar-roomie="${p.id}" data-nombre="${esc(p.nombre)}">Bajar</button>`}
+        </div>
+      </div>
+    </div>`).join("");
+
+  grid.querySelectorAll("[data-ver-roomie]").forEach((btn) => {
+    btn.addEventListener("click", () => abrirModalRoomie(Number(btn.dataset.verRoomie)));
+  });
+  grid.querySelectorAll("[data-bajar-roomie]").forEach((btn) => {
+    btn.addEventListener("click", () => abrirModalBajarRoomie(Number(btn.dataset.bajarRoomie), btn.dataset.nombre));
+  });
+  grid.querySelectorAll("[data-restaurar-roomie]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      btn.disabled = true;
+      const res2 = await api(`/admin/roomies/${btn.dataset.restaurarRoomie}/restaurar`, { metodo: "PATCH" });
+      if (!res2) return;
+      if (!res2.ok) {
+        mostrarToast(mensajeDeError(res2, "No se pudo restaurar el perfil."));
+        btn.disabled = false;
+        return;
+      }
+      mostrarToast("Perfil de roomie restaurado.");
+      renderRoomies();
+    });
+  });
+}
+
+async function abrirModalRoomie(id) {
+  const res = await api(`/roomies/${id}`);
+  if (!res || !res.ok) return;
+  const p = res.datos.persona;
+  const c = p.caracteristicas || {};
+
+  abrirModal(`
+    <button class="adm-modal-close" type="button" id="modCerrarX">&times;</button>
+    <p class="adm-modal-title">${esc(p.nombre)}</p>
+    <p class="adm-modal-sub">${esc(p.ocupacion)} · ${esc(p.zona)}, ${esc(p.ciudad)}</p>
+    <img class="adm-modal-img" src="${esc(p.img || "")}" alt="${esc(p.nombre)}"/>
+    <dl class="adm-modal-grid">
+      <dt>Edad</dt><dd>${esc(p.edad ?? "—")}</dd>
+      <dt>Género</dt><dd>${esc(p.genero || "—")}</dd>
+      <dt>Presupuesto</dt><dd>${esc(formatCOP(p.presupuesto))}</dd>
+      <dt>Estado de búsqueda</dt><dd>${esc(ETIQUETAS_ESTADO_BUSQUEDA[p.estado_busqueda] || p.estado_busqueda || "—")}</dd>
+      <dt>Rating</dt><dd>★ ${esc(p.rating ?? "—")} (${(p.resenas || []).length} reseñas)</dd>
+      <dt>Ambiente preferido</dt><dd>${esc(c.ambiente_preferido || "—")}</dd>
+      <dt>Horario</dt><dd>${esc(c.horario || "—")}</dd>
+      <dt>Busca mudarse</dt><dd>${esc(c.fecha_mudanza || "—")}</dd>
+      <dt>Fumador</dt><dd>${c.fumador ? "Sí" : "No"}</dd>
+      <dt>Tiene mascota</dt><dd>${c.tiene_mascota ? "Sí" : "No"}</dd>
+    </dl>
+    <p style="font-size:13.5px;color:#555;line-height:1.5;margin:0 0 18px;">${esc(p.descripcion || "")}</p>
+    <div class="adm-modal-buttons">
+      <button type="button" class="adm-row-btn" id="modCerrarDetalle">Cerrar</button>
+      <button type="button" class="adm-row-btn is-danger" id="modBajarRoomieDesdeDetalle">Bajar perfil</button>
+    </div>
+  `);
+  document.getElementById("modCerrarX").addEventListener("click", cerrarModal);
+  document.getElementById("modCerrarDetalle").addEventListener("click", cerrarModal);
+  document.getElementById("modBajarRoomieDesdeDetalle").addEventListener("click", () => {
+    cerrarModal();
+    abrirModalBajarRoomie(p.id, p.nombre);
+  });
+}
+
+function abrirModalBajarRoomie(id, nombre) {
+  abrirModal(`
+    <button class="adm-modal-close" type="button" id="modCerrarX">&times;</button>
+    <p class="adm-modal-title">¿Bajar el perfil de ${esc(nombre)}?</p>
+    <p class="adm-modal-sub">Dejará de verse en la búsqueda de roomies, se rechazarán sus citas pendientes y el dueño recibirá una notificación con el motivo. El registro no se borra: se puede restaurar desde el filtro "Bajados".</p>
+    <textarea class="adm-modal-textarea" id="modMotivoBajarRoomie" maxlength="255" placeholder="Motivo (obligatorio, mínimo 5 caracteres). Lo verá el dueño del perfil."></textarea>
+    <p class="adm-modal-sub" id="modBajarRoomieError" style="color:#c0261c;min-height:15px;margin-top:-6px;"></p>
+    <div class="adm-modal-buttons">
+      <button type="button" class="adm-row-btn" id="modCancelarBajarRoomie">Cancelar</button>
+      <button type="button" class="adm-row-btn is-danger" id="modConfirmarBajarRoomie">Sí, bajar</button>
+    </div>
+  `);
+  document.getElementById("modCerrarX").addEventListener("click", cerrarModal);
+  document.getElementById("modCancelarBajarRoomie").addEventListener("click", cerrarModal);
+  document.getElementById("modConfirmarBajarRoomie").addEventListener("click", async (e) => {
+    const motivo = document.getElementById("modMotivoBajarRoomie").value.trim();
+    const errorEl = document.getElementById("modBajarRoomieError");
+    if (motivo.length < 5) {
+      errorEl.textContent = "Indica el motivo (mínimo 5 caracteres).";
+      return;
+    }
+    e.currentTarget.disabled = true;
+    const res = await api(`/admin/roomies/${id}`, { metodo: "DELETE", cuerpo: { motivo } });
+    if (!res) return;
+    if (!res.ok) {
+      errorEl.textContent = mensajeDeError(res, "No se pudo bajar el perfil.");
+      e.currentTarget.disabled = false;
+      return;
+    }
+    cerrarModal();
+    mostrarToast("Perfil de roomie bajado.");
+    renderRoomies();
+  });
+}
+
+// ============================================================
 // MENSAJES DE CONTACTO
 // ============================================================
 let filtroMensajeActual = "pendiente";
@@ -581,13 +740,20 @@ function confirmarAtenderSinResponder(id) {
 // ============================================================
 activarSubtabs("#modReportesFiltros", (f) => { filtroReporteActual = f; renderReportes(); });
 activarSubtabs("#modPubsFiltros", (f) => { filtroPubActual = f; renderPublicaciones(); });
+activarSubtabs("#modRoomiesFiltros", (f) => { filtroRoomieActual = f; renderRoomies(); });
 activarSubtabs("#modMensajesFiltros", (f) => { filtroMensajeActual = f; renderMensajes(); });
 document.getElementById("modPubsSearch").addEventListener("input", debounce((e) => {
   busquedaPubActual = e.target.value.trim();
   renderPublicaciones();
 }, 300));
 
+document.getElementById("modRoomiesSearch").addEventListener("input", debounce((e) => {
+  busquedaRoomieActual = e.target.value.trim();
+  renderRoomies();
+}, 300));
+
 renderReportes();
 renderPublicaciones();
+renderRoomies();
 renderMensajes();
 activarPanelPorHash();

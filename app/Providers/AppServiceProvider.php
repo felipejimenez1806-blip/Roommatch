@@ -3,9 +3,11 @@
 namespace App\Providers;
 
 use App\Models\Localidad;
+use App\Models\PersonaRoomie;
 use App\Models\Publicacion;
 use App\Models\Reporte;
 use App\Models\Usuario;
+use App\Policies\PersonaRoomiePolicy;
 use App\Policies\PublicacionPolicy;
 use App\Policies\ReportePolicy;
 use App\Services\LocalidadPopularService;
@@ -42,6 +44,7 @@ class AppServiceProvider extends ServiceProvider
         // del autodescubrimiento por nombre.
         Gate::policy(Reporte::class, ReportePolicy::class);
         Gate::policy(Publicacion::class, PublicacionPolicy::class);
+        Gate::policy(PersonaRoomie::class, PersonaRoomiePolicy::class);
 
         // "Lugares populares" de index y dashboard: el composer va en el
         // partial (no en las dos vistas) para que ambas compartan la misma

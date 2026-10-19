@@ -28,6 +28,10 @@
 }
 .prf-sidebar {
   width: 200px;
+  /* perfil.css lo deja en top:90px (pensado para el navbar de cliente).
+     Aquí no hay navbar: con 90px el sidebar corto del moderador se
+     desplaza hacia abajo. 36px = padding-top de .prf-page. */
+  top: 36px;
 }
 .prf-content {
   padding-left: 28px;

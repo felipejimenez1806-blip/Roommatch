@@ -48,7 +48,7 @@ use Illuminate\Support\Facades\Route;
 | pendiente; en ese momento aún NO está autenticado, por eso la ruta va
 | fuera del grupo auth). 'es.admin' exige rol activo admin (y el rol vigente
 | en BD) para las rutas /admin/* que son SOLO de administradores. Las que
-| comparten admin y moderador (reportes, publicaciones, mensajes de contacto)
+| comparten admin y moderador (reportes, publicaciones, roomies, mensajes de contacto)
 | no llevan 'es.admin': llevan `can:<permiso>`, y el permiso sale del rol
 | activo (App\Support\Permisos). agregar-rol-cliente es autoservicio (sin
 | restricción extra): ver AuthController::agregarRolCliente().
@@ -187,6 +187,15 @@ Route::middleware(['auth:sanctum', 'cuenta.activa'])->group(function () {
         Route::patch('/publicaciones/{id}/restaurar', [AdminPublicacionController::class, 'restaurar'])
             ->middleware('can:bajar-publicaciones');
 
+        Route::get('/roomies', [AdminPersonaRoomieController::class, 'index'])
+            ->middleware('can:ver-roomies-moderacion');
+        Route::delete('/roomies/{persona}', [AdminPersonaRoomieController::class, 'destroy'])
+            ->middleware('can:bajar-roomies');
+        // Sin route model binding por la misma razón que las publicaciones:
+        // un perfil soft-deleted queda excluido del binding implícito.
+        Route::patch('/roomies/{id}/restaurar', [AdminPersonaRoomieController::class, 'restaurar'])
+            ->middleware('can:bajar-roomies');
+
         Route::middleware('can:responder-mensajes')->group(function () {
             Route::get('/mensajes-contacto', [AdminMensajeContactoController::class, 'index']);
             Route::patch('/mensajes-contacto/{mensajeContacto}/atender', [AdminMensajeContactoController::class, 'atender']);
@@ -210,10 +219,6 @@ Route::middleware(['auth:sanctum', 'cuenta.activa'])->group(function () {
             ->middleware('can:gestionar-roles');
         Route::patch('/usuarios/{usuario}/revocar-moderador', [AdminUsuarioController::class, 'revocarModerador'])
             ->middleware('can:gestionar-roles');
-
-        Route::get('/roomies', [AdminPersonaRoomieController::class, 'index']);
-        Route::delete('/roomies/{persona}', [AdminPersonaRoomieController::class, 'destroy']);
-        Route::patch('/roomies/{id}/restaurar', [AdminPersonaRoomieController::class, 'restaurar']);
 
         Route::get('/reportes/grafica', [AdminReporteController::class, 'grafica']);
     });

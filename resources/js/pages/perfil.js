@@ -518,24 +518,28 @@ async function renderFavoritos() {
 
   gridHab.innerHTML = favoritosHab.length ? favoritosHab.map((f) => `
     <div class="prf-fav-card">
-      <div class="prf-fav-img-wrap"><img src="${esc(f.img || "")}" alt="${esc(f.tipo)} ${esc(f.zona)}"/></div>
+      <a class="prf-fav-link" href="${esc(appUrl(`/publicacion/${f.id}`))}">
+        <div class="prf-fav-img-wrap"><img src="${esc(f.img || "")}" alt="${esc(f.tipo)} ${esc(f.zona)}"/></div>
+        <div class="prf-fav-body">
+          <div class="prf-fav-title">${esc(f.tipo)}</div>
+          <div class="prf-fav-sub">${esc(f.zona)}</div>
+          <div class="prf-fav-price">${esc(formatCOP(f.precio))}</div>
+        </div>
+      </a>
       <button type="button" class="prf-fav-remove" data-remove-hab="${esc(f.id)}" title="Quitar de favoritos">♥</button>
-      <div class="prf-fav-body">
-        <div class="prf-fav-title">${esc(f.tipo)}</div>
-        <div class="prf-fav-sub">${esc(f.zona)}</div>
-        <div class="prf-fav-price">${esc(formatCOP(f.precio))}</div>
-      </div>
     </div>`).join("") : `<div class="prf-empty">Aún no has guardado habitaciones. <a href="${esc(appUrl('/dashboard'))}">Explora habitaciones →</a></div>`;
 
   gridRoom.innerHTML = favoritosRoom.length ? favoritosRoom.map((f) => `
     <div class="prf-fav-card">
-      <div class="prf-fav-img-wrap"><img src="${esc(f.img || "")}" alt="${esc(f.nombre)}"/></div>
+      <a class="prf-fav-link" href="${esc(appUrl(`/roomie/${f.id}`))}">
+        <div class="prf-fav-img-wrap"><img src="${esc(f.img || "")}" alt="${esc(f.nombre)}"/></div>
+        <div class="prf-fav-body">
+          <div class="prf-fav-title">${esc(f.nombre)}</div>
+          <div class="prf-fav-sub">${esc(f.zona)}${esc(f.zona && f.ciudad ? ", " : "")}${esc(f.ciudad || "")}</div>
+          <div class="prf-fav-price">${esc(formatCOP(f.presupuesto))}</div>
+        </div>
+      </a>
       <button type="button" class="prf-fav-remove" data-remove-roomie="${esc(f.id)}" title="Quitar de favoritos">♥</button>
-      <div class="prf-fav-body">
-        <div class="prf-fav-title">${esc(f.nombre)}</div>
-        <div class="prf-fav-sub">${esc(f.zona)}${esc(f.zona && f.ciudad ? ", " : "")}${esc(f.ciudad || "")}</div>
-        <div class="prf-fav-price">${esc(formatCOP(f.presupuesto))}</div>
-      </div>
     </div>`).join("") : `<div class="prf-empty">Aún no te has guardado roomies. <a href="${esc(appUrl('/roomies'))}">Explora roomies →</a></div>`;
 
   gridHab.querySelectorAll("[data-remove-hab]").forEach((btn) => {

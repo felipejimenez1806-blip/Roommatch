@@ -126,6 +126,27 @@ class Notificacion extends Model
     }
 
     /**
+     * Avisa al dueño de un perfil de roomie que el equipo de moderación lo
+     * bajó (mismo patrón que notificarPublicacionBajada()).
+     */
+    public static function notificarPersonaBajada(PersonaRoomie $persona, ?string $motivo): void
+    {
+        $mensaje = 'Tu perfil de roomie fue dado de baja por el equipo de moderación.';
+        if ($motivo) {
+            $mensaje .= " Motivo: {$motivo}";
+        }
+
+        static::create([
+            'id_usuario' => $persona->id_usuario,
+            'tipo' => 'persona_bajada',
+            'mensaje' => Str::limit($mensaje, 495),
+            'objetivo_titulo' => $persona->usuario->nombre_completo ?? 'Perfil de roomie',
+            'link' => '/mis-publicaciones',
+            'leida' => false,
+        ]);
+    }
+
+    /**
      * Crea una notificación por persona. Quien tenga el rol admin recibe el
      * enlace al panel de administración; quien solo sea moderador, el del
      * panel de moderación (cada panel tiene sus propios ids de sección).
