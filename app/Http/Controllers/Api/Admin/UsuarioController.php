@@ -5,9 +5,11 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Rol;
 use App\Models\Usuario;
+use App\Services\ModeracionAuditor;
 use App\Services\SesionUsuario;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 
@@ -20,7 +22,7 @@ class UsuarioController extends Controller
     private const CORREO_ADMIN_SISTEMA = 'roommatch.admin2026@gmail.com';
 
     /**
-     * GET /api/admin/usuarios?filtro=todos|cliente|admin|bloqueado&q=...
+     * GET /api/admin/usuarios?filtro=todos|cliente|moderador|admin|bloqueado&q=...
      * Reemplaza a usuariosFiltrados()/renderUsuarios() de admin.js, pero
      * filtrando en el servidor en vez de sobre el array completo.
      *
@@ -37,6 +39,8 @@ class UsuarioController extends Controller
             $query->bloqueados();
         } elseif ($filtro === 'cliente') {
             $query->clientes();
+        } elseif ($filtro === 'moderador') {
+            $query->moderadores();
         } elseif ($filtro === 'admin') {
             $query->admins();
         }
@@ -128,6 +132,11 @@ class UsuarioController extends Controller
             return $nuevoAdmin;
         });
 
+        ModeracionAuditor::registrar('administrador_creado', 'usuario', $nuevoAdmin->id_usuario, $nuevoAdmin->nombre_completo, [
+            'area' => $datos['area'],
+            'cargo' => $datos['cargo'],
+        ]);
+
         return response()->json([
             'mensaje' => "{$nuevoAdmin->nombre_completo} fue creado como administrador.",
             'usuario' => $this->paraTablaAdmin($nuevoAdmin),
@@ -148,6 +157,8 @@ class UsuarioController extends Controller
      */
     public function promoverAdmin(Request $request, Usuario $usuario)
     {
+        Gate::authorize('gestionar-roles');
+
         $admin = $request->user();
 
         $datos = $request->validate([
@@ -184,6 +195,8 @@ class UsuarioController extends Controller
             ],
         ]);
 
+        ModeracionAuditor::registrar('rol_promovido', 'usuario', $usuario->id_usuario, $usuario->nombre_completo, ['rol' => 'admin']);
+
         return response()->json([
             'mensaje' => "{$usuario->nombre_completo} ahora es administrador.",
             'usuario' => $this->paraTablaAdmin($usuario->fresh()),
@@ -206,6 +219,8 @@ class UsuarioController extends Controller
      */
     public function revocarAdmin(Request $request, Usuario $usuario)
     {
+        Gate::authorize('gestionar-roles');
+
         $admin = $request->user();
 
         if ($usuario->id_usuario === $admin->id_usuario) {
@@ -225,8 +240,102 @@ class UsuarioController extends Controller
         $rolAdmin = Rol::where('nombre', 'admin')->firstOrFail();
         $usuario->roles()->detach($rolAdmin->id_rol);
 
+        ModeracionAuditor::registrar('rol_revocado', 'usuario', $usuario->id_usuario, $usuario->nombre_completo, ['rol' => 'admin']);
+
         return response()->json([
             'mensaje' => "Se revocó el rol de administrador a {$usuario->nombre_completo}.",
+            'usuario' => $this->paraTablaAdmin($usuario->fresh()),
+        ]);
+    }
+
+    /**
+     * PATCH /api/admin/usuarios/{usuario}/promover-moderador
+     * Asigna el rol 'moderador' a un usuario ya existente. Conserva los roles
+     * que ya tenga (cliente y/o admin). Solo administradores (ruta con
+     * `can:gestionar-roles`). Mismo rigor que promoverAdmin(): exige la
+     * contraseña del admin que autoriza, y rechaza cuentas de acceso social
+     * sin contraseña local (no podrían reingresar la contraseña al cambiar
+     * de rol hacia moderador).
+     */
+    public function promoverModerador(Request $request, Usuario $usuario)
+    {
+        Gate::authorize('gestionar-roles');
+
+        $admin = $request->user();
+
+        $request->validate([
+            'password_actual' => ['required', 'string'],
+        ], [
+            'password_actual.required' => 'Confirma tu propia contraseña para autorizar esta acción.',
+        ]);
+
+        if (! Hash::check($request->input('password_actual'), $admin->contrasena)) {
+            return response()->json([
+                'mensaje' => 'Tu contraseña actual no es correcta.',
+                'errors' => ['password_actual' => ['Tu contraseña actual no es correcta.']],
+            ], 422);
+        }
+
+        if ($usuario->esModerador()) {
+            return response()->json([
+                'mensaje' => "{$usuario->nombre_completo} ya es moderador.",
+            ], 409);
+        }
+
+        if ($usuario->bloqueado) {
+            return response()->json([
+                'mensaje' => 'No se puede asignar un rol a una cuenta bloqueada.',
+            ], 422);
+        }
+
+        if (! $usuario->contrasena) {
+            return response()->json([
+                'mensaje' => 'Las cuentas de acceso social sin contraseña local no pueden promoverse a moderador.',
+            ], 422);
+        }
+
+        $rolModerador = Rol::where('nombre', 'moderador')->firstOrFail();
+
+        $usuario->roles()->syncWithoutDetaching([
+            $rolModerador->id_rol => [
+                'fecha_asignacion' => now(),
+                'asignado_por' => $admin->id_usuario,
+            ],
+        ]);
+
+        ModeracionAuditor::registrar('rol_promovido', 'usuario', $usuario->id_usuario, $usuario->nombre_completo, ['rol' => 'moderador']);
+
+        return response()->json([
+            'mensaje' => "{$usuario->nombre_completo} ahora es moderador.",
+            'usuario' => $this->paraTablaAdmin($usuario->fresh()),
+        ]);
+    }
+
+    /**
+     * PATCH /api/admin/usuarios/{usuario}/revocar-moderador
+     * Quita el rol 'moderador' (conserva cliente y/o admin). No pide
+     * contraseña: quitar un privilegio es de menor riesgo que otorgarlo. Si la
+     * persona tiene una sesión abierta como moderador, el middleware
+     * 'cuenta.activa' la saca (o la pasa a su único rol restante) en la
+     * siguiente petición.
+     */
+    public function revocarModerador(Request $request, Usuario $usuario)
+    {
+        Gate::authorize('gestionar-roles');
+
+        if (! $usuario->esModerador()) {
+            return response()->json([
+                'mensaje' => "{$usuario->nombre_completo} no tiene el rol de moderador.",
+            ], 409);
+        }
+
+        $rolModerador = Rol::where('nombre', 'moderador')->firstOrFail();
+        $usuario->roles()->detach($rolModerador->id_rol);
+
+        ModeracionAuditor::registrar('rol_revocado', 'usuario', $usuario->id_usuario, $usuario->nombre_completo, ['rol' => 'moderador']);
+
+        return response()->json([
+            'mensaje' => "Se revocó el rol de moderador a {$usuario->nombre_completo}.",
             'usuario' => $this->paraTablaAdmin($usuario->fresh()),
         ]);
     }
@@ -236,6 +345,8 @@ class UsuarioController extends Controller
      */
     public function bloquear(Request $request, Usuario $usuario)
     {
+        Gate::authorize('bloquear-usuarios');
+
         if ($usuario->esAdmin()) {
             abort(422, 'No se puede bloquear una cuenta de administrador.');
         }
@@ -256,6 +367,11 @@ class UsuarioController extends Controller
         // petición: el bloqueo no depende de este borrado.
         SesionUsuario::cerrarSesionesDe($usuario);
 
+        ModeracionAuditor::registrar('usuario_bloqueado', 'usuario', $usuario->id_usuario, $usuario->nombre_completo, [
+            'via' => 'panel',
+            'motivo' => $usuario->bloqueado_motivo,
+        ]);
+
         return response()->json(['mensaje' => "{$usuario->nombre_completo} fue bloqueado."]);
     }
 
@@ -264,11 +380,15 @@ class UsuarioController extends Controller
      */
     public function desbloquear(Usuario $usuario)
     {
+        Gate::authorize('bloquear-usuarios');
+
         $usuario->update([
             'bloqueado' => false,
             'bloqueado_motivo' => null,
             'bloqueado_fecha' => null,
         ]);
+
+        ModeracionAuditor::registrar('usuario_desbloqueado', 'usuario', $usuario->id_usuario, $usuario->nombre_completo);
 
         return response()->json(['mensaje' => "{$usuario->nombre_completo} fue desbloqueado."]);
     }
@@ -294,6 +414,7 @@ class UsuarioController extends Controller
             'nombre' => $usuario->nombre_completo,
             'email' => $usuario->correo,
             'roles' => $usuario->roles->pluck('nombre')->values(),
+            'esModerador' => $usuario->esModerador(),
             'tipoUsuario' => $esAdmin ? 'admin' : 'cliente',
             'telefono' => $usuario->telefono,
             'fotoPerfil' => $usuario->foto_perfil,

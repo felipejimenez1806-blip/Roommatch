@@ -8,21 +8,33 @@ use App\Models\PersonaRoomie;
 use App\Models\Publicacion;
 use App\Models\Reporte;
 use App\Models\Usuario;
+use App\Services\ModeracionAuditor;
 use App\Services\SesionUsuario;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 class ReporteController extends Controller
 {
     /**
-     * GET /api/admin/reportes?estado=pendiente|resuelto|descartado|todos
-     * Reemplaza a renderReportes() de admin.js. El motivo y el título del
-     * objetivo se guardan como snapshot en el propio reporte (objetivo_titulo),
-     * así que el listado sigue siendo legible aunque la publicación, el
-     * usuario reportado o el perfil de roomie ya no existan.
+     * GET /api/admin/reportes?estado=pendiente|escalado|resuelto|descartado|todos
+     * Compartido por el panel de administración y el de moderación (la ruta
+     * lleva `can:gestionar-reportes`; aquí se vuelve a comprobar). El motivo y
+     * el título del objetivo se guardan como snapshot en el propio reporte
+     * (objetivo_titulo), así que el listado sigue siendo legible aunque la
+     * publicación, el usuario reportado o el perfil de roomie ya no existan.
+     *
+     * Cada reporte trae 'acciones': lo que el rol ACTIVO puede hacer con él
+     * (resolver, descartar, escalar, devolver), calculado con la ReportePolicy.
+     * El frontend solo lo usa para mostrar u ocultar botones; el servidor
+     * vuelve a validar cada acción.
      */
     public function index(Request $request)
     {
-        $query = Reporte::query()->with('autor')->orderByDesc('fecha_reporte');
+        Gate::authorize('gestionar-reportes');
+
+        $query = Reporte::query()
+            ->with(['autor', 'administrador', 'escaladoPor'])
+            ->orderByDesc('fecha_reporte');
 
         $estado = $request->input('estado', 'pendiente');
         if ($estado !== 'todos') {
@@ -32,6 +44,7 @@ class ReporteController extends Controller
         return response()->json([
             'reportes' => $query->get()->map(fn (Reporte $r) => $this->formatear($r)),
             'pendientes' => Reporte::pendientes()->count(),
+            'escalados' => Reporte::escalados()->count(),
         ]);
     }
 
@@ -67,7 +80,14 @@ class ReporteController extends Controller
      */
     public function descartar(Request $request, Reporte $reporte)
     {
+        Gate::authorize('descartar', $reporte);
+
         $this->cambiarEstado($reporte, 'descartado', $request->user());
+
+        ModeracionAuditor::registrar('reporte_descartado', 'reporte', $reporte->id_reporte, $reporte->objetivo_titulo, [
+            'tipo' => $reporte->tipo,
+            'motivo' => $reporte->motivo,
+        ]);
 
         $this->notificar(
             $reporte,
@@ -82,12 +102,22 @@ class ReporteController extends Controller
      * PATCH /api/admin/reportes/{reporte}/resolver
      * Aplica la acción correspondiente según el tipo de reporte:
      *   - publicacion -> elimina (soft delete) la publicación reportada
-     *   - usuario     -> bloquea al usuario reportado
+     *   - usuario     -> bloquea al usuario reportado (SOLO administrador: la
+     *                    ReportePolicy lo niega a un moderador, que debe escalar)
      *   - persona     -> elimina (soft delete) el perfil de roomie reportado
+     *
+     * Un reporte escalado solo lo puede cerrar un administrador.
      */
     public function resolver(Request $request, Reporte $reporte)
     {
+        Gate::authorize('resolver', $reporte);
+
+        $accion = null;
+        $detalleAccion = [];
+
         if ($reporte->tipo === 'publicacion' && $reporte->id_publicacion) {
+            $accion = 'publicacion_bajada';
+            $detalleAccion = ['via' => 'reporte', 'id_publicacion' => $reporte->id_publicacion];
             $this->eliminarPublicacionReportada($reporte->id_publicacion);
         } elseif ($reporte->tipo === 'usuario' && $reporte->id_usuario_reportado) {
             $reportado = Usuario::find($reporte->id_usuario_reportado);
@@ -112,12 +142,24 @@ class ReporteController extends Controller
                 // Cierra las sesiones abiertas del usuario bloqueado (el
                 // middleware 'cuenta.activa' cubre el resto, ver SesionUsuario).
                 SesionUsuario::cerrarSesionesDe($reportado);
+
+                $accion = 'usuario_bloqueado';
+                $detalleAccion = ['via' => 'reporte', 'id_usuario' => $reportado->id_usuario, 'motivo' => $reporte->motivo];
             }
         } elseif ($reporte->tipo === 'persona' && $reporte->id_persona) {
+            $accion = 'persona_bajada';
+            $detalleAccion = ['via' => 'reporte', 'id_persona' => $reporte->id_persona];
             $this->eliminarPersonaReportada($reporte->id_persona);
         }
 
         $this->cambiarEstado($reporte, 'resuelto', $request->user());
+
+        ModeracionAuditor::registrar('reporte_resuelto', 'reporte', $reporte->id_reporte, $reporte->objetivo_titulo, [
+            'tipo' => $reporte->tipo,
+            'motivo' => $reporte->motivo,
+            'accion_aplicada' => $accion,
+            'escalado_por' => $reporte->escaladoPor?->nombre_completo,
+        ] + $detalleAccion);
 
         $this->notificar(
             $reporte,
@@ -126,6 +168,80 @@ class ReporteController extends Controller
         );
 
         return response()->json(['mensaje' => 'Reporte resuelto.']);
+    }
+
+    /**
+     * PATCH /api/admin/reportes/{reporte}/escalar
+     * El moderador pasa un reporte a los administradores (típicamente porque
+     * la acción necesaria es bloquear a un usuario). La nota es obligatoria:
+     * es lo que lee el administrador para decidir.
+     */
+    public function escalar(Request $request, Reporte $reporte)
+    {
+        Gate::authorize('escalar', $reporte);
+
+        $datos = $request->validate([
+            'nota' => ['required', 'string', 'min:10', 'max:500'],
+        ], [
+            'nota.required' => 'Escribe una nota para el administrador.',
+            'nota.min' => 'La nota debe tener al menos 10 caracteres.',
+            'nota.max' => 'La nota no puede superar los 500 caracteres.',
+        ]);
+
+        $moderador = $request->user();
+
+        $reporte->update([
+            'estado_reporte' => 'escalado',
+            'id_escalado_por' => $moderador->id_usuario,
+            'nota_escalado' => $datos['nota'],
+            'fecha_escalado' => now(),
+        ]);
+
+        Notificacion::notificarAdminsReporteEscalado($reporte, $moderador);
+
+        ModeracionAuditor::registrar('reporte_escalado', 'reporte', $reporte->id_reporte, $reporte->objetivo_titulo, [
+            'tipo' => $reporte->tipo,
+            'motivo' => $reporte->motivo,
+            'nota' => $datos['nota'],
+        ]);
+
+        return response()->json(['mensaje' => 'Reporte escalado a los administradores.']);
+    }
+
+    /**
+     * PATCH /api/admin/reportes/{reporte}/devolver
+     * Un administrador devuelve a moderación un reporte escalado (por ejemplo
+     * porque no amerita bloqueo y el moderador puede cerrarlo). El reporte
+     * vuelve a 'pendiente'; quién lo escaló y qué nota dejó queda en la
+     * auditoría.
+     */
+    public function devolver(Request $request, Reporte $reporte)
+    {
+        Gate::authorize('devolver', $reporte);
+
+        $datos = $request->validate([
+            'nota' => ['nullable', 'string', 'max:300'],
+        ]);
+
+        $idModerador = $reporte->id_escalado_por;
+        $notaEscalado = $reporte->nota_escalado;
+
+        $reporte->update([
+            'estado_reporte' => 'pendiente',
+            'id_escalado_por' => null,
+            'nota_escalado' => null,
+            'fecha_escalado' => null,
+        ]);
+
+        Notificacion::notificarModeradorReporteDevuelto($idModerador, $reporte, $datos['nota'] ?? null);
+
+        ModeracionAuditor::registrar('reporte_devuelto', 'reporte', $reporte->id_reporte, $reporte->objetivo_titulo, [
+            'nota' => $datos['nota'] ?? null,
+            'nota_escalado_original' => $notaEscalado,
+            'id_moderador' => $idModerador,
+        ]);
+
+        return response()->json(['mensaje' => 'Reporte devuelto a moderación.']);
     }
 
     /**
@@ -200,11 +316,12 @@ class ReporteController extends Controller
         $persona->delete();
     }
 
-    private function cambiarEstado(Reporte $reporte, string $estado, ?Usuario $admin = null): void
+    /** $gestor: el administrador o moderador que cierra el reporte. */
+    private function cambiarEstado(Reporte $reporte, string $estado, ?Usuario $gestor = null): void
     {
         $reporte->update([
             'estado_reporte' => $estado,
-            'id_administrador' => $admin?->id_usuario,
+            'id_administrador' => $gestor?->id_usuario,
             'fecha_gestion' => now(),
         ]);
     }
@@ -240,6 +357,17 @@ class ReporteController extends Controller
             'estado' => $r->estado_reporte,
             'reportante' => $r->autor->nombre_completo ?? 'Usuario eliminado',
             'fecha' => optional($r->fecha_reporte)->toIso8601String(),
+            'gestionado_por' => $r->administrador->nombre_completo ?? null,
+            'escalado_por' => $r->escaladoPor->nombre_completo ?? null,
+            'nota_escalado' => $r->nota_escalado,
+            'fecha_escalado' => optional($r->fecha_escalado)->toIso8601String(),
+            // Qué puede hacer con ESTE reporte el rol activo (ver ReportePolicy).
+            'acciones' => [
+                'resolver' => Gate::allows('resolver', $r),
+                'descartar' => Gate::allows('descartar', $r),
+                'escalar' => Gate::allows('escalar', $r),
+                'devolver' => Gate::allows('devolver', $r),
+            ],
         ];
     }
 }

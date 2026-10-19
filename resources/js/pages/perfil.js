@@ -25,6 +25,7 @@
 
 import { API_BASE, appUrl } from "../core/config.js";
 import { requerirSesion, obtenerUsuario, actualizarUsuario, cabecerasAutenticadas, manejarNoAutorizado } from "../core/auth.js";
+import { esc } from "../core/html.js";
 
 requerirSesion();
 let usuarioActual = obtenerUsuario();
@@ -49,7 +50,7 @@ function pintarIdentidad() {
   const inicial = (usuarioActual.nombre || "U").trim().charAt(0).toUpperCase();
 
   if (usuarioActual.fotoPerfil) {
-    avatarBig.innerHTML = `<img src="${usuarioActual.fotoPerfil}" alt="${usuarioActual.nombre}"/>`;
+    avatarBig.innerHTML = `<img src="${esc(usuarioActual.fotoPerfil)}" alt="${esc(usuarioActual.nombre)}"/>`;
     quitarBtn.hidden = false;
   } else {
     avatarBig.textContent = inicial;
@@ -234,9 +235,9 @@ function renderDatosPersonales() {
     const valor = usuarioActual[campo.key];
     const textoMostrado = valor ? (campo.type === "select" ? etiquetaOpcion(campo, valor) : valor) : "Sin definir";
     return `
-      <div class="prf-field-row" data-field="${campo.key}">
-        <span class="prf-field-label">${campo.label}</span>
-        <span class="prf-field-value${valor ? "" : " is-empty"}" data-display>${textoMostrado}</span>
+      <div class="prf-field-row" data-field="${esc(campo.key)}">
+        <span class="prf-field-label">${esc(campo.label)}</span>
+        <span class="prf-field-value${esc(valor ? "" : " is-empty")}" data-display>${esc(textoMostrado)}</span>
         <button type="button" class="prf-edit-btn" data-action="edit">Edit</button>
       </div>`;
   }).join("");
@@ -257,10 +258,10 @@ function activarEdicionCampo(row) {
   if (campo.type === "select") {
     inputHtml = `<select class="prf-field-select" data-input>
       <option value="">Selecciona una opción</option>
-      ${campo.options.map((o) => `<option value="${o.value}"${o.value === valorActual ? " selected" : ""}>${o.label}</option>`).join("")}
+      ${campo.options.map((o) => `<option value="${esc(o.value)}"${esc(o.value === valorActual ? " selected" : "")}>${esc(o.label)}</option>`).join("")}
     </select>`;
   } else {
-    inputHtml = `<input class="prf-field-input" data-input type="${campo.type}" placeholder="${campo.placeholder}" value="${valorActual.toString().replace(/"/g, "&quot;")}"/>`;
+    inputHtml = `<input class="prf-field-input" data-input type="${esc(campo.type)}" placeholder="${esc(campo.placeholder)}" value="${esc(valorActual.toString())}"/>`;
   }
 
   display.outerHTML = `${inputHtml}<div class="prf-field-error" data-error></div>`;
@@ -361,9 +362,9 @@ async function actualizarPreferencia(campo, valor) {
 function toggleRow(campo, label, valorActual) {
   return `
     <div class="prf-toggle-row">
-      <span class="prf-toggle-label">${label}</span>
+      <span class="prf-toggle-label">${esc(label)}</span>
       <label class="prf-switch">
-        <input type="checkbox" data-conv-toggle="${campo}" ${valorActual ? "checked" : ""}/>
+        <input type="checkbox" data-conv-toggle="${esc(campo)}" ${esc(valorActual ? "checked" : "")}/>
         <span class="prf-switch-track"></span>
       </label>
     </div>`;
@@ -371,25 +372,25 @@ function toggleRow(campo, label, valorActual) {
 function selectField(campo, label, opciones, valorActual) {
   return `
     <div class="prf-conv-field">
-      <label>${label}</label>
-      <select data-conv-select="${campo}">
+      <label>${esc(label)}</label>
+      <select data-conv-select="${esc(campo)}">
         <option value="">Selecciona una opción</option>
-        ${Object.entries(opciones).map(([v, txt]) => `<option value="${v}"${v === valorActual ? " selected" : ""}>${txt}</option>`).join("")}
+        ${Object.entries(opciones).map(([v, txt]) => `<option value="${esc(v)}"${esc(v === valorActual ? " selected" : "")}>${esc(txt)}</option>`).join("")}
       </select>
     </div>`;
 }
 function numberField(campo, label, valorActual, placeholder) {
   return `
     <div class="prf-conv-field">
-      <label>${label}</label>
-      <input type="number" min="0" data-conv-number="${campo}" value="${valorActual ?? ""}" placeholder="${placeholder}"/>
+      <label>${esc(label)}</label>
+      <input type="number" min="0" data-conv-number="${esc(campo)}" value="${esc(valorActual ?? "")}" placeholder="${esc(placeholder)}"/>
     </div>`;
 }
 function textField(campo, label, valorActual, placeholder) {
   return `
     <div class="prf-conv-field">
-      <label>${label}</label>
-      <input type="text" data-conv-text="${campo}" value="${valorActual ?? ""}" placeholder="${placeholder}"/>
+      <label>${esc(label)}</label>
+      <input type="text" data-conv-text="${esc(campo)}" value="${esc(valorActual ?? "")}" placeholder="${esc(placeholder)}"/>
     </div>`;
 }
 
@@ -517,25 +518,29 @@ async function renderFavoritos() {
 
   gridHab.innerHTML = favoritosHab.length ? favoritosHab.map((f) => `
     <div class="prf-fav-card">
-      <div class="prf-fav-img-wrap"><img src="${f.img || ""}" alt="${f.tipo} ${f.zona}"/></div>
-      <button type="button" class="prf-fav-remove" data-remove-hab="${f.id}" title="Quitar de favoritos">♥</button>
-      <div class="prf-fav-body">
-        <div class="prf-fav-title">${f.tipo}</div>
-        <div class="prf-fav-sub">${f.zona}</div>
-        <div class="prf-fav-price">${formatCOP(f.precio)}</div>
-      </div>
-    </div>`).join("") : `<div class="prf-empty">Aún no has guardado habitaciones. <a href="${appUrl('/dashboard')}">Explora habitaciones →</a></div>`;
+      <a class="prf-fav-link" href="${esc(appUrl(`/publicacion/${f.id}`))}">
+        <div class="prf-fav-img-wrap"><img src="${esc(f.img || "")}" alt="${esc(f.tipo)} ${esc(f.zona)}"/></div>
+        <div class="prf-fav-body">
+          <div class="prf-fav-title">${esc(f.tipo)}</div>
+          <div class="prf-fav-sub">${esc(f.zona)}</div>
+          <div class="prf-fav-price">${esc(formatCOP(f.precio))}</div>
+        </div>
+      </a>
+      <button type="button" class="prf-fav-remove" data-remove-hab="${esc(f.id)}" title="Quitar de favoritos">♥</button>
+    </div>`).join("") : `<div class="prf-empty">Aún no has guardado habitaciones. <a href="${esc(appUrl('/dashboard'))}">Explora habitaciones →</a></div>`;
 
   gridRoom.innerHTML = favoritosRoom.length ? favoritosRoom.map((f) => `
     <div class="prf-fav-card">
-      <div class="prf-fav-img-wrap"><img src="${f.img || ""}" alt="${f.nombre}"/></div>
-      <button type="button" class="prf-fav-remove" data-remove-roomie="${f.id}" title="Quitar de favoritos">♥</button>
-      <div class="prf-fav-body">
-        <div class="prf-fav-title">${f.nombre}</div>
-        <div class="prf-fav-sub">${f.zona}${f.zona && f.ciudad ? ", " : ""}${f.ciudad || ""}</div>
-        <div class="prf-fav-price">${formatCOP(f.presupuesto)}</div>
-      </div>
-    </div>`).join("") : `<div class="prf-empty">Aún no te has guardado roomies. <a href="${appUrl('/roomies')}">Explora roomies →</a></div>`;
+      <a class="prf-fav-link" href="${esc(appUrl(`/roomie/${f.id}`))}">
+        <div class="prf-fav-img-wrap"><img src="${esc(f.img || "")}" alt="${esc(f.nombre)}"/></div>
+        <div class="prf-fav-body">
+          <div class="prf-fav-title">${esc(f.nombre)}</div>
+          <div class="prf-fav-sub">${esc(f.zona)}${esc(f.zona && f.ciudad ? ", " : "")}${esc(f.ciudad || "")}</div>
+          <div class="prf-fav-price">${esc(formatCOP(f.presupuesto))}</div>
+        </div>
+      </a>
+      <button type="button" class="prf-fav-remove" data-remove-roomie="${esc(f.id)}" title="Quitar de favoritos">♥</button>
+    </div>`).join("") : `<div class="prf-empty">Aún no te has guardado roomies. <a href="${esc(appUrl('/roomies'))}">Explora roomies →</a></div>`;
 
   gridHab.querySelectorAll("[data-remove-hab]").forEach((btn) => {
     btn.addEventListener("click", (e) => { e.preventDefault(); quitarFavoritoHabitacion(Number(btn.dataset.removeHab)); });
@@ -576,15 +581,15 @@ function abrirModalCalificacion({ titulo, sub, endpoint, onExito }) {
   overlay.className = "rr-overlay";
   overlay.innerHTML = `
     <div class="rr-modal">
-      <p class="rr-modal-title">${titulo}</p>
-      <p class="rr-modal-sub">${sub}</p>
+      <p class="rr-modal-title">${esc(titulo)}</p>
+      <p class="rr-modal-sub">${esc(sub)}</p>
       <div class="rr-stars" id="rrStars">
         ${[1, 2, 3, 4, 5].map((n) => `
-          <span class="rr-star" data-star="${n}">
+          <span class="rr-star" data-star="${esc(n)}">
             <span class="rr-star-bg">★</span>
             <span class="rr-star-fill">★</span>
-            <span class="rr-star-zone rr-star-zone-half" data-value="${n * 2 - 1}"></span>
-            <span class="rr-star-zone rr-star-zone-full" data-value="${n * 2}"></span>
+            <span class="rr-star-zone rr-star-zone-half" data-value="${esc(n * 2 - 1)}"></span>
+            <span class="rr-star-zone rr-star-zone-full" data-value="${esc(n * 2)}"></span>
           </span>`).join("")}
       </div>
       <p class="rr-rating-value" id="rrRatingValue">Selecciona tu calificación (1 a 10)</p>
@@ -651,9 +656,9 @@ function abrirModalReporte({ objetivoTitulo, motivos, onEnviar }) {
   overlay.innerHTML = `
     <div class="rr-modal">
       <p class="rr-modal-title">Reportar</p>
-      <p class="rr-modal-sub">${objetivoTitulo}</p>
+      <p class="rr-modal-sub">${esc(objetivoTitulo)}</p>
       <label class="rr-label" for="rrMotivo">Motivo</label>
-      <select class="rr-select" id="rrMotivo">${motivos.map((m) => `<option value="${m}">${m}</option>`).join("")}</select>
+      <select class="rr-select" id="rrMotivo">${motivos.map((m) => `<option value="${esc(m)}">${esc(m)}</option>`).join("")}</select>
       <label class="rr-label" style="margin-top:12px;" for="rrDescripcion">Cuéntanos qué pasó</label>
       <textarea class="rr-textarea" id="rrDescripcion" placeholder="Describe la situación con el mayor detalle posible..."></textarea>
       <p class="rr-error" id="rrReporteError">Escribe una descripción de al menos 15 caracteres.</p>
@@ -690,27 +695,27 @@ async function renderReservas() {
   const reservas = datos.reservas || [];
 
   if (!reservas.length) {
-    cont.innerHTML = `<div class="prf-empty">Aún no has solicitado ninguna visita. <a href="${appUrl('/dashboard')}">Buscar habitaciones →</a></div>`;
+    cont.innerHTML = `<div class="prf-empty">Aún no has solicitado ninguna visita. <a href="${esc(appUrl('/dashboard'))}">Buscar habitaciones →</a></div>`;
     return;
   }
 
   cont.innerHTML = reservas.map((r) => `
     <div class="prf-item-card">
-      <img class="prf-item-img" src="${r.img || ""}" alt="${r.titulo}"/>
+      <img class="prf-item-img" src="${esc(r.img || "")}" alt="${esc(r.titulo)}"/>
       <div class="prf-item-body">
-        <div class="prf-item-title">${r.titulo}</div>
-        <div class="prf-item-sub">${r.zona} · ${ETIQUETAS_DURACION[r.duracion] || ""}</div>
-        <div class="prf-item-meta">Visita: ${formatFechaCorta(r.fecha_visita)}${r.hora_visita ? ` · ${formatHora12(r.hora_visita)}` : ""} · ${formatCOP(r.monto_total)}</div>
+        <div class="prf-item-title">${esc(r.titulo)}</div>
+        <div class="prf-item-sub">${esc(r.zona)} · ${esc(ETIQUETAS_DURACION[r.duracion] || "")}</div>
+        <div class="prf-item-meta">Visita: ${esc(formatFechaCorta(r.fecha_visita))}${esc(r.hora_visita ? ` · ${formatHora12(r.hora_visita)}` : "")} · ${esc(formatCOP(r.monto_total))}</div>
         ${r.estado !== "rechazada" && r.huboEdicion ? `<div class="prf-item-warning">⚠️ El oferente editó esta publicación después de tu solicitud.</div>` : ""}
       </div>
       <div class="prf-item-actions">
-        <span class="prf-badge is-${r.estado}">${ETIQUETAS_BADGE[r.estado] || r.estado}</span>
-        ${r.estado === "aceptada" ? `<a class="prf-item-link" href="${appUrl(`/confirmacion?reservaId=${r.id}`)}">Ver detalle</a>` : ""}
+        <span class="prf-badge is-${esc(r.estado)}">${esc(ETIQUETAS_BADGE[r.estado] || r.estado)}</span>
+        ${r.estado === "aceptada" ? `<a class="prf-item-link" href="${esc(appUrl(`/confirmacion?reservaId=${r.id}`))}">Ver detalle</a>` : ""}
         ${r.estado === "aceptada"
-          ? (r.calificada ? `<span class="prf-reviewed-note">★ Ya calificaste</span>` : `<button type="button" class="prf-item-link" data-calificar="${r.id}">★ Calificar espacio</button>`)
+          ? (r.calificada ? `<span class="prf-reviewed-note">★ Ya calificaste</span>` : `<button type="button" class="prf-item-link" data-calificar="${esc(r.id)}">★ Calificar espacio</button>`)
           : ""}
         ${r.estado === "aceptada"
-          ? (r.reportada ? `<span class="prf-reviewed-note is-reportado">🚩 Reportado</span>` : `<button type="button" class="prf-item-link is-reportar" data-reportar="${r.id}">🚩 Reportar</button>`)
+          ? (r.reportada ? `<span class="prf-reviewed-note is-reportado">🚩 Reportado</span>` : `<button type="button" class="prf-item-link is-reportar" data-reportar="${esc(r.id)}">🚩 Reportar</button>`)
           : ""}
       </div>
     </div>`).join("");
@@ -760,26 +765,26 @@ async function renderCitas() {
   const citas = datos.citas || [];
 
   if (!citas.length) {
-    cont.innerHTML = `<div class="prf-empty">Aún no has agendado citas con roomies. <a href="${appUrl('/roomies')}">Buscar roomies →</a></div>`;
+    cont.innerHTML = `<div class="prf-empty">Aún no has agendado citas con roomies. <a href="${esc(appUrl('/roomies'))}">Buscar roomies →</a></div>`;
     return;
   }
 
   cont.innerHTML = citas.map((c) => `
     <div class="prf-item-card">
-      <img class="prf-item-img" src="${c.img || ""}" alt="${c.nombre}"/>
+      <img class="prf-item-img" src="${esc(c.img || "")}" alt="${esc(c.nombre)}"/>
       <div class="prf-item-body">
-        <div class="prf-item-title">${c.nombre}</div>
-        <div class="prf-item-sub">${c.zona} · ${ETIQUETAS_TIPO_ENCUENTRO[c.tipo_encuentro] || ""} · ${c.lugar_encuentro}</div>
-        <div class="prf-item-meta">Cita: ${formatFechaCorta(c.fecha_cita)}${c.hora_cita ? ` · ${formatHora12(c.hora_cita)}` : ""}</div>
+        <div class="prf-item-title">${esc(c.nombre)}</div>
+        <div class="prf-item-sub">${esc(c.zona)} · ${esc(ETIQUETAS_TIPO_ENCUENTRO[c.tipo_encuentro] || "")} · ${esc(c.lugar_encuentro)}</div>
+        <div class="prf-item-meta">Cita: ${esc(formatFechaCorta(c.fecha_cita))}${esc(c.hora_cita ? ` · ${formatHora12(c.hora_cita)}` : "")}</div>
       </div>
       <div class="prf-item-actions">
-        <span class="prf-badge is-${c.estado}">${ETIQUETAS_BADGE[c.estado] || c.estado}</span>
-        ${c.estado === "aceptada" ? `<a class="prf-item-link" href="${appUrl(`/confirmacion-cita?citaId=${c.id}`)}">Ver detalle</a>` : ""}
+        <span class="prf-badge is-${esc(c.estado)}">${esc(ETIQUETAS_BADGE[c.estado] || c.estado)}</span>
+        ${c.estado === "aceptada" ? `<a class="prf-item-link" href="${esc(appUrl(`/confirmacion-cita?citaId=${c.id}`))}">Ver detalle</a>` : ""}
         ${c.estado === "aceptada"
-          ? (c.calificada ? `<span class="prf-reviewed-note">★ Ya calificaste</span>` : `<button type="button" class="prf-item-link" data-calificar-cita="${c.id}">★ Calificar roomie</button>`)
+          ? (c.calificada ? `<span class="prf-reviewed-note">★ Ya calificaste</span>` : `<button type="button" class="prf-item-link" data-calificar-cita="${esc(c.id)}">★ Calificar roomie</button>`)
           : ""}
         ${c.estado === "aceptada"
-          ? (c.reportada ? `<span class="prf-reviewed-note is-reportado">🚩 Reportado</span>` : `<button type="button" class="prf-item-link is-reportar" data-reportar-cita="${c.id}">🚩 Reportar</button>`)
+          ? (c.reportada ? `<span class="prf-reviewed-note is-reportado">🚩 Reportado</span>` : `<button type="button" class="prf-item-link is-reportar" data-reportar-cita="${esc(c.id)}">🚩 Reportar</button>`)
           : ""}
       </div>
     </div>`).join("");
@@ -851,14 +856,14 @@ async function renderNotificaciones() {
   cont.innerHTML = notificaciones.map((n) => {
     const { icono, clase } = NOTIF_ICONOS[n.tipo] || { icono: "•", clase: "is-info" };
     const contenido = `
-        <span class="prf-notif-icon ${clase}">${icono}</span>
+        <span class="prf-notif-icon ${esc(clase)}">${esc(icono)}</span>
         <div class="prf-notif-body">
-          <p class="prf-notif-mensaje">${n.mensaje}</p>
-          <p class="prf-notif-fecha">${formatFechaHora(n.fecha)}</p>
+          <p class="prf-notif-mensaje">${esc(n.mensaje)}</p>
+          <p class="prf-notif-fecha">${esc(formatFechaHora(n.fecha))}</p>
         </div>`;
     return n.link
-      ? `<a class="prf-notif-card ${n.leida ? "" : "is-unread"}" href="${n.link}">${contenido}</a>`
-      : `<div class="prf-notif-card ${n.leida ? "" : "is-unread"}">${contenido}</div>`;
+      ? `<a class="prf-notif-card ${esc(n.leida ? "" : "is-unread")}" href="${esc(n.link)}">${contenido}</a>`
+      : `<div class="prf-notif-card ${esc(n.leida ? "" : "is-unread")}">${contenido}</div>`;
   }).join("");
 }
 

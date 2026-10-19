@@ -39,6 +39,7 @@
     <div class="prf-subtabs" id="admUsuariosFiltros">
       <button class="prf-subtab active" data-filtro="todos" type="button">Todos</button>
       <button class="prf-subtab" data-filtro="cliente" type="button">Clientes</button>
+      <button class="prf-subtab" data-filtro="moderador" type="button">Moderadores</button>
       <button class="prf-subtab" data-filtro="admin" type="button">Administradores</button>
       <button class="prf-subtab" data-filtro="bloqueado" type="button">Bloqueados</button>
     </div>
@@ -101,6 +102,7 @@
 
   <div class="prf-subtabs" id="admReportesFiltros">
     <button class="prf-subtab active" data-filtro="pendiente" type="button">Pendientes</button>
+    <button class="prf-subtab" data-filtro="escalado" type="button">Escalados</button>
     <button class="prf-subtab" data-filtro="resuelto" type="button">Resueltos</button>
     <button class="prf-subtab" data-filtro="descartado" type="button">Descartados</button>
     <button class="prf-subtab" data-filtro="todos" type="button">Todos</button>
@@ -123,6 +125,44 @@
 
   <div class="adm-reportes-list" id="admMensajesList"></div>
   <div class="prf-empty" id="admMensajesEmpty" hidden>No hay mensajes en esta categoría.</div>
+</section>
+
+<!-- AUDITORÍA (solo lectura) -->
+<section class="prf-panel" id="admPanelAuditoria">
+  <h1 class="prf-title">Auditoría</h1>
+  <p class="prf-subtitle">Registro de lo que hacen moderadores y administradores: reportes, publicaciones, mensajes, bloqueos y roles</p>
+
+  <div class="adm-toolbar" style="flex-wrap:wrap;gap:10px;">
+    <input class="adm-search" id="admAuditoriaSearch" type="text" placeholder="Buscar por persona o por elemento..." autocomplete="off" name="adm_buscar_auditoria_no_autofill"/>
+    <select class="adm-search" id="admAuditoriaAccion" style="max-width:260px;">
+      <option value="">Todas las acciones</option>
+    </select>
+    <select class="adm-search" id="admAuditoriaRol" style="max-width:190px;">
+      <option value="">Cualquier rol</option>
+      <option value="moderador">Moderador</option>
+      <option value="admin">Administrador</option>
+    </select>
+    <input class="adm-search" id="admAuditoriaDesde" type="date" style="max-width:170px;" title="Desde"/>
+    <input class="adm-search" id="admAuditoriaHasta" type="date" style="max-width:170px;" title="Hasta"/>
+  </div>
+
+  <div class="adm-table-wrap">
+    <table class="adm-table">
+      <thead>
+        <tr><th>Fecha</th><th>Quién</th><th>Acción</th><th>Sobre</th><th>Detalle</th></tr>
+      </thead>
+      <tbody id="admAuditoriaBody"></tbody>
+    </table>
+  </div>
+  <div class="prf-empty" id="admAuditoriaEmpty" hidden>No hay acciones registradas con esos filtros.</div>
+
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:14px;flex-wrap:wrap;">
+    <span id="admAuditoriaPagina" style="font-size:13px;color:#666;"></span>
+    <div style="display:flex;gap:8px;">
+      <button type="button" class="adm-row-btn" id="admAuditoriaPrev">Anterior</button>
+      <button type="button" class="adm-row-btn" id="admAuditoriaNext">Siguiente</button>
+    </div>
+  </div>
 </section>
 
 @endsection

@@ -17,6 +17,7 @@ class RolSeeder extends Seeder
         $roles = [
             ['nombre' => 'cliente', 'descripcion' => 'Rol por defecto de todo usuario registrado.'],
             ['nombre' => 'admin', 'descripcion' => 'Acceso al panel de administración.'],
+            ['nombre' => 'moderador', 'descripcion' => 'Gestiona reportes, publicaciones y mensajes de contacto. No bloquea usuarios ni asigna roles.'],
         ];
 
         foreach ($roles as $rol) {

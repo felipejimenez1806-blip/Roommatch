@@ -223,6 +223,9 @@ nav.nav-open .nav-burger span:nth-child(3) { transform: translateY(-7px) rotate(
   transition: transform .2s;
 }
 .lugar-card:hover { transform: scale(1.02); }
+/* La tarjeta es un <a> (enlace real a /habitaciones?localidad=...) */
+a.lugar-card { display: block; color: inherit; text-decoration: none; }
+.lugar-card:focus-visible { outline: 3px solid #1a9ecf; outline-offset: 2px; }
 .lugar-card.active-zone::after {
   content: ""; position: absolute; inset: 0;
   border: 3px solid #1a9ecf; border-radius: 14px; pointer-events: none;

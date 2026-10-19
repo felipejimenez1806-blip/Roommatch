@@ -170,8 +170,8 @@ class AuthController extends Controller
     /**
      * POST /api/cambiar-rol
      * Permite, desde una sesión ya abierta, cambiar entre los roles que
-     * el usuario tenga asignados. Exige reingresar la contraseña
-     * únicamente cuando el rol destino es 'admin' (ver CambiarRolRequest).
+     * el usuario tenga asignados. Exige reingresar la contraseña cuando el
+     * rol destino es 'admin' o 'moderador' (ver CambiarRolRequest).
      */
     public function cambiarRol(CambiarRolRequest $request)
     {
@@ -182,7 +182,7 @@ class AuthController extends Controller
             abort(403, 'No tienes asignado ese rol.');
         }
 
-        if ($rolDestino === 'admin') {
+        if (in_array($rolDestino, ['admin', 'moderador'], true)) {
             $contrasenaValida = $usuario->contrasena
                 && Hash::check($request->validated('password'), $usuario->contrasena);
 

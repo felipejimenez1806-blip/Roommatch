@@ -13,6 +13,7 @@
 
 import { API_BASE, appUrl } from "../core/config.js";
 import { haySesion, obtenerUsuario, cabecerasAutenticadas } from "../core/auth.js";
+import { esc } from "../core/html.js";
 
 // ---------- HELPERS ----------
 function formatCOP(n) {
@@ -62,8 +63,8 @@ const GRUPO_REGLAS = [
 function renderListaFeatures(c, campos) {
   return `<div class="pub-feature-list">
     ${campos.map(([campo, etiqueta]) => `
-      <span class="pub-feature-item${c[campo] ? "" : " is-no"}">
-        <span class="pub-feature-check">${c[campo] ? "✓" : "✕"}</span> ${etiqueta}
+      <span class="pub-feature-item${esc(c[campo] ? "" : " is-no")}">
+        <span class="pub-feature-check">${esc(c[campo] ? "✓" : "✕")}</span> ${esc(etiqueta)}
       </span>`).join("")}
   </div>`;
 }
@@ -144,21 +145,21 @@ function tabDescripcion(item) {
   ].filter(([campo]) => c[campo]);
 
   return `
-    <p class="pub-description">${item.descripcion}</p>
+    <p class="pub-description">${esc(item.descripcion)}</p>
     <p class="pub-overview-title">Resumen del espacio</p>
     <div class="pub-overview-grid">
       ${iconos.map(([, icono, texto]) => `
-        <div class="pub-overview-item"><span class="pub-overview-icon">${icono}</span> ${texto}</div>
+        <div class="pub-overview-item"><span class="pub-overview-icon">${esc(icono)}</span> ${esc(texto)}</div>
       `).join("")}
     </div>
-    <div class="pub-info-row"><span>Dirección</span><span>${item.direccion}</span></div>
-    <div class="pub-info-row"><span>Disponible desde</span><span>${formatFechaLarga(item.fecha_disponible)}</span></div>
-    ${item.genero_preferido ? `<div class="pub-info-row"><span>Preferencia</span><span>${ETIQUETAS_ENUM[item.genero_preferido] || item.genero_preferido}</span></div>` : ""}
-    ${c.detalles_incluidos ? `<div class="pub-info-row"><span>Servicios</span><span>${c.detalles_incluidos}</span></div>` : ""}
+    <div class="pub-info-row"><span>Dirección</span><span>${esc(item.direccion)}</span></div>
+    <div class="pub-info-row"><span>Disponible desde</span><span>${esc(formatFechaLarga(item.fecha_disponible))}</span></div>
+    ${item.genero_preferido ? `<div class="pub-info-row"><span>Preferencia</span><span>${esc(ETIQUETAS_ENUM[item.genero_preferido] || item.genero_preferido)}</span></div>` : ""}
+    ${c.detalles_incluidos ? `<div class="pub-info-row"><span>Servicios</span><span>${esc(c.detalles_incluidos)}</span></div>` : ""}
     <p class="pub-overview-title" style="margin-top:20px;">Ubicación aproximada</p>
     <div class="pub-map-wrap">
       <iframe
-        src="https://maps.google.com/maps?q=${encodeURIComponent(`${item.direccion}, ${item.zona}, ${item.ciudad}, Colombia`)}&output=embed"
+        src="https://maps.google.com/maps?q=${esc(encodeURIComponent(`${item.direccion}, ${item.zona}, ${item.ciudad}, Colombia`))}&output=embed"
         loading="lazy"
         referrerpolicy="no-referrer-when-downgrade">
       </iframe>
@@ -181,8 +182,8 @@ function tabCaracteristicas(item) {
       <p class="pub-feature-group-title">Edificio, seguridad y alrededores</p>
       ${renderListaFeatures(c, GRUPO_EDIFICIO_SEGURIDAD)}
     </div>
-    <div class="pub-info-row"><span>Tamaño de la habitación</span><span>${ETIQUETAS_ENUM[c.tamano_habitacion] || "No especificado"}</span></div>
-    <div class="pub-info-row"><span>Tipo de cama</span><span>${ETIQUETAS_ENUM[c.tipo_cama] || "No especificado"}</span></div>`;
+    <div class="pub-info-row"><span>Tamaño de la habitación</span><span>${esc(ETIQUETAS_ENUM[c.tamano_habitacion] || "No especificado")}</span></div>
+    <div class="pub-info-row"><span>Tipo de cama</span><span>${esc(ETIQUETAS_ENUM[c.tipo_cama] || "No especificado")}</span></div>`;
 }
 
 function tabConvivencia(item) {
@@ -192,13 +193,13 @@ function tabConvivencia(item) {
       <p class="pub-feature-group-title">Reglas del hogar</p>
       ${renderListaFeatures(c, GRUPO_REGLAS)}
     </div>
-    <div class="pub-info-row"><span>Ambiente del hogar</span><span>${ETIQUETAS_ENUM[c.ambiente_hogar] || "No especificado"}</span></div>
-    <div class="pub-info-row"><span>Personas viviendo actualmente</span><span>${c.numero_habitantes ?? "No especificado"}</span></div>
-    <div class="pub-info-row"><span>¿Hay fumadores en casa?</span><span>${c.fumadores_en_casa ? "Sí" : "No"}</span></div>
-    <div class="pub-info-row"><span>¿Hay mascotas en casa?</span><span>${c.mascotas_en_casa ? "Sí" : "No"}</span></div>
-    ${c.horario_silencio ? `<div class="pub-info-row"><span>Horario de silencio</span><span>${c.horario_silencio}</span></div>` : ""}
-    <div class="pub-info-row"><span>Horario de entrada</span><span>${c.horario_entrada || "Sin restricción"}</span></div>
-    ${c.distancia_transporte ? `<div class="pub-info-row"><span>Distancia al transporte</span><span>${c.distancia_transporte}</span></div>` : ""}`;
+    <div class="pub-info-row"><span>Ambiente del hogar</span><span>${esc(ETIQUETAS_ENUM[c.ambiente_hogar] || "No especificado")}</span></div>
+    <div class="pub-info-row"><span>Personas viviendo actualmente</span><span>${esc(c.numero_habitantes ?? "No especificado")}</span></div>
+    <div class="pub-info-row"><span>¿Hay fumadores en casa?</span><span>${esc(c.fumadores_en_casa ? "Sí" : "No")}</span></div>
+    <div class="pub-info-row"><span>¿Hay mascotas en casa?</span><span>${esc(c.mascotas_en_casa ? "Sí" : "No")}</span></div>
+    ${c.horario_silencio ? `<div class="pub-info-row"><span>Horario de silencio</span><span>${esc(c.horario_silencio)}</span></div>` : ""}
+    <div class="pub-info-row"><span>Horario de entrada</span><span>${esc(c.horario_entrada || "Sin restricción")}</span></div>
+    ${c.distancia_transporte ? `<div class="pub-info-row"><span>Distancia al transporte</span><span>${esc(c.distancia_transporte)}</span></div>` : ""}`;
 }
 
 // Las reseñas guardan puntuacion en escala 1-10, pero visualmente se
@@ -218,17 +219,17 @@ function tabResenas(item) {
   const promedio = (resenas.reduce((acc, r) => acc + r.puntuacion, 0) / resenas.length).toFixed(1);
   return `
     <div class="pub-reviews-summary">
-      <div class="pub-reviews-score">${promedio}<span>/10</span></div>
-      <div class="pub-reviews-count">${resenas.length} reseña${resenas.length === 1 ? "" : "s"} de buscadores que se alojaron aquí</div>
+      <div class="pub-reviews-score">${esc(promedio)}<span>/10</span></div>
+      <div class="pub-reviews-count">${esc(resenas.length)} reseña${esc(resenas.length === 1 ? "" : "s")} de buscadores que se alojaron aquí</div>
     </div>
     ${resenas.map((r) => `
       <div class="pub-review-card">
         <div class="pub-review-head">
-          <span class="pub-review-author">${r.autor}</span>
-          <span class="pub-review-date">${formatFechaLarga(r.fecha)}</span>
+          <span class="pub-review-author">${esc(r.autor)}</span>
+          <span class="pub-review-date">${esc(formatFechaLarga(r.fecha))}</span>
         </div>
-        <div class="pub-review-stars">${renderEstrellasResena(r.puntuacion)} <span class="pub-review-score">${r.puntuacion}/10</span></div>
-        <p class="pub-review-text">${r.comentario}</p>
+        <div class="pub-review-stars">${esc(renderEstrellasResena(r.puntuacion))} <span class="pub-review-score">${esc(r.puntuacion)}/10</span></div>
+        <p class="pub-review-text">${esc(r.comentario)}</p>
       </div>`).join("")}`;
 }
 
@@ -247,34 +248,34 @@ function renderPublicacion(item, favoritoActivo) {
     : (item.img ? [item.img] : []);
 
   contenedor.innerHTML = `
-    <a class="pub-back" href="${appUrl('/habitaciones')}" title="Volver a resultados">&larr;</a>
+    <a class="pub-back" href="${esc(appUrl('/habitaciones'))}" title="Volver a resultados">&larr;</a>
 
     <div class="pub-top">
       <div class="pub-gallery">
         <div class="pub-gallery-main">
-          <img id="galeriaPrincipal" src="${imagenes[0] || ""}" alt="${item.titulo}"/>
+          <img id="galeriaPrincipal" src="${esc(imagenes[0] || "")}" alt="${esc(item.titulo)}"/>
         </div>
         <div class="pub-gallery-thumbs">
           ${imagenes.slice(1, 5).map((url) => `
-            <div class="pub-gallery-thumb"><img src="${url}" alt="${item.titulo}"/></div>
+            <div class="pub-gallery-thumb"><img src="${esc(url)}" alt="${esc(item.titulo)}"/></div>
           `).join("")}
         </div>
       </div>
 
       <div class="pub-header">
         <div>
-          <div class="pub-title">${item.titulo}</div>
-          <div class="pub-subtitle">${item.direccion} · ${item.zona}, ${item.ciudad}</div>
+          <div class="pub-title">${esc(item.titulo)}</div>
+          <div class="pub-subtitle">${esc(item.direccion)} · ${esc(item.zona)}, ${esc(item.ciudad)}</div>
           ${item.estado_inmueble && item.estado_inmueble !== "disponible"
-            ? `<span class="pub-unavailable-badge">${item.estado_inmueble === "reservado" ? "Ya no disponible — reservado" : "No disponible actualmente"}</span>`
+            ? `<span class="pub-unavailable-badge">${esc(item.estado_inmueble === "reservado" ? "Ya no disponible — reservado" : "No disponible actualmente")}</span>`
             : ""}
         </div>
         <div class="pub-rating-chip">
           <div class="pub-rating-text">
-            <div class="pub-rating-word">${palabraCalificacion(item.rating)}</div>
-            <div class="pub-rating-count">${resenas.length} reseña${resenas.length === 1 ? "" : "s"}</div>
+            <div class="pub-rating-word">${esc(palabraCalificacion(item.rating))}</div>
+            <div class="pub-rating-count">${esc(resenas.length)} reseña${esc(resenas.length === 1 ? "" : "s")}</div>
           </div>
-          <span class="pub-rating-badge">${item.rating}</span>
+          <span class="pub-rating-badge">${esc(item.rating)}</span>
         </div>
       </div>
     </div>
@@ -285,7 +286,7 @@ function renderPublicacion(item, favoritoActivo) {
           <button class="pub-tab-btn active" data-tab="tabDescripcion">Descripción</button>
           <button class="pub-tab-btn" data-tab="tabCaracteristicas">Características</button>
           <button class="pub-tab-btn" data-tab="tabConvivencia">Convivencia y reglas</button>
-          <button class="pub-tab-btn" data-tab="tabResenas">Reseñas${resenas.length ? ` (${resenas.length})` : ""}</button>
+          <button class="pub-tab-btn" data-tab="tabResenas">Reseñas${esc(resenas.length ? ` (${resenas.length})` : "")}</button>
         </div>
 
         <div class="pub-tab-panel active" id="tabDescripcion">${tabDescripcion(item)}</div>
@@ -296,15 +297,15 @@ function renderPublicacion(item, favoritoActivo) {
 
       <div class="pub-sidebar">
         <div class="pub-price-card">
-          <div class="pub-price">${formatCOP(item.precio)} <span>/ mes</span></div>
-          <div class="pub-price-note">${item.caracteristicas?.detalles_incluidos ? "Servicios incluidos" : "Servicios según se indique en la descripción"}</div>
+          <div class="pub-price">${esc(formatCOP(item.precio))} <span>/ mes</span></div>
+          <div class="pub-price-note">${esc(item.caracteristicas?.detalles_incluidos ? "Servicios incluidos" : "Servicios según se indique en la descripción")}</div>
           ${esPropiaPublicacion
-            ? `<p class="pub-login-note">Esta es tu publicación — <a href="${appUrl('/mis-publicaciones')}" style="color:#1a9ecf;font-weight:700;">gestiona las solicitudes aquí →</a></p>`
+            ? `<p class="pub-login-note">Esta es tu publicación — <a href="${esc(appUrl('/mis-publicaciones'))}" style="color:#1a9ecf;font-weight:700;">gestiona las solicitudes aquí →</a></p>`
             : (item.estado_inmueble && item.estado_inmueble !== "disponible"
                 ? `<button type="button" class="pub-cta is-disabled" disabled>No disponible</button>`
                 : `<button type="button" class="pub-cta" id="reservarBtn">Solicitar reserva</button>`)}
-          <button type="button" class="pub-cta-secondary${favoritoActivo ? " is-fav-active" : ""}" id="favoritoBtn">
-            ${favoritoActivo ? "♥ Guardado en favoritos" : "♡ Guardar en favoritos"}
+          <button type="button" class="pub-cta-secondary${esc(favoritoActivo ? " is-fav-active" : "")}" id="favoritoBtn">
+            ${esc(favoritoActivo ? "♥ Guardado en favoritos" : "♡ Guardar en favoritos")}
           </button>
           ${!conSesion ? `<p class="pub-login-note">Inicia sesión para reservar o guardar en favoritos</p>` : ""}
         </div>
@@ -353,7 +354,7 @@ async function cargarPublicacion() {
     contenedor.innerHTML = `
       <div class="pub-not-found">
         <p>No encontramos esta publicación. Puede que ya no esté disponible.</p>
-        <a href="${appUrl('/habitaciones')}">← Volver a la búsqueda</a>
+        <a href="${esc(appUrl('/habitaciones'))}">← Volver a la búsqueda</a>
       </div>`;
   }
 }

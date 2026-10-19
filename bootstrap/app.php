@@ -30,6 +30,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'cuenta.activa' => \App\Http\Middleware\VerificarCuentaActiva::class,
             'zona.cliente' => \App\Http\Middleware\ZonaCliente::class,
             'zona.admin' => \App\Http\Middleware\ZonaAdmin::class,
+            'zona.moderador' => \App\Http\Middleware\ZonaModerador::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

@@ -17,6 +17,7 @@
 
 import { appUrl } from "../core/config.js";
 import { iniciarSesion, seleccionarRol, obtenerRolesPendientes } from "../core/auth.js";
+import { esc } from "../core/html.js";
 
 // --- Referencias DOM ---
 const form = document.getElementById("loginForm");
@@ -66,8 +67,8 @@ function sesionAbiertaYRedirigir() {
   formMessage.textContent = "¡Bienvenido a Roommatch! Redirigiendo...";
   mostrarToast("Inicio de sesión exitoso");
   setTimeout(() => {
-    // El middleware zona.cliente del servidor manda a /admin si el rol
-    // activo resultó ser 'admin', y a /onboarding si falta completar perfil.
+    // El middleware zona.cliente del servidor manda a /admin o /moderador
+    // según el rol activo, y a /onboarding si falta completar perfil.
     window.location.href = appUrl("/dashboard");
   }, 900);
 }
@@ -78,7 +79,7 @@ function sesionAbiertaYRedirigir() {
 // El login está pendiente en el servidor (sin sesión todavía); elegir
 // el rol con POST /seleccionar-rol lo completa.
 // ============================================================
-const ETIQUETAS_ROL = { cliente: "Cliente", admin: "Administrador" };
+const ETIQUETAS_ROL = { cliente: "Cliente", moderador: "Moderador", admin: "Administrador" };
 
 function inyectarEstilosSelectorRol() {
   if (document.getElementById("rmSelectorRolEstilos")) return;
@@ -107,7 +108,7 @@ function mostrarSelectorRol(roles) {
       <p class="rm-rol-title">Ingresar como…</p>
       <p class="rm-rol-text">Tu cuenta tiene más de un rol. Elige con cuál quieres iniciar sesión esta vez.</p>
       <div class="rm-rol-opciones">
-        ${roles.map((r) => `<button type="button" class="rm-rol-btn" data-rol="${r}">${ETIQUETAS_ROL[r] || r}</button>`).join("")}
+        ${roles.map((r) => `<button type="button" class="rm-rol-btn" data-rol="${esc(r)}">${esc(ETIQUETAS_ROL[r] || r)}</button>`).join("")}
       </div>
       <p class="rm-rol-error" id="rmSelectorRolError"></p>
     </div>`;

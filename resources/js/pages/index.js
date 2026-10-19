@@ -8,11 +8,10 @@
 
 import { API_BASE, appUrl } from "../core/config.js";
 import { haySesion, cabecerasAutenticadas, manejarNoAutorizado } from "../core/auth.js";
+import { esc } from "../core/html.js";
 
-const CANTIDAD_RECOMENDADOS = 5;
 let listings = [];
 let favorites = new Set();
-let activeZoneFilter = null;
 
 function formatCOP(n) {
   return "$" + n.toLocaleString("es-CO") + " COP";
@@ -33,20 +32,10 @@ async function cargarDestacadas() {
   return datos.data;
 }
 
-// Zona seleccionada (clic en "Lugares populares"): las 5 MEJORES
-// publicaciones de esa zona puntual, sin importar si compiten o no
-// con el top global. Reusa el endpoint de listado con los filtros
-// zona + orden=rating que ya soporta PublicacionController::index.
-async function cargarPorZona(zona) {
-  const parametros = new URLSearchParams({ zona, orden: "rating" });
-  const respuesta = await fetch(`${API_BASE}/publicaciones?${parametros}`);
-  const datos = await respuesta.json();
-  return datos.data.slice(0, CANTIDAD_RECOMENDADOS);
-}
-
-// Trae el conjunto correcto según haya o no una zona activa.
+// Los "Lugares populares" ya no filtran esta sección: cada tarjeta es un
+// enlace a /habitaciones?localidad=... (ver partials/lugares-populares).
 async function cargarListings() {
-  return activeZoneFilter ? cargarPorZona(activeZoneFilter) : cargarDestacadas();
+  return cargarDestacadas();
 }
 
 async function cargarFavoritos() {
@@ -111,18 +100,18 @@ function renderListings(items) {
     card.dataset.id = item.id;
     card.innerHTML = `
       <div class="recom-img-wrap">
-        <img src="${item.img}" alt="${item.tipo_espacio} ${item.zona}"/>
-        <span class="recom-badge">${item.rating}</span>
-        <button class="recom-fav${favorites.has(item.id) ? " is-fav" : ""}" data-id="${item.id}">
-          ${favorites.has(item.id) ? "♥" : "♡"}
+        <img src="${esc(item.img)}" alt="${esc(item.tipo_espacio)} ${esc(item.zona)}"/>
+        <span class="recom-badge">${esc(item.rating)}</span>
+        <button class="recom-fav${esc(favorites.has(item.id) ? " is-fav" : "")}" data-id="${esc(item.id)}">
+          ${esc(favorites.has(item.id) ? "♥" : "♡")}
         </button>
       </div>
       <div class="recom-body">
-        <div class="recom-type">${item.tipo_espacio}</div>
-        <div class="recom-zone">${item.zona}</div>
+        <div class="recom-type">${esc(item.tipo_espacio)}</div>
+        <div class="recom-zone">${esc(item.zona)}</div>
         <div class="recom-price">
-          ${formatCOP(item.precio)}
-          <button class="arrow-btn" data-id="${item.id}">&#8594;</button>
+          ${esc(formatCOP(item.precio))}
+          <button class="arrow-btn" data-id="${esc(item.id)}">&#8594;</button>
         </div>
       </div>`;
     grid.appendChild(card);
@@ -145,9 +134,8 @@ function renderListings(items) {
 }
 
 // ---------- FILTRO DE TEXTO (dentro del dataset ya cargado) ----------
-// La zona YA NO se filtra aquí en memoria: cambia qué se carga desde
-// el servidor (ver cargarListings/seleccionarZona). Este filtro solo
-// aplica la búsqueda de texto sobre lo que esté cargado en `listings`.
+// Este filtro solo aplica la búsqueda de texto sobre lo que esté cargado
+// en `listings` (la zona se elige desde los enlaces de Lugares populares).
 function applyFilters() {
   const query = normalize(document.getElementById("searchInput").value.trim());
 
@@ -166,35 +154,11 @@ function clearAllFilters() {
   applyFilters();
 }
 
-// ---------- SELECCIÓN DE ZONA (recarga desde el servidor) ----------
-async function seleccionarZona(zona) {
-  const grid = document.getElementById("recomGrid");
-  grid.innerHTML = `<p class="results-count">Cargando...</p>`;
-
-  listings = await cargarListings();
-  document.getElementById("searchInput").value = "";
-  renderListings(listings);
-}
-
 document.getElementById("searchInput").addEventListener("input", applyFilters);
 document.getElementById("searchInput").addEventListener("keydown", e => {
   if (e.key === "Enter") applyFilters();
 });
 document.getElementById("searchBtn").addEventListener("click", applyFilters);
-
-document.querySelectorAll(".lugar-card").forEach(card => {
-  card.addEventListener("click", () => {
-    const zone = card.dataset.zone;
-    const isActive = activeZoneFilter === zone;
-
-    document.querySelectorAll(".lugar-card").forEach(c => c.classList.remove("active-zone"));
-    activeZoneFilter = isActive ? null : zone;
-    if (activeZoneFilter) card.classList.add("active-zone");
-
-    seleccionarZona(activeZoneFilter);
-    document.getElementById("recomSection").scrollIntoView({ behavior: "smooth", block: "start" });
-  });
-});
 
 (async function inicializar() {
   const [publicaciones, idsFavoritos] = await Promise.all([

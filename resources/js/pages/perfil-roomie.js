@@ -12,6 +12,7 @@
 
 import { API_BASE, appUrl } from "../core/config.js";
 import { haySesion, obtenerUsuario, cabecerasAutenticadas } from "../core/auth.js";
+import { esc } from "../core/html.js";
 
 // ---------- HELPERS ----------
 function formatCOP(n) {
@@ -60,8 +61,8 @@ const GRUPO_OTROS = [
 function renderListaFeatures(c, campos) {
   return `<div class="rp-feature-list">
     ${campos.map(([campo, etiqueta]) => `
-      <span class="rp-feature-item${c[campo] ? "" : " is-no"}">
-        <span class="rp-feature-check">${c[campo] ? "✓" : "✕"}</span> ${etiqueta}
+      <span class="rp-feature-item${esc(c[campo] ? "" : " is-no")}">
+        <span class="rp-feature-check">${esc(c[campo] ? "✓" : "✕")}</span> ${esc(etiqueta)}
       </span>`).join("")}
   </div>`;
 }
@@ -132,20 +133,20 @@ function tabSobreMi(item) {
   if (!c.fumador) iconos.unshift(["no_fumador", "🚭", "No fumador/a"]);
 
   return `
-    <p class="rp-description">${item.descripcion || ""}</p>
+    <p class="rp-description">${esc(item.descripcion || "")}</p>
     <p class="rp-overview-title">Resumen del perfil</p>
     <div class="rp-overview-grid">
       ${iconos.map(([, icono, texto]) => `
-        <div class="rp-overview-item"><span class="rp-overview-icon">${icono}</span> ${texto}</div>
+        <div class="rp-overview-item"><span class="rp-overview-icon">${esc(icono)}</span> ${esc(texto)}</div>
       `).join("")}
     </div>
-    <div class="rp-info-row"><span>Zona donde busca</span><span>${item.zona}, ${item.ciudad}</span></div>
-    <div class="rp-info-row"><span>Ocupación</span><span>${item.ocupacion}</span></div>
-    <div class="rp-info-row"><span>Edad</span><span>${item.edad} años</span></div>
-    <div class="rp-info-row"><span>Género</span><span>${item.genero}</span></div>
-    <div class="rp-info-row"><span>Presupuesto mensual</span><span>${formatCOP(item.presupuesto)}</span></div>
-    <div class="rp-info-row"><span>Tiempo de búsqueda</span><span>${ETIQUETAS_ENUM[c.tiempo_busqueda] || "No especificado"}</span></div>
-    <div class="rp-info-row"><span>Fecha de mudanza</span><span>${ETIQUETAS_ENUM[c.fecha_mudanza] || "No especificado"}</span></div>`;
+    <div class="rp-info-row"><span>Zona donde busca</span><span>${esc(item.zona)}, ${esc(item.ciudad)}</span></div>
+    <div class="rp-info-row"><span>Ocupación</span><span>${esc(item.ocupacion)}</span></div>
+    <div class="rp-info-row"><span>Edad</span><span>${esc(item.edad)} años</span></div>
+    <div class="rp-info-row"><span>Género</span><span>${esc(item.genero)}</span></div>
+    <div class="rp-info-row"><span>Presupuesto mensual</span><span>${esc(formatCOP(item.presupuesto))}</span></div>
+    <div class="rp-info-row"><span>Tiempo de búsqueda</span><span>${esc(ETIQUETAS_ENUM[c.tiempo_busqueda] || "No especificado")}</span></div>
+    <div class="rp-info-row"><span>Fecha de mudanza</span><span>${esc(ETIQUETAS_ENUM[c.fecha_mudanza] || "No especificado")}</span></div>`;
 }
 
 function tabEstiloVida(item) {
@@ -155,8 +156,8 @@ function tabEstiloVida(item) {
       <p class="rp-feature-group-title">Estilo de vida</p>
       ${renderListaFeatures(c, GRUPO_ESTILO_VIDA)}
     </div>
-    <div class="rp-info-row"><span>Horario habitual</span><span>${ETIQUETAS_ENUM[c.horario] || "No especificado"}</span></div>
-    <div class="rp-info-row"><span>Viaja frecuentemente</span><span>${c.viaja_frecuentemente ? "Sí" : "No"}</span></div>`;
+    <div class="rp-info-row"><span>Horario habitual</span><span>${esc(ETIQUETAS_ENUM[c.horario] || "No especificado")}</span></div>
+    <div class="rp-info-row"><span>Viaja frecuentemente</span><span>${esc(c.viaja_frecuentemente ? "Sí" : "No")}</span></div>`;
 }
 
 function tabConvivencia(item) {
@@ -166,7 +167,7 @@ function tabConvivencia(item) {
       <p class="rp-feature-group-title">Convivencia</p>
       ${renderListaFeatures(c, GRUPO_CONVIVENCIA)}
     </div>
-    <div class="rp-info-row"><span>Ambiente que busca</span><span>${ETIQUETAS_ENUM[c.ambiente_preferido] || "No especificado"}</span></div>
+    <div class="rp-info-row"><span>Ambiente que busca</span><span>${esc(ETIQUETAS_ENUM[c.ambiente_preferido] || "No especificado")}</span></div>
     <div class="rp-feature-group" style="margin-top:18px;">
       <p class="rp-feature-group-title">Preferencias del hogar</p>
       ${renderListaFeatures(c, GRUPO_PREFERENCIAS_HOGAR)}
@@ -194,17 +195,17 @@ function tabResenas(item) {
   const promedio = (resenas.reduce((acc, r) => acc + r.puntuacion, 0) / resenas.length).toFixed(1);
   return `
     <div class="rp-reviews-summary">
-      <div class="rp-reviews-score">${promedio}<span>/10</span></div>
-      <div class="rp-reviews-count">${resenas.length} reseña${resenas.length === 1 ? "" : "s"} de personas que han compartido vivienda con ${item.nombre.split(" ")[0]}</div>
+      <div class="rp-reviews-score">${esc(promedio)}<span>/10</span></div>
+      <div class="rp-reviews-count">${esc(resenas.length)} reseña${esc(resenas.length === 1 ? "" : "s")} de personas que han compartido vivienda con ${esc(item.nombre.split(" ")[0])}</div>
     </div>
     ${resenas.map((r) => `
       <div class="rp-review-card">
         <div class="rp-review-head">
-          <span class="rp-review-author">${r.autor}</span>
-          <span class="rp-review-date">${formatFechaLarga(r.fecha)}</span>
+          <span class="rp-review-author">${esc(r.autor)}</span>
+          <span class="rp-review-date">${esc(formatFechaLarga(r.fecha))}</span>
         </div>
-        <div class="rp-review-stars">${renderEstrellasResena(r.puntuacion)} <span class="rp-review-score">${r.puntuacion}/10</span></div>
-        <p class="rp-review-text">${r.comentario}</p>
+        <div class="rp-review-stars">${esc(renderEstrellasResena(r.puntuacion))} <span class="rp-review-score">${esc(r.puntuacion)}/10</span></div>
+        <p class="rp-review-text">${esc(r.comentario)}</p>
       </div>`).join("")}`;
 }
 
@@ -220,25 +221,25 @@ function renderPerfil(item, favoritoActivo) {
     && item.propietario.id === usuarioActual.id;
 
   contenedor.innerHTML = `
-    <a class="rp-back" href="${appUrl('/roomies')}" title="Volver a resultados">&larr;</a>
+    <a class="rp-back" href="${esc(appUrl('/roomies'))}" title="Volver a resultados">&larr;</a>
 
     <div class="rp-hero">
       <div class="rp-avatar-wrap">
-        <img src="${item.img || ""}" alt="${item.nombre}"/>
+        <img src="${esc(item.img || "")}" alt="${esc(item.nombre)}"/>
       </div>
       <div class="rp-hero-info">
-        <div class="rp-title">${item.nombre} <span>· ${item.edad} años</span></div>
-        <div class="rp-subtitle">${item.ocupacion} · Busca en ${item.zona}, ${item.ciudad}</div>
+        <div class="rp-title">${esc(item.nombre)} <span>· ${esc(item.edad)} años</span></div>
+        <div class="rp-subtitle">${esc(item.ocupacion)} · Busca en ${esc(item.zona)}, ${esc(item.ciudad)}</div>
         ${item.estado_busqueda && item.estado_busqueda !== "buscando"
-          ? `<span class="rp-unavailable-badge">${item.estado_busqueda === "ya_encontro" ? "Ya no está buscando — encontró roomie" : "Búsqueda pausada"}</span>`
+          ? `<span class="rp-unavailable-badge">${esc(item.estado_busqueda === "ya_encontro" ? "Ya no está buscando — encontró roomie" : "Búsqueda pausada")}</span>`
           : ""}
       </div>
       <div class="rp-rating-chip">
         <div class="rp-rating-text">
-          <div class="rp-rating-word">${resenas.length ? palabraCalificacion(item.rating) : "Nuevo"}</div>
-          <div class="rp-rating-count">${resenas.length} reseña${resenas.length === 1 ? "" : "s"}</div>
+          <div class="rp-rating-word">${esc(resenas.length ? palabraCalificacion(item.rating) : "Nuevo")}</div>
+          <div class="rp-rating-count">${esc(resenas.length)} reseña${esc(resenas.length === 1 ? "" : "s")}</div>
         </div>
-        <span class="rp-rating-badge">${resenas.length ? item.rating : "—"}</span>
+        <span class="rp-rating-badge">${esc(resenas.length ? item.rating : "—")}</span>
       </div>
     </div>
 
@@ -248,7 +249,7 @@ function renderPerfil(item, favoritoActivo) {
           <button class="rp-tab-btn active" data-tab="tabSobreMi">Sobre mí</button>
           <button class="rp-tab-btn" data-tab="tabEstiloVida">Estilo de vida</button>
           <button class="rp-tab-btn" data-tab="tabConvivencia">Convivencia y preferencias</button>
-          <button class="rp-tab-btn" data-tab="tabResenas">Reseñas${resenas.length ? ` (${resenas.length})` : ""}</button>
+          <button class="rp-tab-btn" data-tab="tabResenas">Reseñas${esc(resenas.length ? ` (${resenas.length})` : "")}</button>
         </div>
 
         <div class="rp-tab-panel active" id="tabSobreMi">${tabSobreMi(item)}</div>
@@ -259,15 +260,15 @@ function renderPerfil(item, favoritoActivo) {
 
       <div class="rp-sidebar">
         <div class="rp-contact-card">
-          <div class="rp-price">${formatCOP(item.presupuesto)} <span>/ mes</span></div>
-          <div class="rp-price-note">Presupuesto máximo declarado por ${item.nombre.split(" ")[0]}</div>
+          <div class="rp-price">${esc(formatCOP(item.presupuesto))} <span>/ mes</span></div>
+          <div class="rp-price-note">Presupuesto máximo declarado por ${esc(item.nombre.split(" ")[0])}</div>
           ${esPropioPerfil
-            ? `<p class="rp-login-note">Este es tu perfil de roomie — <a href="${appUrl('/mis-publicaciones')}" style="color:#1a9ecf;font-weight:700;">gestiona las solicitudes aquí →</a></p>`
+            ? `<p class="rp-login-note">Este es tu perfil de roomie — <a href="${esc(appUrl('/mis-publicaciones'))}" style="color:#1a9ecf;font-weight:700;">gestiona las solicitudes aquí →</a></p>`
             : (item.estado_busqueda && item.estado_busqueda !== "buscando"
                 ? `<button type="button" class="rp-cta is-disabled" disabled>No disponible</button>`
                 : `<button type="button" class="rp-cta" id="agendarCitaBtn">📅 Agendar cita para conocerse</button>`)}
-          <button type="button" class="rp-cta-secondary${favoritoActivo ? " is-fav-active" : ""}" id="favoritoBtn">
-            ${favoritoActivo ? "♥ Guardado en favoritos" : "♡ Guardar en favoritos"}
+          <button type="button" class="rp-cta-secondary${esc(favoritoActivo ? " is-fav-active" : "")}" id="favoritoBtn">
+            ${esc(favoritoActivo ? "♥ Guardado en favoritos" : "♡ Guardar en favoritos")}
           </button>
           ${!conSesion ? `<p class="rp-login-note">Inicia sesión para agendar una cita o guardar en favoritos</p>` : ""}
         </div>
@@ -311,7 +312,7 @@ async function cargarPerfil() {
     contenedor.innerHTML = `
       <div class="rp-not-found">
         <p>No encontramos este perfil. Puede que ya no esté disponible.</p>
-        <a href="${appUrl('/roomies')}">← Volver a la búsqueda</a>
+        <a href="${esc(appUrl('/roomies'))}">← Volver a la búsqueda</a>
       </div>`;
   }
 }

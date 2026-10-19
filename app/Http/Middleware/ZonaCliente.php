@@ -11,7 +11,8 @@ use Symfony\Component\HttpFoundation\Response;
 /**
  * Páginas del sitio de cliente (todas las que usan layouts.app: públicas y
  * privadas). Reemplaza dos chequeos que antes hacía JavaScript en el navegador:
- *  - partials/admin-guard: un admin que navega como admin va a /admin.
+ *  - partials/admin-guard: un admin que navega como admin va a /admin, y un
+ *    moderador que navega como moderador va a /moderador.
  *  - nav.js (redirigirSiPerfilIncompleto): un usuario con el perfil
  *    incompleto va a /onboarding.
  *
@@ -27,6 +28,10 @@ class ZonaCliente
         if ($usuario) {
             if (SesionUsuario::rolActivo() === 'admin') {
                 return redirect()->route('admin');
+            }
+
+            if (SesionUsuario::rolActivo() === 'moderador') {
+                return redirect()->route('moderador');
             }
 
             if (! $usuario->perfilCompleto()) {

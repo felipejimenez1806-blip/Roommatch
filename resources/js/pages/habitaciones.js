@@ -1,4 +1,5 @@
 import { API_BASE, appUrl } from "../core/config.js";
+import { esc } from "../core/html.js";
 
 const RESULTADOS_POR_PAGINA = 6;
 
@@ -72,18 +73,18 @@ async function cargarResultados() {
     lista.innerHTML = data.map((item) => `
       <div class="room-card">
         <div class="room-card-img-wrap">
-          <img src="${item.img}" alt="${item.tipo_espacio} en ${item.zona}"/>
-          <span class="room-card-badge">${item.rating}</span>
+          <img src="${esc(item.img)}" alt="${esc(item.tipo_espacio)} en ${esc(item.zona)}"/>
+          <span class="room-card-badge">${esc(item.rating)}</span>
         </div>
         <div class="room-card-body">
-          <div class="room-card-type">${item.tipo_espacio}</div>
-          <div class="room-card-zone">${item.zona}, ${item.ciudad}</div>
+          <div class="room-card-type">${esc(item.tipo_espacio)}</div>
+          <div class="room-card-zone">${esc(item.zona)}, ${esc(item.ciudad)}</div>
           <div class="room-card-tags">
-            ${item.tags.map((t) => `<span class="room-card-tag">${t}</span>`).join("")}
+            ${item.tags.map((t) => `<span class="room-card-tag">${esc(t)}</span>`).join("")}
           </div>
           <div class="room-card-footer">
-            <div class="room-card-price">${formatCOP(item.precio)}<span>por mes</span></div>
-            <a class="room-card-btn" href="${appUrl(`/publicacion/${item.id}`)}">Ver publicación</a>
+            <div class="room-card-price">${esc(formatCOP(item.precio))}<span>por mes</span></div>
+            <a class="room-card-btn" href="${esc(appUrl(`/publicacion/${item.id}`))}">Ver publicación</a>
           </div>
         </div>
       </div>`).join("");
@@ -134,7 +135,7 @@ function refrescarConDebounce() {
 }
 
 // ---------- EVENTOS ----------
-document.getElementById("filtroZona").addEventListener("input", refrescarConDebounce);
+document.getElementById("filtroZona").addEventListener("change", () => { paginaActual = 1; cargarResultados(); });
 document.getElementById("precioMin").addEventListener("input", refrescarConDebounce);
 document.getElementById("precioMax").addEventListener("input", refrescarConDebounce);
 document.querySelectorAll(".filtroTipo").forEach((c) => c.addEventListener("change", () => { paginaActual = 1; cargarResultados(); }));
@@ -148,9 +149,14 @@ document.getElementById("limpiarFiltrosBtn").addEventListener("click", limpiarFi
 
 // ---------- INICIALIZACIÓN ----------
 const parametrosURL = new URLSearchParams(window.location.search);
+// Llegada desde "Lugares populares" (?localidad=suba) o con el nombre exacto
+// (?zona=Suba). Solo se preselecciona si existe en el select cerrado.
+const selectZona = document.getElementById("filtroZona");
+const slugDesdeURL = parametrosURL.get("localidad");
 const zonaDesdeURL = parametrosURL.get("zona");
-if (zonaDesdeURL) {
-  document.getElementById("filtroZona").value = zonaDesdeURL;
-}
+const opcionInicial =
+  (slugDesdeURL && Array.from(selectZona.options).find((o) => o.dataset.slug === slugDesdeURL)) ||
+  (zonaDesdeURL && Array.from(selectZona.options).find((o) => o.value === zonaDesdeURL));
+if (opcionInicial) selectZona.value = opcionInicial.value;
 
 cargarResultados();

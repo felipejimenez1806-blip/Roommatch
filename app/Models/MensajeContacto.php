@@ -19,6 +19,7 @@ class MensajeContacto extends Model
         'mensaje',
         'atendido',
         'fecha_atencion',
+        'respuesta',
     ];
 
     protected $casts = [
@@ -32,7 +33,7 @@ class MensajeContacto extends Model
         return $this->belongsTo(Usuario::class, 'id_usuario', 'id_usuario');
     }
 
-    /** Administrador que atendió el mensaje. */
+    /** Administrador o moderador que atendió el mensaje. */
     public function administrador(): BelongsTo
     {
         return $this->belongsTo(Usuario::class, 'id_administrador', 'id_usuario');

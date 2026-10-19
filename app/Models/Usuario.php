@@ -115,8 +115,10 @@ class Usuario extends Authenticatable
     }
 
     /**
-     * Roles N:N (cliente/admin). Un usuario puede tener uno o ambos a la
-     * vez (ej. un cliente promovido a administrador).
+     * Roles N:N (cliente / moderador / admin). Un usuario puede tener varios
+     * a la vez (ej. un cliente promovido a moderador, o a administrador).
+     * Los permisos NO se calculan con todos estos roles juntos sino con el
+     * rol activo de la sesión (ver App\Support\Permisos).
      */
     public function roles()
     {
@@ -139,6 +141,11 @@ class Usuario extends Authenticatable
     public function esCliente(): bool
     {
         return $this->tieneRol('cliente');
+    }
+
+    public function esModerador(): bool
+    {
+        return $this->tieneRol('moderador');
     }
 
     /**
@@ -164,6 +171,17 @@ class Usuario extends Authenticatable
     public function scopeClientes($query)
     {
         return $query->whereHas('roles', fn ($q) => $q->where('nombre', 'cliente'));
+    }
+
+    public function scopeModeradores($query)
+    {
+        return $query->whereHas('roles', fn ($q) => $q->where('nombre', 'moderador'));
+    }
+
+    /** Quien atiende reportes y mensajes: administradores y moderadores. */
+    public function scopeEquipoModeracion($query)
+    {
+        return $query->whereHas('roles', fn ($q) => $q->whereIn('nombre', ['admin', 'moderador']));
     }
 
     public function scopeBloqueados($query)

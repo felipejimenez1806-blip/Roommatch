@@ -23,6 +23,7 @@ import {
   renovarSesion,
   cerrarSesion as cerrarSesionApi,
 } from "./core/auth.js";
+import { esc } from "./core/html.js";
 
 (function () {
   function primerNombre(nombreCompleto) {
@@ -99,12 +100,13 @@ import {
   // ------------------------------------------------------------
   // Solo aparece cuando el usuario tiene más de un rol asignado
   // (usuario.roles.length > 1). Pide contraseña únicamente cuando el
-  // destino es 'admin' (mismo criterio que el backend, ver
+  // destino es 'admin' o 'moderador' (mismo criterio que el backend, ver
   // CambiarRolRequest). Al terminar, el servidor ya cambió el rol
   // activo de la sesión; se navega a /dashboard y el middleware
   // (zona.cliente / zona.admin) deja al usuario en la zona correcta.
   // ============================================================
-  const ETIQUETAS_ROL = { cliente: "Cliente", admin: "Administrador" };
+  const ETIQUETAS_ROL = { cliente: "Cliente", moderador: "Moderador", admin: "Administrador" };
+  const ZONA_POR_ROL = { admin: "/admin", moderador: "/moderador", cliente: "/dashboard" };
 
   function abrirModalCambiarRol(usuario, rolActivo) {
     inyectarEstilosSesion();
@@ -115,11 +117,11 @@ import {
     overlay.innerHTML = `
       <div class="rm-rol-modal">
         <p class="rm-rol-title">Cambiar de rol</p>
-        <p class="rm-rol-text">Ingresaste como ${ETIQUETAS_ROL[rolActivo] || rolActivo}. Elige con qué rol quieres continuar.</p>
+        <p class="rm-rol-text">Ingresaste como ${esc(ETIQUETAS_ROL[rolActivo] || rolActivo)}. Elige con qué rol quieres continuar.</p>
         <div class="rm-rol-opciones">
           ${roles.map((r) => `
-            <button type="button" class="rm-rol-btn${r === rolActivo ? " is-active" : ""}" data-rol="${r}" ${r === rolActivo ? "disabled" : ""}>
-              ${ETIQUETAS_ROL[r] || r}${r === rolActivo ? " (actual)" : ""}
+            <button type="button" class="rm-rol-btn${esc(r === rolActivo ? " is-active" : "")}" data-rol="${esc(r)}" ${esc(r === rolActivo ? "disabled" : "")}>
+              ${esc(ETIQUETAS_ROL[r] || r)}${esc(r === rolActivo ? " (actual)" : "")}
             </button>`).join("")}
         </div>
         <div id="rmRolPasswordWrap" hidden>
@@ -145,10 +147,10 @@ import {
         rolElegido = btn.dataset.rol;
         errorEl.textContent = "";
 
-        // Pasar a admin exige contraseña; si el input todavía no está
-        // visible, se muestra y se espera a que el usuario la escriba
-        // en vez de mandar la petición de una vez.
-        if (rolElegido === "admin" && passwordWrap.hidden) {
+        // Pasar a admin o moderador exige contraseña; si el input todavía
+        // no está visible, se muestra y se espera a que el usuario la
+        // escriba en vez de mandar la petición de una vez.
+        if ((rolElegido === "admin" || rolElegido === "moderador") && passwordWrap.hidden) {
           passwordWrap.hidden = false;
           passwordInput.focus();
           return;
@@ -168,7 +170,7 @@ import {
 
       guardarSesion(datos);
       cerrar();
-      window.location.href = appUrl(datos.rolActivo === "admin" ? "/admin" : "/dashboard");
+      window.location.href = appUrl(ZONA_POR_ROL[datos.rolActivo] || "/dashboard");
     }
 
     // Si ya se mostró el campo de contraseña, Enter también confirma.
@@ -468,5 +470,13 @@ import {
   conectarNavbar();
   inicializarDetectorInactividad();
 
-  window.RoommatchNav = { renderNavbar, cerrarSesion, actualizarBadgeNotificaciones, abrirModalUsarComoCliente };
+  // abrirModalCambiarRol: los paneles /admin y /moderador no tienen navbar de
+  // cliente, así que reutilizan este modal desde su propio sidebar.
+  window.RoommatchNav = {
+    renderNavbar,
+    cerrarSesion,
+    actualizarBadgeNotificaciones,
+    abrirModalUsarComoCliente,
+    abrirModalCambiarRol: () => abrirModalCambiarRol(obtenerUsuario(), obtenerRolActivo()),
+  };
 })();

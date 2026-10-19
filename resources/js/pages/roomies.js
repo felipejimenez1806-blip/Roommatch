@@ -8,6 +8,7 @@
 // ============================================================
 
 import { API_BASE, appUrl } from "../core/config.js";
+import { esc } from "../core/html.js";
 
 const RESULTADOS_POR_PAGINA = 6;
 
@@ -91,18 +92,18 @@ async function cargarResultados() {
     lista.innerHTML = data.map((item) => `
       <div class="roomie-card">
         <div class="roomie-card-avatar-wrap">
-          <img src="${item.img}" alt="${item.nombre}"/>
-          <span class="roomie-card-badge">${item.rating > 0 ? item.rating : "Nuevo"}</span>
+          <img src="${esc(item.img)}" alt="${esc(item.nombre)}"/>
+          <span class="roomie-card-badge">${esc(item.rating > 0 ? item.rating : "Nuevo")}</span>
         </div>
         <div class="roomie-card-body">
-          <div class="roomie-card-name">${item.nombre} <span>· ${item.edad} años</span></div>
-          <div class="roomie-card-sub">${item.ocupacion} · Busca en ${item.zona}, ${item.ciudad}</div>
+          <div class="roomie-card-name">${esc(item.nombre)} <span>· ${esc(item.edad)} años</span></div>
+          <div class="roomie-card-sub">${esc(item.ocupacion)} · Busca en ${esc(item.zona)}, ${esc(item.ciudad)}</div>
           <div class="roomie-card-tags">
-            ${item.tags.map((t) => `<span class="roomie-card-tag">${t}</span>`).join("")}
+            ${item.tags.map((t) => `<span class="roomie-card-tag">${esc(t)}</span>`).join("")}
           </div>
           <div class="roomie-card-footer">
-            <div class="roomie-card-price">${formatCOP(item.presupuesto)}<span>presupuesto/mes</span></div>
-            <a class="roomie-card-btn" href="${appUrl(`/roomie/${item.id}`)}">Ver perfil</a>
+            <div class="roomie-card-price">${esc(formatCOP(item.presupuesto))}<span>presupuesto/mes</span></div>
+            <a class="roomie-card-btn" href="${esc(appUrl(`/roomie/${item.id}`))}">Ver perfil</a>
           </div>
         </div>
       </div>`).join("");

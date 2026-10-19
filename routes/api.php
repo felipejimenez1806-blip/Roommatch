@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\Admin\AdminController;
+use App\Http\Controllers\Api\Admin\AuditoriaController as AdminAuditoriaController;
 use App\Http\Controllers\Api\Admin\MensajeContactoController as AdminMensajeContactoController;
 use App\Http\Controllers\Api\Admin\PersonaRoomieController as AdminPersonaRoomieController;
 use App\Http\Controllers\Api\Admin\PublicacionController as AdminPublicacionController;
@@ -11,6 +12,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CitaController;
 use App\Http\Controllers\Api\ContactoController;
 use App\Http\Controllers\Api\FavoritoController;
+use App\Http\Controllers\Api\LocalidadController;
 use App\Http\Controllers\Api\NotificacionController;
 use App\Http\Controllers\Api\PersonaRoomieController;
 use App\Http\Controllers\Api\PublicacionController;
@@ -45,8 +47,11 @@ use Illuminate\Support\Facades\Route;
 | usuario lo completa con /seleccionar-rol ('seleccion.rol' exige ese login
 | pendiente; en ese momento aún NO está autenticado, por eso la ruta va
 | fuera del grupo auth). 'es.admin' exige rol activo admin (y el rol vigente
-| en BD) para /admin/*. agregar-rol-cliente es autoservicio (sin restricción
-| extra): ver AuthController::agregarRolCliente().
+| en BD) para las rutas /admin/* que son SOLO de administradores. Las que
+| comparten admin y moderador (reportes, publicaciones, roomies, mensajes de contacto)
+| no llevan 'es.admin': llevan `can:<permiso>`, y el permiso sale del rol
+| activo (App\Support\Permisos). agregar-rol-cliente es autoservicio (sin
+| restricción extra): ver AuthController::agregarRolCliente().
 |
 */
 
@@ -69,6 +74,11 @@ Route::post('/password/restablecer', [PasswordResetController::class, 'restablec
 Route::post('/contacto', [ContactoController::class, 'store'])
     ->middleware('throttle:5,1');
 
+// Pública (el index la usa sin sesión). Se registra antes que cualquier ruta
+// con {parametro} para que 'populares' no se interprete como un id.
+Route::get('/localidades/populares', [LocalidadController::class, 'populares'])
+    ->middleware('throttle:60,1');
+
 Route::get('/publicaciones', [PublicacionController::class, 'index']);
 Route::get('/publicaciones/destacadas', [PublicacionController::class, 'destacadas']);
 Route::get('/publicaciones/{publicacion}', [PublicacionController::class, 'show']);
@@ -85,8 +95,8 @@ Route::middleware(['auth:sanctum', 'cuenta.activa'])->group(function () {
 
     // ---------- Cambio de rol ----------
     // cambiar-rol: desde una sesión ya abierta, salta entre los roles ya
-    // asignados (pide contraseña otra vez solo si el destino es admin, ver
-    // CambiarRolRequest). agregar-rol-cliente: autoservicio para que un
+    // asignados (pide contraseña otra vez si el destino es admin o moderador,
+    // ver CambiarRolRequest). agregar-rol-cliente: autoservicio para que un
     // admin sin rol cliente se lo agregue (no es elevación de privilegios,
     // no pide contraseña). (seleccionar-rol está más arriba, fuera de este
     // grupo, porque ocurre antes de estar autenticado.)
@@ -150,9 +160,54 @@ Route::middleware(['auth:sanctum', 'cuenta.activa'])->group(function () {
         Route::post('/roomies/{persona}/citas', [CitaController::class, 'store']);
     });
 
-    // ---------- Administración ----------
+    // ---------- Moderación (compartido admin + moderador) ----------
+    // Sin 'es.admin': cada ruta exige el permiso que le corresponde (Gates
+    // en AppServiceProvider, mapa en App\Support\Permisos). Un moderador
+    // entra aquí; lo que es solo de admin está en el grupo de abajo y a un
+    // moderador le responde 403. Los controladores vuelven a comprobar el
+    // permiso (y las Policies, el estado del recurso).
+    Route::prefix('admin')->group(function () {
+        Route::middleware('can:gestionar-reportes')->group(function () {
+            Route::get('/reportes', [AdminReporteController::class, 'index']);
+            Route::patch('/reportes/{reporte}/resolver', [AdminReporteController::class, 'resolver']);
+            Route::patch('/reportes/{reporte}/descartar', [AdminReporteController::class, 'descartar']);
+        });
+        Route::patch('/reportes/{reporte}/escalar', [AdminReporteController::class, 'escalar'])
+            ->middleware('can:escalar-reportes');
+        Route::patch('/reportes/{reporte}/devolver', [AdminReporteController::class, 'devolver'])
+            ->middleware('can:gestionar-escalados');
+
+        Route::get('/publicaciones', [AdminPublicacionController::class, 'index'])
+            ->middleware('can:ver-publicaciones-moderacion');
+        Route::delete('/publicaciones/{publicacion}', [AdminPublicacionController::class, 'destroy'])
+            ->middleware('can:bajar-publicaciones');
+        // Sin route model binding: una publicación soft-deleted queda
+        // excluida del binding implícito, así que el id se recibe "en
+        // bruto" y se busca con withTrashed() dentro del controlador.
+        Route::patch('/publicaciones/{id}/restaurar', [AdminPublicacionController::class, 'restaurar'])
+            ->middleware('can:bajar-publicaciones');
+
+        Route::get('/roomies', [AdminPersonaRoomieController::class, 'index'])
+            ->middleware('can:ver-roomies-moderacion');
+        Route::delete('/roomies/{persona}', [AdminPersonaRoomieController::class, 'destroy'])
+            ->middleware('can:bajar-roomies');
+        // Sin route model binding por la misma razón que las publicaciones:
+        // un perfil soft-deleted queda excluido del binding implícito.
+        Route::patch('/roomies/{id}/restaurar', [AdminPersonaRoomieController::class, 'restaurar'])
+            ->middleware('can:bajar-roomies');
+
+        Route::middleware('can:responder-mensajes')->group(function () {
+            Route::get('/mensajes-contacto', [AdminMensajeContactoController::class, 'index']);
+            Route::patch('/mensajes-contacto/{mensajeContacto}/atender', [AdminMensajeContactoController::class, 'atender']);
+            Route::post('/mensajes-contacto/{mensajeContacto}/responder', [AdminMensajeContactoController::class, 'responder']);
+        });
+    });
+
+    // ---------- Administración (solo admin) ----------
     Route::middleware('es.admin')->prefix('admin')->group(function () {
         Route::get('/resumen', [AdminController::class, 'resumen']);
+        Route::get('/auditoria', [AdminAuditoriaController::class, 'index'])
+            ->middleware('can:ver-auditoria');
 
         Route::get('/usuarios', [AdminUsuarioController::class, 'index']);
         Route::post('/administradores', [AdminUsuarioController::class, 'crearAdministrador']);
@@ -160,24 +215,11 @@ Route::middleware(['auth:sanctum', 'cuenta.activa'])->group(function () {
         Route::patch('/usuarios/{usuario}/desbloquear', [AdminUsuarioController::class, 'desbloquear']);
         Route::patch('/usuarios/{usuario}/promover-admin', [AdminUsuarioController::class, 'promoverAdmin']);
         Route::patch('/usuarios/{usuario}/revocar-admin', [AdminUsuarioController::class, 'revocarAdmin']);
+        Route::patch('/usuarios/{usuario}/promover-moderador', [AdminUsuarioController::class, 'promoverModerador'])
+            ->middleware('can:gestionar-roles');
+        Route::patch('/usuarios/{usuario}/revocar-moderador', [AdminUsuarioController::class, 'revocarModerador'])
+            ->middleware('can:gestionar-roles');
 
-        Route::get('/publicaciones', [AdminPublicacionController::class, 'index']);
-        Route::delete('/publicaciones/{publicacion}', [AdminPublicacionController::class, 'destroy']);
-        // Sin route model binding: una publicación soft-deleted queda
-        // excluida del binding implícito, así que el id se recibe "en
-        // bruto" y se busca con withTrashed() dentro del controlador.
-        Route::patch('/publicaciones/{id}/restaurar', [AdminPublicacionController::class, 'restaurar']);
-
-        Route::get('/roomies', [AdminPersonaRoomieController::class, 'index']);
-        Route::delete('/roomies/{persona}', [AdminPersonaRoomieController::class, 'destroy']);
-        Route::patch('/roomies/{id}/restaurar', [AdminPersonaRoomieController::class, 'restaurar']);
-
-        Route::get('/reportes', [AdminReporteController::class, 'index']);
         Route::get('/reportes/grafica', [AdminReporteController::class, 'grafica']);
-        Route::patch('/reportes/{reporte}/resolver', [AdminReporteController::class, 'resolver']);
-        Route::patch('/reportes/{reporte}/descartar', [AdminReporteController::class, 'descartar']);
-
-        Route::get('/mensajes-contacto', [AdminMensajeContactoController::class, 'index']);
-        Route::patch('/mensajes-contacto/{mensajeContacto}/atender', [AdminMensajeContactoController::class, 'atender']);
     });
 });

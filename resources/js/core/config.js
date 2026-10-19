@@ -26,6 +26,14 @@ export const BASE_URL = APP.baseUrl;
 /** URL base de la API. Ej: https://dominio.com/roommatch-laravel/public/api */
 export const API_BASE = APP.apiBase;
 
+/**
+ * Catálogo cerrado de localidades de Bogotá: [{ nombre, slug }, ...] ordenado por
+ * nombre. Viene de la tabla `localidad` (única fuente de verdad); los <select> de
+ * zona se llenan con esto para que publicaciones y perfiles guarden siempre el
+ * nombre exacto.
+ */
+export const LOCALIDADES = APP.localidades ?? [];
+
 /** Parte de ruta del subdirectorio, sin barra final. "" si vive en la raíz. */
 export const BASE_PATH = APP.basePath;
 

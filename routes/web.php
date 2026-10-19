@@ -18,9 +18,11 @@ use App\Http\Controllers\SocialAuthController;
 |   auth          visitante sin sesión -> /login
 |   cuenta.activa cuenta bloqueada o rol activo inválido -> sesión cerrada
 |   zona.cliente  páginas del sitio de cliente (layouts.app): un admin que
-|                 navega como admin va a /admin; un usuario con el perfil
+|                 navega como admin va a /admin, uno que navega como
+|                 moderador va a /moderador; un usuario con el perfil
 |                 incompleto va a /onboarding
 |   zona.admin    páginas de administración: solo con el rol activo admin
+|   zona.moderador panel de moderación: solo con el rol activo moderador
 |
 | Esto es experiencia de uso; la protección de los DATOS sigue siendo la de
 | la API ('auth:sanctum', 'es.admin', 'perfil.completo').
@@ -104,3 +106,13 @@ Route::prefix('admin')->middleware(['auth', 'cuenta.activa', 'zona.admin'])->gro
     Route::get('/nuevo-administrador', fn () => view('crear-administrador'))
         ->name('admin.crear-administrador');
 });
+
+// ==========================================================================
+// Moderación — layouts.moderador (sin nav de cliente). Solo con el rol
+// activo 'moderador' (selector "Ingresar como…"). Los datos los protege la
+// API con `can:` (ver api.php), no esta ruta.
+// ==========================================================================
+
+Route::middleware(['auth', 'cuenta.activa', 'zona.moderador'])
+    ->get('/moderador', fn () => view('moderador'))
+    ->name('moderador');

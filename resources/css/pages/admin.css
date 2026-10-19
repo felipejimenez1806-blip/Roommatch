@@ -28,6 +28,10 @@
 }
 .prf-sidebar {
   width: 200px;
+  /* perfil.css lo deja en top:90px (pensado para el navbar de cliente).
+     Aquí no hay navbar: con 90px el sidebar corto del moderador se
+     desplaza hacia abajo. 36px = padding-top de .prf-page. */
+  top: 36px;
 }
 .prf-content {
   padding-left: 28px;
@@ -510,3 +514,26 @@
     transform: translateY(0);
   }
 }
+
+/* ---- Rol moderador y escalamiento de reportes ---- */
+.adm-tipo-badge.is-moderador { background: #e9f7f0; color: #17874a; }
+.adm-tipo-badge.is-cliente { background: #eaf6fc; color: #1a9ecf; }
+.prf-badge.is-escalado { background: #f3ecfb; color: #7a3fc0; }
+
+/* Nota del moderador al escalar, y respuesta enviada en un mensaje de contacto */
+.adm-reporte-nota {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #f7f7f8;
+  border-left: 3px solid #7a3fc0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #444;
+  white-space: pre-line;
+  word-break: break-word;
+}
+
+/* Detalle de la tabla de auditoría */
+.adm-audit-kv { display: inline-block; margin: 0 8px 2px 0; font-size: 12.5px; color: #555; word-break: break-word; }
+.adm-audit-kv b { color: #333; font-weight: 600; text-transform: capitalize; }

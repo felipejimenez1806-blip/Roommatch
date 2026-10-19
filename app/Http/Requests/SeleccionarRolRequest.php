@@ -16,7 +16,7 @@ class SeleccionarRolRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'rol' => ['required', 'string', 'in:cliente,admin'],
+            'rol' => ['required', 'string', 'in:cliente,moderador,admin'],
         ];
     }
 }
