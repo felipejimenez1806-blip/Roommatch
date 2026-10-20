@@ -23,9 +23,14 @@
 // disponibles para todo cliente sin importar su rol.
 // ============================================================
 
-import { API_BASE, appUrl } from "../core/config.js";
+import { API_BASE, appUrl, LIMITES as L } from "../core/config.js";
 import { requerirSesion, obtenerUsuario, actualizarUsuario, cabecerasAutenticadas, manejarNoAutorizado } from "../core/auth.js";
 import { esc } from "../core/html.js";
+import { OPCIONES_AMBIENTE } from "../core/convivencia.js";
+import {
+  validarHabitantes, validarPresupuesto, validarTextoOpcional, normalizarTelefono, telefonoNacional, formatearTelefono, MENSAJE_TELEFONO,
+  bloquearTeclasNoEnteras, leerRespuesta, erroresPorCampo, mensajeGeneral,
+} from "../core/validacion.js";
 
 requerirSesion();
 let usuarioActual = obtenerUsuario();
@@ -115,8 +120,11 @@ document.getElementById("fotoInput").addEventListener("change", async (e) => {
       body: JSON.stringify({ foto: dataUrl }),
     });
     if (manejarNoAutorizado(respuesta)) return;
-    const datos = await respuesta.json();
-    if (!respuesta.ok) { mostrarErrorFoto(datos.mensaje || "No se pudo subir la foto."); return; }
+    const datos = await leerRespuesta(respuesta);
+    if (!respuesta.ok) {
+      mostrarErrorFoto(erroresPorCampo(datos).foto || mensajeGeneral(respuesta, datos, "No se pudo subir la foto."));
+      return;
+    }
     guardarUsuarioLocal(datos.usuario);
     pintarIdentidad();
     window.RoommatchNav.renderNavbar();
@@ -132,7 +140,11 @@ document.getElementById("quitarFotoBtn").addEventListener("click", async () => {
     body: JSON.stringify({ foto: null }),
   });
   if (manejarNoAutorizado(respuesta)) return;
-  const datos = await respuesta.json();
+  const datos = await leerRespuesta(respuesta);
+  if (!respuesta.ok) {
+    mostrarErrorFoto(mensajeGeneral(respuesta, datos, "No se pudo quitar la foto."));
+    return;
+  }
   guardarUsuarioLocal(datos.usuario);
   pintarIdentidad();
   window.RoommatchNav.renderNavbar();
@@ -211,7 +223,7 @@ const MOTIVOS_REPORTE_ROOMIE = [
 const CAMPOS_PERSONALES = [
   { key: "nombre", label: "Nombre completo", type: "text", placeholder: "Tu nombre completo" },
   { key: "email", label: "Email", type: "email", placeholder: "correo@ejemplo.com" },
-  { key: "telefono", label: "Teléfono", type: "tel", placeholder: "+57 300 123 4567" },
+  { key: "telefono", label: "Teléfono", type: "tel", placeholder: "Ej. 300 123 4567" },
   { key: "direccion", label: "Dirección / Localidad", type: "text", placeholder: "Ej. Kennedy, Bogotá" },
   {
     key: "genero", label: "Género", type: "select", placeholder: "",
@@ -233,7 +245,7 @@ function renderDatosPersonales() {
   const cont = document.getElementById("datosPersonalesList");
   cont.innerHTML = CAMPOS_PERSONALES.map((campo) => {
     const valor = usuarioActual[campo.key];
-    const textoMostrado = valor ? (campo.type === "select" ? etiquetaOpcion(campo, valor) : valor) : "Sin definir";
+    const textoMostrado = valor ? (campo.type === "select" ? etiquetaOpcion(campo, valor) : campo.key === "telefono" ? formatearTelefono(valor) : valor) : "Sin definir";
     return `
       <div class="prf-field-row" data-field="${esc(campo.key)}">
         <span class="prf-field-label">${esc(campo.label)}</span>
@@ -252,7 +264,7 @@ function activarEdicionCampo(row) {
   const campo = CAMPOS_PERSONALES.find((c) => c.key === key);
   const display = row.querySelector("[data-display]");
   const btn = row.querySelector('[data-action="edit"]');
-  const valorActual = usuarioActual[key] || "";
+  const valorActual = key === "telefono" ? telefonoNacional(usuarioActual[key] || "") : (usuarioActual[key] || "");
 
   let inputHtml;
   if (campo.type === "select") {
@@ -281,10 +293,10 @@ async function guardarCampo(row) {
   const valor = input.value.trim();
 
   let invalido = false, mensajeError = "";
-  if (key === "nombre" && valor.length < 3) { invalido = true; mensajeError = "Ingresa tu nombre completo."; }
-  if (key === "email" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(valor)) { invalido = true; mensajeError = "Ingresa un correo válido."; }
-  if (key === "telefono" && valor.replace(/\D/g, "").length < 7) { invalido = true; mensajeError = "Ingresa un teléfono válido."; }
-  if (key === "direccion" && valor.length < 3) { invalido = true; mensajeError = "Ingresa una dirección válida."; }
+  if (key === "nombre" && (valor.length < 3 || valor.length > 150)) { invalido = true; mensajeError = "Ingresa tu nombre completo (entre 3 y 150 caracteres)."; }
+  if (key === "email" && (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(valor) || valor.length > 150)) { invalido = true; mensajeError = "Ingresa un correo válido (máximo 150 caracteres)."; }
+  if (key === "telefono" && !normalizarTelefono(valor)) { invalido = true; mensajeError = MENSAJE_TELEFONO; }
+  if (key === "direccion" && (valor.length < 3 || valor.length > 255)) { invalido = true; mensajeError = "Ingresa una dirección válida (entre 3 y 255 caracteres)."; }
   if (key === "genero" && !valor) { invalido = true; mensajeError = "Selecciona una opción."; }
 
   if (invalido) {
@@ -307,10 +319,15 @@ async function guardarCampo(row) {
     body: JSON.stringify(payload),
   });
   if (manejarNoAutorizado(respuesta)) return;
-  const datos = await respuesta.json();
+  const datos = await leerRespuesta(respuesta);
 
   if (!respuesta.ok) {
-    errorEl.textContent = datos.mensaje || "No se pudo guardar. Verifica el dato.";
+    // 422: Laravel manda `errors` por campo (nunca `mensaje`). Se muestra el
+    // del campo que se está editando, o el primero que haya.
+    const porCampo = erroresPorCampo(datos);
+    errorEl.textContent = respuesta.status === 422
+      ? (porCampo[key] || Object.values(porCampo)[0] || "No se pudo guardar. Verifica el dato.")
+      : mensajeGeneral(respuesta, datos, "No se pudo guardar. Verifica el dato.");
     errorEl.classList.add("is-visible");
     return;
   }
@@ -331,12 +348,6 @@ async function guardarCampo(row) {
 // preferenciasConvivencia; los dos bloques comparten esa misma bolsa
 // de claves, así que llenar uno no borra el otro.
 // ============================================================
-const ETIQUETAS_ENUM_CONV = {
-  estudiantes: "Estudiantes", profesionales: "Profesionales", otro: "Otro",
-  diurno: "Diurno", nocturno: "Nocturno", mixto: "Mixto",
-  corto: "Corto plazo", largo: "Largo plazo",
-  inmediata: "Inmediata", "1mes": "En un mes", flexible: "Flexible",
-};
 
 function mostrarNotaGuardado() {
   const nota = document.getElementById("convivenciaSaveNote");
@@ -345,18 +356,73 @@ function mostrarNotaGuardado() {
   mostrarNotaGuardado._t = setTimeout(() => nota.classList.remove("show"), 1400);
 }
 
-async function actualizarPreferencia(campo, valor) {
+// Mismos topes que el servidor (config/roommatch.php). Un campo vacío (null)
+// siempre es válido: significa "borrar el dato".
+const VALIDADORES_CONV = {
+  numero_habitantes: validarHabitantes,
+  presupuesto_max: validarPresupuesto,
+  horario_entrada: (v) => validarTextoOpcional(v, { sujeto: "El horario de entrada", max: L.texto_corto_max }),
+  horario_silencio: (v) => validarTextoOpcional(v, { sujeto: "El horario de silencio", max: L.texto_corto_max }),
+};
+
+function mostrarErrorConvivencia(mensaje) {
+  let el = document.getElementById("convivenciaError");
+  if (!el) {
+    el = document.createElement("p");
+    el.id = "convivenciaError";
+    el.className = "prf-field-error";
+    document.getElementById("convivenciaSaveNote").insertAdjacentElement("afterend", el);
+  }
+  el.textContent = mensaje;
+  el.classList.toggle("is-visible", Boolean(mensaje));
+}
+
+// Devuelve el control al valor que tenía antes del intento fallido.
+function restaurarControl(el, previo) {
+  if (!el) return;
+  if (el.type === "checkbox") el.checked = Boolean(previo);
+  else el.value = previo ?? "";
+}
+
+async function actualizarPreferencia(campo, valor, el) {
+  mostrarErrorConvivencia("");
+  const previo = usuarioActual.preferenciasConvivencia?.[campo] ?? null;
+
+  const validar = VALIDADORES_CONV[campo];
+  const mensaje = validar && valor !== null ? validar(valor) : null;
+  if (mensaje) {
+    mostrarErrorConvivencia(mensaje);
+    restaurarControl(el, previo);
+    return;
+  }
+
+  let respuesta, datos;
+  try {
+    respuesta = await fetch(`${API_BASE}/usuario/convivencia`, {
+      method: "PUT",
+      headers: cabecerasAutenticadas(),
+      body: JSON.stringify({ [campo]: valor }),
+    });
+    if (manejarNoAutorizado(respuesta)) return;
+    datos = await leerRespuesta(respuesta);
+  } catch (err) {
+    mostrarErrorConvivencia("No se pudo conectar con el servidor. Intenta de nuevo.");
+    restaurarControl(el, previo);
+    return;
+  }
+
+  if (!respuesta.ok) {
+    const porCampo = erroresPorCampo(datos);
+    mostrarErrorConvivencia(porCampo[campo] || Object.values(porCampo)[0] || mensajeGeneral(respuesta, datos, "No se pudo guardar el cambio."));
+    restaurarControl(el, previo);
+    return;
+  }
+
+  // Solo ahora (el servidor ya lo aceptó) se actualiza el estado local.
   usuarioActual.preferenciasConvivencia = usuarioActual.preferenciasConvivencia || {};
   usuarioActual.preferenciasConvivencia[campo] = valor;
   actualizarUsuario(usuarioActual);
-
-  const respuesta = await fetch(`${API_BASE}/usuario/convivencia`, {
-    method: "PUT",
-    headers: cabecerasAutenticadas(),
-    body: JSON.stringify({ [campo]: valor }),
-  });
-  if (manejarNoAutorizado(respuesta)) return;
-  if (respuesta.ok) mostrarNotaGuardado();
+  mostrarNotaGuardado();
 }
 
 function toggleRow(campo, label, valorActual) {
@@ -415,7 +481,7 @@ function bloqueEstiloVida(p) {
         ${toggleRow("cerca_transporte_publico", "Cerca a transporte público", p.cerca_transporte_publico)}
         ${toggleRow("cerca_universidad", "Cerca a universidad", p.cerca_universidad)}
       </div>
-      ${selectField("ambiente_preferido", "Ambiente que prefieres", ETIQUETAS_ENUM_CONV, p.ambiente_preferido)}
+      ${selectField("ambiente_preferido", "Ambiente que prefieres", OPCIONES_AMBIENTE, p.ambiente_preferido)}
       ${selectField("horario", "Tu horario habitual", { diurno: "Diurno", nocturno: "Nocturno", mixto: "Mixto" }, p.horario)}
       ${selectField("tiempo_busqueda", "Tiempo de búsqueda", { corto: "Corto plazo", largo: "Largo plazo" }, p.tiempo_busqueda)}
       ${selectField("fecha_mudanza", "Fecha de mudanza", { inmediata: "Inmediata", "1mes": "En un mes", flexible: "Flexible" }, p.fecha_mudanza)}
@@ -427,7 +493,7 @@ function bloqueReglasHogar(p) {
   return `
     <div class="prf-conv-group">
       <p class="prf-conv-group-title">Ambiente del hogar</p>
-      ${selectField("ambiente_hogar", "Ambiente de la casa", ETIQUETAS_ENUM_CONV, p.ambiente_hogar)}
+      ${selectField("ambiente_hogar", "Ambiente de la casa", OPCIONES_AMBIENTE, p.ambiente_hogar)}
       ${numberField("numero_habitantes", "Número de habitantes actuales", p.numero_habitantes, "Ej. 2")}
       ${textField("horario_entrada", "Horario de entrada permitido", p.horario_entrada, "Ej. Hasta las 11:00pm")}
       ${textField("horario_silencio", "Horario de silencio", p.horario_silencio, "Ej. 10:00pm - 7:00am")}
@@ -445,10 +511,13 @@ function bloqueReglasHogar(p) {
 }
 
 function adjuntarListenersConvivencia(cont) {
-  cont.querySelectorAll("[data-conv-toggle]").forEach((el) => el.addEventListener("change", () => actualizarPreferencia(el.dataset.convToggle, el.checked)));
-  cont.querySelectorAll("[data-conv-select]").forEach((el) => el.addEventListener("change", () => actualizarPreferencia(el.dataset.convSelect, el.value || null)));
-  cont.querySelectorAll("[data-conv-number]").forEach((el) => el.addEventListener("change", () => actualizarPreferencia(el.dataset.convNumber, el.value ? Number(el.value) : null)));
-  cont.querySelectorAll("[data-conv-text]").forEach((el) => el.addEventListener("change", () => actualizarPreferencia(el.dataset.convText, el.value.trim() || null)));
+  cont.querySelectorAll("[data-conv-toggle]").forEach((el) => el.addEventListener("change", () => actualizarPreferencia(el.dataset.convToggle, el.checked, el)));
+  cont.querySelectorAll("[data-conv-select]").forEach((el) => el.addEventListener("change", () => actualizarPreferencia(el.dataset.convSelect, el.value || null, el)));
+  cont.querySelectorAll("[data-conv-number]").forEach((el) => {
+    bloquearTeclasNoEnteras(el);
+    el.addEventListener("change", () => actualizarPreferencia(el.dataset.convNumber, el.value ? Number(el.value) : null, el));
+  });
+  cont.querySelectorAll("[data-conv-text]").forEach((el) => el.addEventListener("change", () => actualizarPreferencia(el.dataset.convText, el.value.trim() || null, el)));
 }
 
 function renderConvivencia() {

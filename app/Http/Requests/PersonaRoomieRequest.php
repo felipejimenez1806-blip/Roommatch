@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Models\Localidad;
 use App\Rules\ImagenSubida;
+use App\Support\Telefono;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -29,13 +30,15 @@ class PersonaRoomieRequest extends FormRequest
 
     /**
      * Limpia el teléfono a solo dígitos antes de validar, mismo criterio
-     * que limpiarTelefono() en crear-perfil-roomie.js.
+     * que normalizarTelefono() en core/validacion.js.
      */
     protected function prepareForValidation(): void
     {
+        // "300 111 2233" / "+57 300-111-2233" / "573001112233" -> "+573001112233".
+        // Si no es válido se deja tal cual para que la regla de abajo lo rechace.
         if ($this->has('telefono_contacto')) {
             $this->merge([
-                'telefono_contacto' => preg_replace('/\D/', '', (string) $this->input('telefono_contacto')),
+                'telefono_contacto' => Telefono::normalizarOConservar($this->input('telefono_contacto')),
             ]);
         }
     }
@@ -58,7 +61,7 @@ class PersonaRoomieRequest extends FormRequest
             'ciudad' => ['nullable', 'string', "max:{$l['ciudad_max']}"],
             // Antes solo `gt:0`: sin tope, un presupuesto enorme reventaba decimal(10,2).
             'presupuesto' => ['required', 'integer', "min:{$l['presupuesto_min']}", "max:{$l['presupuesto_max']}"],
-            'telefono_contacto' => ['required', 'string', "digits_between:{$l['telefono_min']},{$l['telefono_max']}"],
+            'telefono_contacto' => ['required', 'string', 'regex:' . Telefono::REGEX],
             'descripcion' => ['required', 'string', "min:{$l['descripcion_min']}", "max:{$l['descripcion_max']}"],
             // data:image/... (nuevo) o URL ya existente (sin cambios, en edición)
             'foto' => ['required', new ImagenSubida('La foto de perfil')],
@@ -103,7 +106,7 @@ class PersonaRoomieRequest extends FormRequest
             'presupuesto.max' => "El presupuesto no puede superar {$cop($l['presupuesto_max'])} COP al mes. Revisa que no tengas ceros de más.",
 
             'telefono_contacto.required' => 'Ingresa un teléfono de contacto.',
-            'telefono_contacto.digits_between' => "El teléfono debe tener entre {$l['telefono_min']} y {$l['telefono_max']} dígitos, con indicativo de país (ej. 573001112233).",
+            'telefono_contacto.regex' => Telefono::MENSAJE,
 
             'descripcion.required' => "Cuéntanos un poco más de ti (mínimo {$l['descripcion_min']} caracteres).",
             'descripcion.min' => "Cuéntanos un poco más de ti (mínimo {$l['descripcion_min']} caracteres).",

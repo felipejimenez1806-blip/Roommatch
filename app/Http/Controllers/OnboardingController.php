@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\Telefono;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -28,12 +29,15 @@ class OnboardingController extends Controller
             ], 401);
         }
 
+        // "300 111 2233" / "+57 300-111-2233" -> "+573001112233" antes de validar.
+        $request->merge(['telefono' => Telefono::normalizarOConservar($request->input('telefono'))]);
+
         $validado = $request->validate([
-            'telefono' => ['required', 'regex:/^(\+57)?[0-9]{7,10}$/'],
+            'telefono' => ['required', 'regex:' . Telefono::REGEX],
             'genero' => ['nullable', Rule::in(['masculino', 'femenino', 'otro', 'prefiero_no_decir'])],
         ], [
             'telefono.required' => 'Ingresa tu número de teléfono.',
-            'telefono.regex' => 'Ingresa un teléfono válido (10 dígitos).',
+            'telefono.regex' => Telefono::MENSAJE,
             'genero.in' => 'La opción de género no es válida.',
         ]);
 

@@ -19,6 +19,8 @@
                     para mostrar u ocultar botones: el servidor valida cada acción.
     localidades     Catálogo cerrado de localidades de Bogotá ([{nombre, slug}], tabla
                     `localidad`). Alimenta los <select> de zona de los wizards.
+    limites         Topes de validación (config/roommatch.php): precio, habitantes, largos de
+                    texto, fotos. Los usa core/validacion.js.
     rolesPendientes Si la contraseña ya fue verificada pero falta elegir con
                     qué rol entrar (cuenta con más de un rol, p. ej. tras un
                     login social), los roles a elegir; [] en otro caso.
@@ -41,5 +43,6 @@
     permisos: {{ \Illuminate\Support\Js::from($usuarioSesion ? \App\Support\Permisos::delRolActivo() : []) }},
     rolesPendientes: {{ \Illuminate\Support\Js::from($usuarioSesion ? [] : \App\Services\SesionUsuario::rolesPendientes(request())) }},
     localidades: {{ \Illuminate\Support\Js::from(\App\Models\Localidad::todas()) }},
+    limites: {{ \Illuminate\Support\Js::from(config('roommatch.limites')) }},
   });
 </script>

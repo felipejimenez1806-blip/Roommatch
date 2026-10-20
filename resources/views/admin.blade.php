@@ -29,8 +29,8 @@
       <h1 class="prf-title">Usuarios registrados</h1>
       <p class="prf-subtitle">Consulta y modera las cuentas de la plataforma</p>
     </div>
-    <a href="{{ url('/admin/nuevo-administrador') }}" class="adm-row-btn is-primary" style="white-space:nowrap;text-decoration:none;">
-      + Crear administrador
+    <a href="{{ url('/admin/nuevo-usuario') }}" class="adm-row-btn is-primary" style="white-space:nowrap;text-decoration:none;">
+      + Crear usuario
     </a>
   </div>
 
@@ -134,14 +134,8 @@
 
   <div class="adm-toolbar" style="flex-wrap:wrap;gap:10px;">
     <input class="adm-search" id="admAuditoriaSearch" type="text" placeholder="Buscar por persona o por elemento..." autocomplete="off" name="adm_buscar_auditoria_no_autofill"/>
-    <select class="adm-search" id="admAuditoriaAccion" style="max-width:260px;">
-      <option value="">Todas las acciones</option>
-    </select>
-    <select class="adm-search" id="admAuditoriaRol" style="max-width:190px;">
-      <option value="">Cualquier rol</option>
-      <option value="moderador">Moderador</option>
-      <option value="admin">Administrador</option>
-    </select>
+    <div class="adm-audit-select" id="admAuditoriaAccionHost"></div>
+    <div class="adm-audit-select is-rol" id="admAuditoriaRolHost"></div>
     <input class="adm-search" id="admAuditoriaDesde" type="date" style="max-width:170px;" title="Desde"/>
     <input class="adm-search" id="admAuditoriaHasta" type="date" style="max-width:170px;" title="Hasta"/>
   </div>

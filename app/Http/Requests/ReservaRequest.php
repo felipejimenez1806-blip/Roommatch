@@ -2,10 +2,19 @@
 
 namespace App\Http\Requests;
 
+use App\Support\Telefono;
 use Illuminate\Foundation\Http\FormRequest;
 
 class ReservaRequest extends FormRequest
 {
+    /** "300 111 2233" / "+57 300-111-2233" -> "+573001112233" antes de validar. */
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('contacto_telefono')) {
+            $this->merge(['contacto_telefono' => Telefono::normalizarOConservar($this->input('contacto_telefono'))]);
+        }
+    }
+
     public function authorize(): bool
     {
         return true; // el guard de "no puedes reservar tu propia publicación" se hace en el controller
@@ -19,7 +28,7 @@ class ReservaRequest extends FormRequest
             'duracion_estimada' => ['required', 'in:1-3,3-6,6-12,12+'],
             'contacto_nombre' => ['required', 'string', 'min:3', 'max:150'],
             'contacto_correo' => ['required', 'email', 'max:150'],
-            'contacto_telefono' => ['required', 'string', 'min:7', 'max:20'],
+            'contacto_telefono' => ['required', 'string', 'regex:' . Telefono::REGEX],
         ];
     }
 
@@ -37,7 +46,7 @@ class ReservaRequest extends FormRequest
             'contacto_correo.required' => 'Ingresa un correo válido.',
             'contacto_correo.email' => 'Ingresa un correo válido.',
             'contacto_telefono.required' => 'Ingresa un número de teléfono válido.',
-            'contacto_telefono.min' => 'Ingresa un número de teléfono válido.',
+            'contacto_telefono.regex' => Telefono::MENSAJE,
         ];
     }
 }

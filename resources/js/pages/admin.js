@@ -28,6 +28,7 @@
 
 import { API_BASE } from "../core/config.js";
 import { requerirSesion, obtenerUsuario, cabecerasAutenticadas, manejarNoAutorizado as manejarSesionInvalida } from "../core/auth.js";
+import { selectHtml, enlazarSelects, valorSelect } from "../core/select-personalizado.js";
 
 requerirSesion({ rol: "admin" });
 const usuarioActual = obtenerUsuario();
@@ -78,7 +79,7 @@ function textoError(res, porDefecto) {
     const primero = Object.values(res.datos.errors)[0];
     if (Array.isArray(primero) && primero[0]) return primero[0];
   }
-  return res?.datos?.mensaje || porDefecto;
+  return res?.datos?.mensaje || res?.datos?.message || porDefecto;
 }
 
 // ============================================================
@@ -192,6 +193,13 @@ window.addEventListener("hashchange", activarPanelPorHash);
 // ============================================================
 // USUARIOS (HU-11)
 // ============================================================
+// Roles que el panel muestra (de menor a mayor privilegio) y los que un
+// administrador puede asignar/quitar. 'cliente' no se promueve ni se revoca
+// desde aquí (todo el que se registra ya lo es).
+const ORDEN_ROLES = ["cliente", "moderador", "admin"];
+const ROLES_EQUIPO = ["moderador", "admin"];
+const ETIQUETA_ROL = { cliente: "Cliente", moderador: "Moderador", admin: "Administrador" };
+
 let filtroUsuarioActual = "todos";
 let busquedaUsuarioActual = "";
 
@@ -223,32 +231,38 @@ async function renderUsuarios() {
     const avatar = u.fotoPerfil ? `<img src="${esc(u.fotoPerfil)}" alt="${esc(u.nombre)}"/>` : esc(inicial(u.nombre));
     const roles = u.roles || [];
     const esAdmin = roles.includes("admin");
-    const esModerador = roles.includes("moderador");
     const nombreAttr = esc(u.nombre);
 
-    // Una cuenta puede tener varios roles a la vez: un badge por cada uno.
-    const badgesRol = [
-      esAdmin ? `<span class="adm-tipo-badge is-admin">Administrador</span>` : "",
-      esModerador ? `<span class="adm-tipo-badge is-moderador">Moderador</span>` : "",
-      roles.includes("cliente") ? `<span class="adm-tipo-badge is-cliente">Cliente</span>` : "",
-    ].join(" ");
+    // Una cuenta puede tener varios roles a la vez: se pintan en una sola
+    // línea, de menor a mayor privilegio (Cliente / Moderador / Administrador).
+    const badgesRol = ORDEN_ROLES
+      .filter((r) => roles.includes(r))
+      .map((r) => `<span class="adm-tipo-badge is-${r}">${ETIQUETA_ROL[r]}</span>`)
+      .join(`<span class="adm-roles-sep" aria-hidden="true">/</span>`);
 
-    // Promover/revocar admin (Fase 3) y moderador. Un admin nunca se puede
-    // bloquear (ver UsuarioController::bloquear), así que su fila no ofrece
-    // bloquear. Solo los administradores ven este panel, y el servidor
-    // vuelve a exigir el permiso en cada una de estas rutas.
-    const botonModerador = esModerador
-      ? `<button type="button" class="adm-row-btn" data-revocar-mod="${u.id}" data-nombre="${nombreAttr}">Revocar moderador</button>`
-      : `<button type="button" class="adm-row-btn" data-promover-mod="${u.id}" data-nombre="${nombreAttr}">Promover a moderador</button>`;
+    // Un solo botón "Promover" y un solo "Revocar": el rol concreto se elige
+    // en el modal. Cada botón solo aparece si hay algo que hacer (roles de
+    // equipo que la cuenta aún no tiene / que ya tiene). El servidor vuelve
+    // a validar todo en cada ruta (can:gestionar-roles, cuenta de sistema,
+    // auto-revocación).
+    const rolesPromovibles = ROLES_EQUIPO.filter((r) => !roles.includes(r));
+    const rolesRevocables = ROLES_EQUIPO.filter((r) => roles.includes(r));
 
-    const accionesHtml = esAdmin
-      ? `${botonModerador}
-         <button type="button" class="adm-row-btn is-danger" data-revocar-admin="${u.id}" data-nombre="${nombreAttr}">Revocar admin</button>`
-      : `${botonModerador}
-         <button type="button" class="adm-row-btn" data-promover-admin="${u.id}" data-nombre="${nombreAttr}">Promover a admin</button>
-         <button type="button" class="adm-row-btn ${u.bloqueado ? "" : "is-danger"}" data-toggle-bloqueo="${u.id}" data-bloqueado="${u.bloqueado}" data-nombre="${nombreAttr}">
+    const botonPromover = rolesPromovibles.length
+      ? `<button type="button" class="adm-row-btn" data-promover="${u.id}" data-roles="${rolesPromovibles.join(",")}" data-nombre="${nombreAttr}">Promover</button>`
+      : "";
+    const botonRevocar = rolesRevocables.length
+      ? `<button type="button" class="adm-row-btn is-danger" data-revocar="${u.id}" data-roles="${rolesRevocables.join(",")}" data-nombre="${nombreAttr}">Revocar</button>`
+      : "";
+    // Bloquear/desbloquear no cambia: un admin nunca se puede bloquear
+    // (ver UsuarioController::bloquear), así que su fila no lo ofrece.
+    const botonBloqueo = esAdmin
+      ? ""
+      : `<button type="button" class="adm-row-btn ${u.bloqueado ? "" : "is-danger"}" data-toggle-bloqueo="${u.id}" data-bloqueado="${u.bloqueado}" data-nombre="${nombreAttr}">
            ${u.bloqueado ? "Desbloquear" : "Bloquear"}
          </button>`;
+
+    const accionesHtml = `${botonPromover}${botonRevocar}${botonBloqueo}`;
 
     return `
       <tr>
@@ -259,13 +273,13 @@ async function renderUsuarios() {
           </div>
         </td>
         <td data-label="Correo">${esc(u.email || "—")}</td>
-        <td data-label="Tipo">${badgesRol}</td>
+        <td data-label="Tipo"><div class="adm-roles">${badgesRol}</div></td>
         <td data-label="Teléfono">${esc(u.telefono || "—")}</td>
         <td data-label="Estado">
           <span class="prf-badge ${u.bloqueado ? "is-bloqueado" : "is-activo"}">${u.bloqueado ? "Bloqueado" : "Activo"}</span>
         </td>
         <td data-label="">
-          <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;">
+          <div class="adm-row-actions">
             ${accionesHtml}
           </div>
         </td>
@@ -279,24 +293,14 @@ async function renderUsuarios() {
       bloqueado ? desbloquearUsuario(id, btn.dataset.nombre) : abrirModalBloqueo(id, btn.dataset.nombre);
     });
   });
-  body.querySelectorAll("[data-promover-admin]").forEach((btn) => {
+  body.querySelectorAll("[data-promover]").forEach((btn) => {
     btn.addEventListener("click", () => {
-      abrirModalPromoverAdmin(Number(btn.dataset.promoverAdmin), btn.dataset.nombre);
+      abrirModalPromover(Number(btn.dataset.promover), btn.dataset.nombre, btn.dataset.roles.split(","));
     });
   });
-  body.querySelectorAll("[data-revocar-admin]").forEach((btn) => {
+  body.querySelectorAll("[data-revocar]").forEach((btn) => {
     btn.addEventListener("click", () => {
-      confirmarRevocarAdmin(Number(btn.dataset.revocarAdmin), btn.dataset.nombre);
-    });
-  });
-  body.querySelectorAll("[data-promover-mod]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      abrirModalPromoverModerador(Number(btn.dataset.promoverMod), btn.dataset.nombre);
-    });
-  });
-  body.querySelectorAll("[data-revocar-mod]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      confirmarRevocarModerador(Number(btn.dataset.revocarMod), btn.dataset.nombre);
+      abrirModalRevocar(Number(btn.dataset.revocar), btn.dataset.nombre, btn.dataset.roles.split(","));
     });
   });
 }
@@ -336,127 +340,136 @@ function abrirModalBloqueo(id, nombre) {
   });
 }
 
-// ---------- Fase 3: Promover / revocar admin ----------
+// ---------- Promover / revocar rol (admin o moderador) ----------
+// Un solo flujo para ambos roles: el modal muestra un select con los roles
+// que aplican a esa cuenta y, según la elección, llama a la ruta de siempre
+// (promover-admin / promover-moderador / revocar-admin / revocar-moderador).
 
-function abrirModalPromoverAdmin(id, nombre) {
+const DESCRIPCION_PROMOVER = {
+  admin: "Tendrá acceso completo al panel de administración. Conserva sus demás roles.",
+  moderador: "Podrá resolver reportes, bajar publicaciones y responder mensajes de contacto desde su propio panel. No podrá bloquear usuarios ni asignar roles. Conserva sus demás roles.",
+};
+const DESCRIPCION_REVOCAR = {
+  admin: "Dejará de tener acceso al panel de administración. Sus demás roles no cambian.",
+  moderador: "Dejará de tener acceso al panel de moderación. Sus demás roles no cambian.",
+};
+
+function opcionesDeRoles(roles) {
+  return roles.map((r) => [r, ETIQUETA_ROL[r]]);
+}
+
+function abrirModalPromover(id, nombre, rolesDisponibles) {
+  const opciones = opcionesDeRoles(rolesDisponibles);
+  // Con una sola opción posible (ya tiene el otro rol) llega preseleccionada.
+  const inicial = opciones.length === 1 ? opciones[0][0] : "";
+
   abrirModal(`
     <button class="adm-modal-close" type="button" id="admModalCloseBtn">&times;</button>
     <p class="adm-modal-title">Promover a ${esc(nombre)}</p>
-    <p class="adm-modal-sub">Tendrá acceso completo al panel de administración. Confirma tu propia contraseña para autorizar esta acción.</p>
-    <input type="password" class="adm-modal-textarea" id="admPasswordActualPromover" style="min-height:auto;" placeholder="Tu contraseña actual" autocomplete="off"/>
-    <p class="admcta-error" id="admPromoverError" style="color:#c0261c;font-size:12.5px;margin:-8px 0 12px;"></p>
+    <p class="adm-modal-sub" id="admPromoverDescripcion">${esc(DESCRIPCION_PROMOVER[inicial] || "Elige el rol que tendrá esta cuenta. Confirma tu contraseña para autorizar la acción.")}</p>
+
+    <label class="adm-modal-label" id="admPromoverRolLabel">Promover a</label>
+    ${selectHtml({ id: "admPromoverRol", opciones, valor: inicial, placeholder: "Selecciona un rol", labelledby: "admPromoverRolLabel" })}
+
+    <label class="adm-modal-label" for="admPasswordPromover">Tu contraseña actual</label>
+    <!-- new-password + readonly hasta enfocar: evita que el navegador trate este
+         campo como un login y rellene "usuario" en el buscador de la página. -->
+    <input type="password" class="adm-modal-input" id="admPasswordPromover" name="adm_confirmar_password_propia" placeholder="Confirma tu contraseña" autocomplete="new-password" readonly onfocus="this.removeAttribute('readonly')"/>
+    <p class="adm-modal-error" id="admPromoverError"></p>
+
     <div class="adm-modal-buttons">
       <button type="button" class="adm-row-btn" id="admCancelarPromover">Cancelar</button>
-      <button type="button" class="adm-row-btn is-primary" id="admConfirmarPromover">Promover a administrador</button>
+      <button type="button" class="adm-row-btn is-primary" id="admConfirmarPromover">Promover</button>
     </div>
   `);
+
+  const selectEl = document.getElementById("admPromoverRol");
+  const errorEl = document.getElementById("admPromoverError");
+  enlazarSelects(document.getElementById("admModal"));
+
+  selectEl.addEventListener("select-cambio", (e) => {
+    selectEl.classList.remove("has-error");
+    errorEl.textContent = "";
+    document.getElementById("admPromoverDescripcion").textContent = DESCRIPCION_PROMOVER[e.detail.valor] || "";
+  });
+
   document.getElementById("admModalCloseBtn").addEventListener("click", cerrarModal);
   document.getElementById("admCancelarPromover").addEventListener("click", cerrarModal);
   document.getElementById("admConfirmarPromover").addEventListener("click", async () => {
-    const passwordActual = document.getElementById("admPasswordActualPromover").value;
-    const errorEl = document.getElementById("admPromoverError");
-
-    const respuesta = await fetch(`${API_BASE}/admin/usuarios/${id}/promover-admin`, {
-      method: "PATCH",
-      headers: cabecerasAutenticadas(),
-      body: JSON.stringify({ password_actual: passwordActual }),
-    });
-    if (manejarNoAutorizado(respuesta)) return;
-    const datos = await respuesta.json().catch(() => ({}));
-
-    if (!respuesta.ok) {
-      errorEl.textContent = datos.mensaje || "No se pudo promover al usuario.";
+    const rol = valorSelect(selectEl);
+    if (!rol) {
+      selectEl.classList.add("has-error");
+      errorEl.textContent = "Selecciona a qué rol promover.";
       return;
     }
 
-    cerrarModal();
-    mostrarToast(datos.mensaje || `${nombre} ahora es administrador.`);
-    renderUsuarios();
-    renderResumen();
-  });
-}
-
-function confirmarRevocarAdmin(id, nombre) {
-  abrirModal(`
-    <button class="adm-modal-close" type="button" id="admModalCloseBtn">&times;</button>
-    <p class="adm-modal-title">¿Revocar el rol de administrador a ${esc(nombre)}?</p>
-    <p class="adm-modal-sub">Dejará de tener acceso al panel de administración.</p>
-    <div class="adm-modal-buttons">
-      <button type="button" class="adm-row-btn" id="admCancelarRevocar">Cancelar</button>
-      <button type="button" class="adm-row-btn is-danger" id="admConfirmarRevocar">Sí, revocar</button>
-    </div>
-  `);
-  document.getElementById("admModalCloseBtn").addEventListener("click", cerrarModal);
-  document.getElementById("admCancelarRevocar").addEventListener("click", cerrarModal);
-  document.getElementById("admConfirmarRevocar").addEventListener("click", async () => {
-    const respuesta = await fetch(`${API_BASE}/admin/usuarios/${id}/revocar-admin`, { method: "PATCH", headers: cabecerasAutenticadas(false) });
-    if (manejarNoAutorizado(respuesta)) return;
-    const datos = await respuesta.json().catch(() => ({}));
-
-    if (!respuesta.ok) {
-      cerrarModal();
-      mostrarToast(datos.mensaje || "No se pudo revocar el rol.");
-      return;
-    }
-
-    cerrarModal();
-    mostrarToast(datos.mensaje || `Se revocó el rol de administrador a ${nombre}.`);
-    renderUsuarios();
-    renderResumen();
-  });
-}
-
-// ---------- Promover / revocar moderador ----------
-
-function abrirModalPromoverModerador(id, nombre) {
-  abrirModal(`
-    <button class="adm-modal-close" type="button" id="admModalCloseBtn">&times;</button>
-    <p class="adm-modal-title">Promover a ${esc(nombre)} a moderador</p>
-    <p class="adm-modal-sub">Podrá resolver reportes, bajar publicaciones y responder mensajes de contacto desde su propio panel. No podrá bloquear usuarios ni asignar roles. Conserva sus demás roles. Confirma tu contraseña para autorizar esta acción.</p>
-    <input type="password" class="adm-modal-textarea" id="admPasswordPromoverMod" style="min-height:auto;" placeholder="Tu contraseña actual" autocomplete="off"/>
-    <p class="admcta-error" id="admPromoverModError" style="color:#c0261c;font-size:12.5px;margin:-8px 0 12px;"></p>
-    <div class="adm-modal-buttons">
-      <button type="button" class="adm-row-btn" id="admCancelarPromoverMod">Cancelar</button>
-      <button type="button" class="adm-row-btn is-primary" id="admConfirmarPromoverMod">Promover a moderador</button>
-    </div>
-  `);
-  document.getElementById("admModalCloseBtn").addEventListener("click", cerrarModal);
-  document.getElementById("admCancelarPromoverMod").addEventListener("click", cerrarModal);
-  document.getElementById("admConfirmarPromoverMod").addEventListener("click", async () => {
-    const errorEl = document.getElementById("admPromoverModError");
-    const res = await peticionAccion(`/admin/usuarios/${id}/promover-moderador`, {
-      cuerpo: { password_actual: document.getElementById("admPasswordPromoverMod").value },
+    const res = await peticionAccion(`/admin/usuarios/${id}/promover-${rol === "admin" ? "admin" : "moderador"}`, {
+      cuerpo: { password_actual: document.getElementById("admPasswordPromover").value },
     });
     if (!res) return;
     if (!res.ok) {
       errorEl.textContent = textoError(res, "No se pudo promover al usuario.");
       return;
     }
+
     cerrarModal();
-    mostrarToast(res.datos.mensaje || `${nombre} ahora es moderador.`);
+    mostrarToast(res.datos.mensaje || `${nombre} ahora es ${ETIQUETA_ROL[rol].toLowerCase()}.`);
     renderUsuarios();
     renderResumen();
     renderAuditoria();
   });
 }
 
-function confirmarRevocarModerador(id, nombre) {
+function abrirModalRevocar(id, nombre, rolesDisponibles) {
+  const opciones = opcionesDeRoles(rolesDisponibles);
+  const inicial = opciones.length === 1 ? opciones[0][0] : "";
+
   abrirModal(`
     <button class="adm-modal-close" type="button" id="admModalCloseBtn">&times;</button>
-    <p class="adm-modal-title">¿Revocar el rol de moderador a ${esc(nombre)}?</p>
-    <p class="adm-modal-sub">Dejará de tener acceso al panel de moderación. Sus demás roles no cambian.</p>
+    <p class="adm-modal-title">Revocar rol a ${esc(nombre)}</p>
+    <p class="adm-modal-sub" id="admRevocarDescripcion">${esc(DESCRIPCION_REVOCAR[inicial] || "Elige el rol que se le quitará a esta cuenta.")}</p>
+
+    <label class="adm-modal-label" id="admRevocarRolLabel">Revocar el rol de</label>
+    ${selectHtml({ id: "admRevocarRol", opciones, valor: inicial, placeholder: "Selecciona un rol", labelledby: "admRevocarRolLabel" })}
+    <p class="adm-modal-error" id="admRevocarError"></p>
+
     <div class="adm-modal-buttons">
-      <button type="button" class="adm-row-btn" id="admCancelarRevocarMod">Cancelar</button>
-      <button type="button" class="adm-row-btn is-danger" id="admConfirmarRevocarMod">Sí, revocar</button>
+      <button type="button" class="adm-row-btn" id="admCancelarRevocar">Cancelar</button>
+      <button type="button" class="adm-row-btn is-danger" id="admConfirmarRevocar">Revocar</button>
     </div>
   `);
+
+  const selectEl = document.getElementById("admRevocarRol");
+  const errorEl = document.getElementById("admRevocarError");
+  enlazarSelects(document.getElementById("admModal"));
+
+  selectEl.addEventListener("select-cambio", (e) => {
+    selectEl.classList.remove("has-error");
+    errorEl.textContent = "";
+    document.getElementById("admRevocarDescripcion").textContent = DESCRIPCION_REVOCAR[e.detail.valor] || "";
+  });
+
   document.getElementById("admModalCloseBtn").addEventListener("click", cerrarModal);
-  document.getElementById("admCancelarRevocarMod").addEventListener("click", cerrarModal);
-  document.getElementById("admConfirmarRevocarMod").addEventListener("click", async () => {
-    const res = await peticionAccion(`/admin/usuarios/${id}/revocar-moderador`);
+  document.getElementById("admCancelarRevocar").addEventListener("click", cerrarModal);
+  document.getElementById("admConfirmarRevocar").addEventListener("click", async () => {
+    const rol = valorSelect(selectEl);
+    if (!rol) {
+      selectEl.classList.add("has-error");
+      errorEl.textContent = "Selecciona qué rol revocar.";
+      return;
+    }
+
+    const res = await peticionAccion(`/admin/usuarios/${id}/revocar-${rol === "admin" ? "admin" : "moderador"}`);
     if (!res) return;
+    if (!res.ok) {
+      // Los resguardos del servidor (cuenta de sistema, auto-revocación)
+      // se muestran dentro del modal para que se pueda elegir otro rol.
+      errorEl.textContent = textoError(res, "No se pudo revocar el rol.");
+      return;
+    }
+
     cerrarModal();
-    mostrarToast(res.ok ? (res.datos.mensaje || `Se revocó el rol de moderador a ${nombre}.`) : textoError(res, "No se pudo revocar el rol."));
+    mostrarToast(res.datos.mensaje || `Se revocó el rol de ${ETIQUETA_ROL[rol].toLowerCase()} a ${nombre}.`);
     renderUsuarios();
     renderResumen();
     renderAuditoria();
@@ -1144,8 +1157,8 @@ async function renderAuditoria() {
   const empty = document.getElementById("admAuditoriaEmpty");
 
   const params = new URLSearchParams({ page: String(paginaAuditoria) });
-  const accion = document.getElementById("admAuditoriaAccion").value;
-  const rol = document.getElementById("admAuditoriaRol").value;
+  const accion = valorSelect(document.getElementById("admAuditoriaAccion"));
+  const rol = valorSelect(document.getElementById("admAuditoriaRol"));
   const q = document.getElementById("admAuditoriaSearch").value.trim();
   const desde = document.getElementById("admAuditoriaDesde").value;
   const hasta = document.getElementById("admAuditoriaHasta").value;
@@ -1167,9 +1180,9 @@ async function renderAuditoria() {
   const datos = res.datos;
 
   if (!etiquetasAuditoriaCargadas) {
-    const select = document.getElementById("admAuditoriaAccion");
-    select.insertAdjacentHTML("beforeend", Object.entries(datos.etiquetas || {})
-      .map(([clave, etiqueta]) => `<option value="${esc(clave)}">${esc(etiqueta)}</option>`).join(""));
+    // Las acciones llegan con la primera respuesta: se reconstruye el select
+    // con ellas (el escucha de cambios vive en el contenedor, no se pierde).
+    pintarSelectAccionAuditoria(datos.etiquetas || {});
     etiquetasAuditoriaCargadas = true;
   }
 
@@ -1196,11 +1209,35 @@ async function renderAuditoria() {
     </tr>`).join("");
 }
 
+function pintarSelectAccionAuditoria(etiquetas) {
+  const host = document.getElementById("admAuditoriaAccionHost");
+  host.innerHTML = selectHtml({
+    id: "admAuditoriaAccion",
+    opciones: [["", "Todas las acciones"], ...Object.entries(etiquetas)],
+    valor: "",
+  });
+  enlazarSelects(host);
+}
+
 function inicializarAuditoria() {
   if (!document.getElementById("admAuditoriaBody")) return;
 
   const recargar = () => { paginaAuditoria = 1; renderAuditoria(); };
-  ["admAuditoriaAccion", "admAuditoriaRol", "admAuditoriaDesde", "admAuditoriaHasta"].forEach((id) => {
+
+  pintarSelectAccionAuditoria({});
+  const rolHost = document.getElementById("admAuditoriaRolHost");
+  rolHost.innerHTML = selectHtml({
+    id: "admAuditoriaRol",
+    opciones: [["", "Cualquier rol"], ["moderador", "Moderador"], ["admin", "Administrador"]],
+    valor: "",
+  });
+  enlazarSelects(rolHost);
+
+  // "select-cambio" burbujea desde el select hasta su contenedor.
+  ["admAuditoriaAccionHost", "admAuditoriaRolHost"].forEach((id) => {
+    document.getElementById(id).addEventListener("select-cambio", recargar);
+  });
+  ["admAuditoriaDesde", "admAuditoriaHasta"].forEach((id) => {
     document.getElementById(id).addEventListener("change", recargar);
   });
   document.getElementById("admAuditoriaSearch").addEventListener("input", debounce(recargar, 300));

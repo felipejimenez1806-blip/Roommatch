@@ -1,9 +1,9 @@
 @extends('layouts.admin-bare')
 
-@section('title', 'Roommatch – Crear administrador')
+@section('title', 'Roommatch – Crear usuario')
 
 @push('css')
-@vite('resources/css/pages/crear-administrador.css')
+@vite('resources/css/pages/crear-usuario.css')
 @endpush
 
 @section('content')
@@ -21,8 +21,8 @@
         <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
         Acceso restringido
       </span>
-      <h1>Crear administrador</h1>
-      <p>Esta cuenta tendrá acceso completo al panel de administración de Roommatch.</p>
+      <h1>Crear usuario</h1>
+      <p id="tipoDescripcion">Elige el tipo de usuario. La cuenta tendrá acceso al panel que le corresponda según ese rol.</p>
     </div>
 
     <form id="crearAdminForm" autocomplete="off" novalidate>
@@ -35,6 +35,12 @@
 
       <div class="admcta-section">
         <p class="admcta-section-title">Información básica</p>
+
+        <div class="admcta-field" id="tipoGroupWrap">
+          <label id="tipoLabel">Tipo de usuario</label>
+          <div id="tipoSelectHost"></div>
+          <p class="admcta-error" id="tipoError"></p>
+        </div>
 
         <div class="admcta-field" id="nombreGroupWrap">
           <label for="nombre">Nombre completo</label>
@@ -140,7 +146,7 @@
       <p class="form-message" id="formMessage" role="alert"></p>
 
       <button type="submit" class="admcta-submit" id="submitBtn">
-        <span class="btn-text">Crear administrador</span>
+        <span class="btn-text" id="submitTexto">Crear usuario</span>
         <span class="spinner" hidden></span>
       </button>
 
@@ -153,5 +159,5 @@
 @endsection
 
 @push('js')
-@vite('resources/js/pages/crear-administrador.js')
+@vite('resources/js/pages/crear-usuario.js')
 @endpush

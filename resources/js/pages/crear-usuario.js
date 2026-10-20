@@ -1,5 +1,5 @@
 /* =========================================================
-   Roommatch - Crear administrador (panel de admin)
+   Roommatch - Crear usuario (administrador o moderador)
    ---------------------------------------------------------
    Página aparte (no modal) porque otorgar privilegios de admin
    es una acción sensible que merece su propia pantalla, con un
@@ -9,7 +9,9 @@
        en el registro normal) + mayúscula/minúscula/número/símbolo.
      - Exige la contraseña ACTUAL del admin que está creando la
        cuenta, como paso de confirmación (ver
-       Api\Admin\UsuarioController::crearAdministrador en backend).
+       Api\Admin\UsuarioController::crearUsuario en backend).
+     - El tipo de cuenta (administrador o moderador) se elige en un
+       select personalizado ('tipo_usuario' = 'admin' | 'moderador').
    Mismo patrón de autenticación y protección de acceso que admin.js.
    ========================================================= */
 
@@ -20,8 +22,48 @@
 // el archivo — por eso no validaba nada ni pintaba el checklist en verde.
 import { API_BASE, appUrl } from "../core/config.js";
 import { requerirSesion, cabecerasAutenticadas, manejarNoAutorizado } from "../core/auth.js";
+import { selectHtml, enlazarSelects, valorSelect, establecerValorSelect } from "../core/select-personalizado.js";
 
 requerirSesion({ rol: "admin" });
+
+// --- Tipo de usuario (select personalizado) ---
+const TIPOS_USUARIO = [
+  ["admin", "Administrador"],
+  ["moderador", "Moderador"],
+];
+const TEXTO_TIPO = {
+  admin: { descripcion: "Esta cuenta tendrá acceso completo al panel de administración de Roommatch.", creado: "administrador" },
+  moderador: { descripcion: "Esta cuenta podrá resolver reportes, bajar publicaciones y responder mensajes desde el panel de moderación. No podrá bloquear usuarios ni asignar roles.", creado: "moderador" },
+};
+
+const tipoHost = document.getElementById("tipoSelectHost");
+tipoHost.innerHTML = selectHtml({
+  id: "tipoUsuario",
+  opciones: TIPOS_USUARIO,
+  valor: "",
+  placeholder: "Selecciona el tipo de usuario",
+  labelledby: "tipoLabel",
+});
+enlazarSelects(tipoHost);
+const tipoSelect = document.getElementById("tipoUsuario");
+const tipoError = document.getElementById("tipoError");
+const tipoDescripcion = document.getElementById("tipoDescripcion");
+const submitTexto = document.getElementById("submitTexto");
+const DESCRIPCION_INICIAL = tipoDescripcion.textContent;
+
+// Permite abrir el formulario con el tipo ya elegido: /admin/nuevo-usuario#moderador
+const tipoInicial = window.location.hash.replace("#", "");
+if (TEXTO_TIPO[tipoInicial]) {
+  establecerValorSelect(tipoSelect, tipoInicial, { emitir: true });
+}
+
+tipoSelect.addEventListener("select-cambio", (e) => {
+  const tipo = e.detail.valor;
+  tipoSelect.classList.remove("has-error");
+  tipoError.textContent = "";
+  tipoDescripcion.textContent = TEXTO_TIPO[tipo]?.descripcion || DESCRIPCION_INICIAL;
+  submitTexto.textContent = tipo === "moderador" ? "Crear moderador" : tipo === "admin" ? "Crear administrador" : "Crear usuario";
+});
 
 // --- Referencias DOM ---
 const form = document.getElementById("crearAdminForm");
@@ -145,6 +187,7 @@ passwordActualInput.addEventListener("input", () => limpiarError(passwordActualG
 // --- Mapea errores de validación de Laravel (422) a los campos del form ---
 function mostrarErroresBackend(errores) {
   const mapa = {
+    tipo_usuario: [tipoSelect, tipoError],
     nombre: [nombreGroup, nombreError],
     correo: [correoGroup, correoError],
     area: [areaGroup, areaError],
@@ -165,6 +208,7 @@ form.addEventListener("submit", async (evento) => {
   formMessage.textContent = "";
   formMessage.className = "form-message";
 
+  const tipoUsuario = valorSelect(tipoSelect);
   const nombre = nombreInput.value.trim();
   const correo = correoInput.value.trim();
   const area = areaInput.value.trim();
@@ -174,6 +218,13 @@ form.addEventListener("submit", async (evento) => {
   const passwordActual = passwordActualInput.value;
 
   let esValido = true;
+
+  if (!tipoUsuario) {
+    mostrarError(tipoSelect, tipoError, "Selecciona el tipo de usuario.");
+    esValido = false;
+  } else {
+    limpiarError(tipoSelect, tipoError);
+  }
 
   if (!nombre || nombre.length < 3) {
     mostrarError(nombreGroup, nombreError, "Ingresa el nombre completo.");
@@ -238,10 +289,11 @@ form.addEventListener("submit", async (evento) => {
   setCargando(true);
 
   try {
-    const respuesta = await fetch(`${API_BASE}/admin/administradores`, {
+    const respuesta = await fetch(`${API_BASE}/admin/usuarios`, {
       method: "POST",
       headers: cabecerasAutenticadas(),
       body: JSON.stringify({
+        tipo_usuario: tipoUsuario,
         nombre,
         correo,
         area,
@@ -262,14 +314,15 @@ form.addEventListener("submit", async (evento) => {
         mostrarErroresBackend(datos.errors);
       }
       formMessage.classList.add("error");
-      formMessage.textContent = datos.mensaje || "No se pudo crear la cuenta de administrador.";
-      mostrarToast(datos.mensaje || "No se pudo crear la cuenta de administrador.");
+      formMessage.textContent = datos.mensaje || "No se pudo crear la cuenta.";
+      mostrarToast(datos.mensaje || "No se pudo crear la cuenta.");
       return;
     }
 
     formMessage.classList.add("success");
-    formMessage.textContent = `${datos.usuario.nombre} fue creado como administrador. Redirigiendo...`;
-    mostrarToast("Administrador creado correctamente");
+    const creado = TEXTO_TIPO[tipoUsuario].creado;
+    formMessage.textContent = `${datos.usuario.nombre} fue creado como ${creado}. Redirigiendo...`;
+    mostrarToast(`${creado.charAt(0).toUpperCase()}${creado.slice(1)} creado correctamente`);
     form.reset();
 
     setTimeout(() => {

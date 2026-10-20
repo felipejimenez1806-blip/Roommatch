@@ -15,6 +15,7 @@
 import { API_BASE, appUrl } from "../core/config.js";
 import { requerirSesion, obtenerUsuario, cabecerasAutenticadas, manejarNoAutorizado } from "../core/auth.js";
 import { esc } from "../core/html.js";
+import { normalizarTelefono, formatearTelefono, MENSAJE_TELEFONO } from "../core/validacion.js";
 
 // Página privada: sin sesión no hay nada que hacer aquí.
 requerirSesion();
@@ -207,8 +208,8 @@ function renderCita(item) {
             </div>
             <div class="cr-field">
               <label for="telefono">Número de teléfono</label>
-              <input type="tel" id="telefono" placeholder="+57 300 123 4567"/>
-              <div class="cr-field-error" id="err-telefono">Ingresa un número de teléfono válido.</div>
+              <input type="tel" id="telefono" placeholder="Ej. 300 123 4567"/>
+              <div class="cr-field-error" id="err-telefono">Ingresa un celular colombiano de 10 dígitos que empiece por 3 (ej. 300 123 4567). El indicativo +57 es opcional.</div>
             </div>
           </div>
         </div>
@@ -398,7 +399,7 @@ function activarEnvio(item) {
       mensaje: document.getElementById("mensaje").value.trim(),
       contacto_nombre: document.getElementById("nombre").value.trim(),
       contacto_correo: document.getElementById("correo").value.trim(),
-      contacto_telefono: document.getElementById("telefono").value.trim(),
+      contacto_telefono: normalizarTelefono(document.getElementById("telefono").value) ?? document.getElementById("telefono").value.trim(),
     };
 
     // ---- Validación en cliente (misma UX que el original) ----
@@ -425,7 +426,7 @@ function activarEnvio(item) {
     marcarError("lugarEncuentro", campos.lugar_encuentro.length < 3);
     marcarError("nombre", campos.contacto_nombre.length < 3);
     marcarError("correo", !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(campos.contacto_correo));
-    marcarError("telefono", campos.contacto_telefono.replace(/\D/g, "").length < 7);
+    marcarError("telefono", !normalizarTelefono(campos.contacto_telefono));
 
     const formError = document.getElementById("formError");
     if (!valido) {

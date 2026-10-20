@@ -34,6 +34,13 @@ export const API_BASE = APP.apiBase;
  */
 export const LOCALIDADES = APP.localidades ?? [];
 
+/**
+ * Topes de validación (config/roommatch.php, única fuente de verdad): precio,
+ * habitantes, largos de texto, fotos... core/validacion.js los usa para que el
+ * mensaje del navegador diga lo mismo que el del servidor.
+ */
+export const LIMITES = APP.limites ?? {};
+
 /** Parte de ruta del subdirectorio, sin barra final. "" si vive en la raíz. */
 export const BASE_PATH = APP.basePath;
 
