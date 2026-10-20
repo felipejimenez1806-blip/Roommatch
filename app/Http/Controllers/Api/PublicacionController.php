@@ -376,7 +376,9 @@ class PublicacionController extends Controller
 
     private function sincronizarTelefonoUsuario($usuario, string $telefonoContacto): void
     {
-        $limpio = preg_replace('/\D/', '', $telefonoContacto);
+        // PublicacionRequest ya lo normalizó a "+57XXXXXXXXXX": se guarda tal cual.
+        // (Antes se le quitaban los no-dígitos y quedaba distinto al de otras pantallas.)
+        $limpio = $telefonoContacto;
         if ($limpio && $limpio !== $usuario->telefono) {
             $usuario->update(['telefono' => $limpio]);
         }
@@ -388,12 +390,17 @@ class PublicacionController extends Controller
      */
     private function guardarImagenBase64(string $dataUrl): string
     {
-        if (! preg_match('/^data:image\/(\w+);base64,/', $dataUrl, $tipo)) {
+        // Solo jpeg/png/webp: con \w+ se podía guardar "data:image/php;base64,..." como .php.
+        // El request ya valida con ImagenSubida; esto es la segunda barrera.
+        if (! preg_match('/^data:image\/(jpeg|png|webp);base64,/', $dataUrl, $tipo)) {
             throw new \InvalidArgumentException('Formato de imagen inválido.');
         }
 
         $extension = $tipo[1] === 'jpeg' ? 'jpg' : $tipo[1];
-        $contenido = base64_decode(substr($dataUrl, strpos($dataUrl, ',') + 1));
+        $contenido = base64_decode(substr($dataUrl, strpos($dataUrl, ',') + 1), true);
+        if ($contenido === false) {
+            throw new \InvalidArgumentException('Imagen base64 inválida.');
+        }
         $ruta = 'publicaciones/' . Str::uuid() . '.' . $extension;
 
         Storage::disk('public')->put($ruta, $contenido);
@@ -424,7 +431,8 @@ class PublicacionController extends Controller
         $resultado['tamano_habitacion'] = $c['tamano_habitacion'] ?: null;
         $resultado['tipo_cama'] = $c['tipo_cama'] ?: null;
         $resultado['detalles_incluidos'] = $c['detalles_incluidos'] ?: null;
-        $resultado['numero_habitantes'] = $c['numero_habitantes'] ?: null;
+        // ?? y no ?: — con ?: el 0 (válido: espacio sin otros habitantes) se guardaba como NULL.
+        $resultado['numero_habitantes'] = $c['numero_habitantes'] ?? null;
         $resultado['horario_silencio'] = $c['horario_silencio'] ?: null;
         $resultado['horario_entrada'] = $c['horario_entrada'] ?: null;
         $resultado['distancia_transporte'] = $c['distancia_transporte'] ?: null;

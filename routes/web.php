@@ -91,8 +91,7 @@ Route::middleware(['auth', 'cuenta.activa', 'zona.cliente'])->group(function () 
 
 // ==========================================================================
 // Administración — usan layouts.admin / layouts.admin-bare (sin nav de
-// cliente). Nombres de ruta sin cambios ('admin' y
-// 'admin.crear-administrador') para no romper los route() de las vistas.
+// cliente). Nombres de ruta: 'admin' y 'admin.crear-usuario'.
 // ==========================================================================
 
 Route::prefix('admin')->middleware(['auth', 'cuenta.activa', 'zona.admin'])->group(function () {
@@ -103,8 +102,9 @@ Route::prefix('admin')->middleware(['auth', 'cuenta.activa', 'zona.admin'])->gro
     // por ejemplo:
     // Route::get('/usuarios', fn () => view('admin.usuarios'))->name('admin.usuarios');
 
-    Route::get('/nuevo-administrador', fn () => view('crear-administrador'))
-        ->name('admin.crear-administrador');
+    // Crear administrador o moderador (el tipo se elige en el formulario).
+    Route::get('/nuevo-usuario', fn () => view('crear-usuario'))
+        ->name('admin.crear-usuario');
 });
 
 // ==========================================================================

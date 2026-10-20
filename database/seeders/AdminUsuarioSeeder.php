@@ -21,7 +21,7 @@ class AdminUsuarioSeeder extends Seeder
     public function run(): void
     {
         $usuario = Usuario::firstOrCreate(
-            ['correo' => 'roommatch.admin2026@gmail.com'],
+            ['correo' => 'roommatch.admin2026@roommatch.com'],
             [
                 'nombre_completo' => 'Administrador RoomMatch',
                 'contrasena' => Hash::make('RoomMatchAdmin2026'),

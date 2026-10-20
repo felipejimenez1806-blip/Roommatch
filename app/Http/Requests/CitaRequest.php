@@ -2,10 +2,19 @@
 
 namespace App\Http\Requests;
 
+use App\Support\Telefono;
 use Illuminate\Foundation\Http\FormRequest;
 
 class CitaRequest extends FormRequest
 {
+    /** "300 111 2233" / "+57 300-111-2233" -> "+573001112233" antes de validar. */
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('contacto_telefono')) {
+            $this->merge(['contacto_telefono' => Telefono::normalizarOConservar($this->input('contacto_telefono'))]);
+        }
+    }
+
     public function authorize(): bool
     {
         return true; // el guard de "no agendar contigo mismo/a" se hace en el controller
@@ -21,7 +30,7 @@ class CitaRequest extends FormRequest
             'mensaje' => ['nullable', 'string', 'max:1000'],
             'contacto_nombre' => ['required', 'string', 'min:3', 'max:150'],
             'contacto_correo' => ['required', 'email', 'max:150'],
-            'contacto_telefono' => ['required', 'string', 'min:7', 'max:20'],
+            'contacto_telefono' => ['required', 'string', 'regex:' . Telefono::REGEX],
         ];
     }
 
@@ -41,7 +50,7 @@ class CitaRequest extends FormRequest
             'contacto_correo.required' => 'Ingresa un correo válido.',
             'contacto_correo.email' => 'Ingresa un correo válido.',
             'contacto_telefono.required' => 'Ingresa un número de teléfono válido.',
-            'contacto_telefono.min' => 'Ingresa un número de teléfono válido.',
+            'contacto_telefono.regex' => Telefono::MENSAJE,
         ];
     }
 }

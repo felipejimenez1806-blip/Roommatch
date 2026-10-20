@@ -14,9 +14,14 @@
 // La sesión (token/usuario) se maneja en core/auth.js.
 // ============================================================
 
-import { API_BASE, appUrl, LOCALIDADES } from "../core/config.js";
+import { API_BASE, appUrl, LOCALIDADES, LIMITES as L } from "../core/config.js";
 import { requerirSesion, obtenerUsuario, cabecerasAutenticadas, manejarNoAutorizado } from "../core/auth.js";
 import { esc } from "../core/html.js";
+import { estadoRoomieDesdeConvivencia } from "../core/convivencia.js";
+import {
+  validarEdad, validarPresupuesto, validarTexto, validarTextoOpcional, validarTelefono,
+  normalizarTelefono, telefonoNacional, bloquearTeclasNoEnteras, leerRespuesta, erroresPorCampo, mensajeGeneral,
+} from "../core/validacion.js";
 
 // ---------- LOCALIDADES DE BOGOTÁ ----------
 // Mismo catálogo que crear-publicacion.js (tabla `localidad`, vía
@@ -44,7 +49,7 @@ let modoEdicion = false; // se resuelve en inicializar(), según exista ya un pe
 function estadoVacio() {
   return {
     edad: "", genero: "", ocupacion: "", zona: "", ciudad: "Bogotá",
-    presupuesto: "", telefono_contacto: usuarioActual.telefono || "",
+    presupuesto: "", telefono_contacto: telefonoNacional(usuarioActual.telefono || ""),
     descripcion: "", tiempo_busqueda: "", fecha_mudanza: "",
 
     fumador: false, tiene_mascota: false, ordenado: false, sociable: false,
@@ -63,7 +68,8 @@ function estadoVacio() {
   };
 }
 
-let estado = estadoVacio();
+// Al crear, se parte de lo que la persona ya llenó en "Información convivencial".
+let estado = { ...estadoVacio(), ...estadoRoomieDesdeConvivencia(usuarioActual.preferenciasConvivencia) };
 
 function llenarEstadoDesdePerfil(perfil) {
   const c = perfil.caracteristicas || {};
@@ -75,7 +81,7 @@ function llenarEstadoDesdePerfil(perfil) {
     zona: perfil.zona || estado.zona,
     ciudad: perfil.ciudad || estado.ciudad,
     presupuesto: perfil.presupuesto ?? estado.presupuesto,
-    telefono_contacto: perfil.telefono || estado.telefono_contacto,
+    telefono_contacto: telefonoNacional(perfil.telefono || "") || estado.telefono_contacto,
     descripcion: perfil.descripcion || estado.descripcion,
     tiempo_busqueda: c.tiempo_busqueda || estado.tiempo_busqueda,
     fecha_mudanza: c.fecha_mudanza || estado.fecha_mudanza,
@@ -100,20 +106,20 @@ const cprPage = document.getElementById("cprPage");
 // ============================================================
 // HELPERS DE CAMPOS (mismo espíritu que crear-publicacion.js)
 // ============================================================
-function campoTexto({ key, label, placeholder = "", tipo = "text", hint = "" }) {
+function campoTexto({ key, label, placeholder = "", tipo = "text", hint = "", attrs = "" }) {
   return `
     <div class="cp-field" data-field="${esc(key)}">
       <label for="cpr_${esc(key)}">${esc(label)}</label>
-      <input id="cpr_${esc(key)}" type="${esc(tipo)}" data-bind="${esc(key)}" placeholder="${esc(placeholder)}" value="${esc((estado[key] ?? "").toString())}"/>
+      <input id="cpr_${esc(key)}" type="${esc(tipo)}" data-bind="${esc(key)}" placeholder="${esc(placeholder)}" value="${esc((estado[key] ?? "").toString())}" ${attrs}/>
       ${hint ? `<p class="cp-field-hint">${esc(hint)}</p>` : ""}
       <p class="cp-field-error" data-error></p>
     </div>`;
 }
-function campoTextarea({ key, label, placeholder = "" }) {
+function campoTextarea({ key, label, placeholder = "", attrs = "" }) {
   return `
     <div class="cp-field" data-field="${esc(key)}">
       <label for="cpr_${esc(key)}">${esc(label)}</label>
-      <textarea id="cpr_${esc(key)}" data-bind="${esc(key)}" placeholder="${esc(placeholder)}">${esc(estado[key] ?? "")}</textarea>
+      <textarea id="cpr_${esc(key)}" data-bind="${esc(key)}" placeholder="${esc(placeholder)}" ${attrs}>${esc(estado[key] ?? "")}</textarea>
       <p class="cp-field-error" data-error></p>
     </div>`;
 }
@@ -163,11 +169,28 @@ function toggleRow(key, label) {
     </div>`;
 }
 
+// Validación en vivo: al SALIR de un campo ya escrito se muestra el problema
+// concreto, sin esperar a "Siguiente".
+const VALIDADORES_CAMPO = {
+  edad: validarEdad,
+  ciudad: (v) => validarTextoOpcional(v, { sujeto: "La ciudad", max: L.ciudad_max }),
+  presupuesto: validarPresupuesto,
+  telefono_contacto: validarTelefono,
+  descripcion: (v) => validarTexto(v, { sujeto: "La descripción", min: L.descripcion_min, max: L.descripcion_max }),
+};
+
 function enlazarCampos(cont) {
   cont.querySelectorAll("[data-bind]").forEach((el) => {
     el.addEventListener("input", () => { estado[el.dataset.bind] = el.value; limpiarError(el); });
     el.addEventListener("change", () => { estado[el.dataset.bind] = el.value; limpiarError(el); });
+    el.addEventListener("blur", () => {
+      const validar = VALIDADORES_CAMPO[el.dataset.bind];
+      if (!validar || el.value.trim() === "") return;
+      const mensaje = validar(el.value);
+      if (mensaje) marcarError(el.dataset.bind, mensaje);
+    });
   });
+  cont.querySelectorAll('input[type="number"]').forEach(bloquearTeclasNoEnteras);
   cont.querySelectorAll("[data-bind-toggle]").forEach((el) => {
     el.addEventListener("change", () => { estado[el.dataset.bindToggle] = el.checked; });
   });
@@ -265,9 +288,6 @@ function marcarError(key, mensaje) {
   err.textContent = mensaje;
   err.classList.add("is-visible");
 }
-function limpiarTelefono(str) {
-  return (str || "").replace(/\D/g, "");
-}
 function formatCOP(n) {
   return "$" + Math.round(Number(n) || 0).toLocaleString("es-CO") + " COP";
 }
@@ -299,25 +319,25 @@ function renderBasico() {
     <p class="cp-step-subtitle">Esta información aparecerá en tu perfil público de roomie</p>
 
     <div class="cp-field-row">
-      ${campoTexto({ key: "edad", label: "Edad", tipo: "number" })}
+      ${campoTexto({ key: "edad", label: "Edad", tipo: "number", attrs: `min="${esc(L.edad_min)}" max="${esc(L.edad_max)}" step="1" inputmode="numeric"` })}
       ${campoSelect({ key: "genero", label: "Género", opciones: [["Mujer", "Mujer"], ["Hombre", "Hombre"], ["Otro", "Otro"]] })}
     </div>
     ${campoSelect({ key: "ocupacion", label: "Ocupación", opciones: [["Estudiante", "Estudiante"], ["Profesional", "Profesional"], ["Freelance", "Freelance"], ["Otro", "Otro"]] })}
 
     <div class="cp-field-row">
       ${campoSelect({ key: "zona", label: "Zona donde buscas", opciones: LOCALIDADES_BOGOTA.map((loc) => [loc, loc]), placeholder: "Selecciona una localidad" })}
-      ${campoTexto({ key: "ciudad", label: "Ciudad", placeholder: "Ej. Bogotá" })}
+      ${campoTexto({ key: "ciudad", label: "Ciudad", placeholder: "Ej. Bogotá", attrs: `maxlength="${esc(L.ciudad_max)}"` })}
     </div>
-    ${campoTexto({ key: "presupuesto", label: "Presupuesto mensual (COP)", tipo: "number" })}
+    ${campoTexto({ key: "presupuesto", label: "Presupuesto mensual (COP)", tipo: "number", placeholder: "Ej. 800000", attrs: `min="${esc(L.presupuesto_min)}" max="${esc(L.presupuesto_max)}" step="1" inputmode="numeric"`, hint: `Entre $${L.presupuesto_min.toLocaleString("es-CO")} y $${L.presupuesto_max.toLocaleString("es-CO")} COP al mes, sin puntos ni comas.` })}
 
     <div class="cp-field-row">
       ${campoSelect({ key: "tiempo_busqueda", label: "Tiempo de estadía buscado", opciones: [["corto", "Corto plazo"], ["largo", "Largo plazo"]] })}
       ${campoSelect({ key: "fecha_mudanza", label: "Fecha de mudanza", opciones: [["inmediata", "Inmediata"], ["1mes", "En un mes"], ["flexible", "Flexible"]] })}
     </div>
 
-    ${campoTexto({ key: "telefono_contacto", label: "Teléfono de contacto (WhatsApp)", tipo: "tel", placeholder: "Ej. 573001112233", hint: "Con indicativo de país, solo números. Es el número que verán los interesados al contactarte." })}
+    ${campoTexto({ key: "telefono_contacto", label: "Teléfono de contacto (WhatsApp)", tipo: "tel", placeholder: "Ej. 300 123 4567", attrs: 'inputmode="tel" autocomplete="tel-national"', hint: "Tu celular, sin indicativo (se guarda como +57). Es el número que verán los interesados al contactarte por WhatsApp." })}
 
-    ${campoTextarea({ key: "descripcion", label: "Descripción", placeholder: "Cuéntale a otros roomies quién eres, tu rutina y qué buscas en un lugar para vivir" })}
+    ${campoTextarea({ key: "descripcion", label: "Descripción", placeholder: "Cuéntale a otros roomies quién eres, tu rutina y qué buscas en un lugar para vivir", attrs: `maxlength="${esc(L.descripcion_max)}"` })}
 
     <div class="cp-nav">
       <a class="cp-btn cp-btn-ghost" href="${esc(appUrl(modoEdicion ? "/mis-publicaciones" : "/perfil"))}">Cancelar</a>
@@ -334,18 +354,25 @@ function renderBasico() {
 
 function validarBasico() {
   let ok = true;
-  const edad = Number(estado.edad);
-  if (!estado.edad || edad < 18 || edad > 99) { marcarError("edad", "Ingresa una edad válida (18-99)."); ok = false; }
-  if (!estado.genero) { marcarError("genero", "Selecciona tu género."); ok = false; }
-  if (!estado.ocupacion) { marcarError("ocupacion", "Selecciona tu ocupación."); ok = false; }
-  if (!estado.zona || !LOCALIDADES_BOGOTA.includes(estado.zona)) { marcarError("zona", "Selecciona una localidad de la lista."); ok = false; }
-  if (!estado.presupuesto || Number(estado.presupuesto) <= 0) { marcarError("presupuesto", "Ingresa un presupuesto válido."); ok = false; }
-  if (!estado.tiempo_busqueda) { marcarError("tiempo_busqueda", "Selecciona el tiempo de estadía que buscas."); ok = false; }
-  if (!estado.fecha_mudanza) { marcarError("fecha_mudanza", "Selecciona tu fecha de mudanza."); ok = false; }
-  const telefonoLimpio = limpiarTelefono(estado.telefono_contacto);
-  if (telefonoLimpio.length < 10) { marcarError("telefono_contacto", "Ingresa un número de WhatsApp válido, con indicativo de país (ej. 573001112233)."); ok = false; }
-  if (!estado.descripcion || estado.descripcion.trim().length < 15) { marcarError("descripcion", "Cuéntanos un poco más de ti (mínimo 15 caracteres)."); ok = false; }
+  const revisar = (key, mensaje) => { if (mensaje) { marcarError(key, mensaje); ok = false; } };
+
+  revisar("edad", validarEdad(estado.edad));
+  if (!estado.genero) revisar("genero", "Selecciona tu género.");
+  if (!estado.ocupacion) revisar("ocupacion", "Selecciona tu ocupación.");
+  if (!estado.zona || !LOCALIDADES_BOGOTA.includes(estado.zona)) revisar("zona", "Selecciona una localidad de la lista.");
+  revisar("ciudad", VALIDADORES_CAMPO.ciudad(estado.ciudad));
+  revisar("presupuesto", validarPresupuesto(estado.presupuesto));
+  if (!estado.tiempo_busqueda) revisar("tiempo_busqueda", "Selecciona el tiempo de estadía que buscas.");
+  if (!estado.fecha_mudanza) revisar("fecha_mudanza", "Selecciona tu fecha de mudanza.");
+  revisar("telefono_contacto", validarTelefono(estado.telefono_contacto));
+  revisar("descripcion", VALIDADORES_CAMPO.descripcion(estado.descripcion));
+
+  if (!ok) enfocarPrimerError();
   return ok;
+}
+
+function enfocarPrimerError() {
+  cprPage.querySelector(".cp-field.has-error")?.scrollIntoView({ behavior: "smooth", block: "center" });
 }
 
 // ============================================================
@@ -581,6 +608,41 @@ function renderResumen() {
   document.getElementById("cprPublicar").addEventListener("click", publicar);
 }
 
+// Campo del servidor -> paso del wizard donde se edita. Si el servidor rechaza
+// algo, se vuelve a ESE paso y se marca el campo.
+const CAMPOS_POR_PASO = {
+  1: ["edad", "genero", "ocupacion", "zona", "ciudad", "presupuesto", "tiempo_busqueda", "fecha_mudanza", "telefono_contacto", "descripcion"],
+  3: ["ambiente_preferido"],
+  4: ["foto"],
+};
+
+function mostrarErroresServidor(porCampo) {
+  const campos = Object.keys(porCampo);
+  const paso = [1, 3, 4].find((p) => campos.some((c) => CAMPOS_POR_PASO[p].includes(c)));
+  if (!paso) return false;
+
+  pasoActual = paso;
+  renderPasoActual();
+
+  for (const campo of campos.filter((c) => CAMPOS_POR_PASO[paso].includes(c))) {
+    if (campo === "foto") {
+      const el = document.getElementById("cprFotoError");
+      el.textContent = porCampo[campo];
+      el.classList.add("is-visible");
+    } else {
+      marcarError(campo, porCampo[campo]);
+    }
+  }
+
+  const aviso = document.createElement("p");
+  aviso.className = "cp-field-error is-visible";
+  aviso.style.textAlign = "center";
+  aviso.textContent = "No se pudo guardar: corrige lo marcado en rojo e intenta de nuevo.";
+  cprPage.prepend(aviso);
+  enfocarPrimerError();
+  return true;
+}
+
 async function publicar() {
   const btn = document.getElementById("cprPublicar");
   const errorGeneral = document.getElementById("cprErrorGeneral");
@@ -595,7 +657,7 @@ async function publicar() {
     zona: estado.zona.trim(),
     ciudad: estado.ciudad.trim() || "Bogotá",
     presupuesto: Number(estado.presupuesto),
-    telefono_contacto: limpiarTelefono(estado.telefono_contacto),
+    telefono_contacto: normalizarTelefono(estado.telefono_contacto) ?? estado.telefono_contacto,
     descripcion: estado.descripcion.trim(),
     foto: estado.foto,
     tiempo_busqueda: estado.tiempo_busqueda,
@@ -623,20 +685,29 @@ async function publicar() {
 
     if (manejarNoAutorizado(respuesta)) return;
 
-    const datos = await respuesta.json();
+    const datos = await leerRespuesta(respuesta);
 
     if (!respuesta.ok) {
       // Perfil sin tipo_usuario/telefono: el backend no deja crear
       // nada nuevo hasta que se complete (ver perfil.completo).
-      if (respuesta.status === 409) {
-        errorGeneral.textContent = datos.mensaje || "Completa tu perfil antes de continuar.";
+      // Solo el middleware EnsurePerfilCompleto manda `mensaje` en un 409; el
+      // abort(409, "Ya tienes un perfil...") del controlador manda `message`.
+      if (respuesta.status === 409 && datos.mensaje) {
+        errorGeneral.textContent = datos.mensaje;
         setTimeout(() => { window.location.href = appUrl("/onboarding"); }, 1500);
         return;
       }
 
       btn.disabled = false;
       btn.textContent = modoEdicion ? "Guardar cambios" : "Publicar perfil";
-      errorGeneral.textContent = datos.mensaje || "No se pudo guardar tu perfil. Revisa los datos e intenta de nuevo.";
+      if (respuesta.status === 422) {
+        const porCampo = erroresPorCampo(datos);
+        if (mostrarErroresServidor(porCampo)) return;
+        errorGeneral.textContent = Object.values(porCampo)[0] || datos.message || "No se pudo guardar tu perfil. Revisa los datos e intenta de nuevo.";
+        return;
+      }
+
+      errorGeneral.textContent = mensajeGeneral(respuesta, datos, "No se pudo guardar tu perfil. Revisa los datos e intenta de nuevo.");
       return;
     }
 

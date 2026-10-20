@@ -29,6 +29,7 @@ class AuditoriaController extends Controller
         'rol_promovido' => 'Asignó un rol',
         'rol_revocado' => 'Revocó un rol',
         'administrador_creado' => 'Creó un administrador',
+        'moderador_creado' => 'Creó un moderador',
     ];
 
     /**

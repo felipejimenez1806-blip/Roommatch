@@ -12,6 +12,7 @@
 
 import { API_BASE, appUrl } from "../core/config.js";
 import { requerirSesion, cabecerasAutenticadas, limpiarSesion, actualizarUsuario } from "../core/auth.js";
+import { normalizarTelefono, formatearTelefono, MENSAJE_TELEFONO } from "../core/validacion.js";
 
 const TOTAL_PASOS = 2;
 
@@ -42,9 +43,7 @@ const toast = document.getElementById("toast");
 
 // --- Utilidades ---
 function esTelefonoValido(valor) {
-  const limpio = valor.replace(/[\s-]/g, "");
-  const patron = /^(\+57)?[0-9]{7,10}$/;
-  return patron.test(limpio);
+  return normalizarTelefono(valor) !== null;
 }
 
 function mostrarToast(mensaje, duracion = 3200) {
@@ -88,7 +87,7 @@ function irAPaso(nuevoPaso) {
 }
 
 function actualizarResumen() {
-  summaryTelefono.textContent = datos.telefono || "—";
+  summaryTelefono.textContent = datos.telefono ? formatearTelefono(datos.telefono) : "—";
 }
 
 document.querySelectorAll(".summary-edit").forEach((boton) => {
@@ -105,11 +104,11 @@ document.getElementById("next1").addEventListener("click", () => {
     return;
   }
   if (!esTelefonoValido(telefono)) {
-    mostrarError(telefonoGroup, telefonoError, "Ingresa un teléfono válido (10 dígitos).");
+    mostrarError(telefonoGroup, telefonoError, MENSAJE_TELEFONO);
     return;
   }
   limpiarError(telefonoGroup, telefonoError);
-  datos.telefono = telefono;
+  datos.telefono = normalizarTelefono(telefono); // "+57XXXXXXXXXX"
   irAPaso(2);
 });
 

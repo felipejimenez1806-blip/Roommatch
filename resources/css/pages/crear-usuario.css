@@ -1,5 +1,7 @@
+@import url("../components/adm-select.css");
+
 /* ============================================================
-   ROOMMATCH – Crear administrador
+   ROOMMATCH – Crear usuario (administrador o moderador)
    ------------------------------------------------------------
    Hoja de estilos propia para esta página (antes reusaba
    signup.css, pensada para el fondo con foto del login/registro

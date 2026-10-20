@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Models\Localidad;
 use App\Rules\ImagenSubida;
+use App\Support\Telefono;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -32,12 +33,14 @@ class PublicacionRequest extends FormRequest
         return true; // el guard de "es tuya o no" se hace en el controller
     }
 
-    /** Solo dígitos antes de validar, igual que limpiarTelefono() del JS. */
+    /** Mismo criterio que normalizarTelefono() del JS (core/validacion.js). */
     protected function prepareForValidation(): void
     {
+        // "300 111 2233" / "+57 300-111-2233" / "573001112233" -> "+573001112233".
+        // Si no es válido se deja tal cual para que la regla de abajo lo rechace.
         if ($this->has('telefono_contacto')) {
             $this->merge([
-                'telefono_contacto' => preg_replace('/\D/', '', (string) $this->input('telefono_contacto')),
+                'telefono_contacto' => Telefono::normalizarOConservar($this->input('telefono_contacto')),
             ]);
         }
     }
@@ -70,7 +73,7 @@ class PublicacionRequest extends FormRequest
             'precio' => ['required', 'integer', "min:{$l['precio_min']}", "max:{$l['precio_max']}"],
             'fecha_disponible' => $fecha,
             'genero' => ['nullable', 'in:masculino,femenino,otro'],
-            'telefono_contacto' => ['required', 'string', "digits_between:{$l['telefono_min']},{$l['telefono_max']}"],
+            'telefono_contacto' => ['required', 'string', 'regex:' . Telefono::REGEX],
             'descripcion' => ['required', 'string', "min:{$l['descripcion_min']}", "max:{$l['descripcion_max']}"],
             'imagenes' => ['required', 'array', 'min:1', "max:{$l['fotos_max']}"],
             'imagenes.*' => ['required', new ImagenSubida('La foto')],
@@ -129,7 +132,7 @@ class PublicacionRequest extends FormRequest
             'genero.in' => 'El género preferido no es válido.',
 
             'telefono_contacto.required' => 'Ingresa un teléfono de contacto.',
-            'telefono_contacto.digits_between' => "El teléfono debe tener entre {$l['telefono_min']} y {$l['telefono_max']} dígitos, con indicativo de país (ej. 573001112233).",
+            'telefono_contacto.regex' => Telefono::MENSAJE,
 
             'descripcion.required' => "Describe el espacio con al menos {$l['descripcion_min']} caracteres.",
             'descripcion.min' => "Describe el espacio con al menos {$l['descripcion_min']} caracteres.",

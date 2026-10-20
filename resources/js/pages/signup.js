@@ -11,6 +11,7 @@
 
 import { API_BASE, appUrl } from "../core/config.js";
 import { cabecerasAutenticadas } from "../core/auth.js";
+import { normalizarTelefono, formatearTelefono, MENSAJE_TELEFONO } from "../core/validacion.js";
 
 // --- Referencias DOM ---
 const form = document.getElementById("signupForm");
@@ -54,9 +55,7 @@ function esCorreoValido(valor) {
 }
 
 function esTelefonoValido(valor) {
-  const limpio = valor.replace(/[\s-]/g, "");
-  const patron = /^(\+57)?[0-9]{7,10}$/;
-  return patron.test(limpio);
+  return normalizarTelefono(valor) !== null;
 }
 
 // --- Fuerza de la contraseña (checklist en vivo) ---
@@ -195,7 +194,7 @@ form.addEventListener("submit", async (evento) => {
     mostrarError(telefonoGroup, telefonoError, "Ingresa tu número de teléfono.");
     esValido = false;
   } else if (!esTelefonoValido(telefono)) {
-    mostrarError(telefonoGroup, telefonoError, "Ingresa un teléfono válido (10 dígitos).");
+    mostrarError(telefonoGroup, telefonoError, MENSAJE_TELEFONO);
     esValido = false;
   } else {
     limpiarError(telefonoGroup, telefonoError);
@@ -246,7 +245,7 @@ form.addEventListener("submit", async (evento) => {
       body: JSON.stringify({
         nombre,
         email,
-        telefono,
+        telefono: normalizarTelefono(telefono) ?? telefono,
         direccion,
         password,
         password_confirmation: confirmPassword,

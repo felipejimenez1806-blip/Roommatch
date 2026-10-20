@@ -8,9 +8,14 @@
 //   - Ya NO depende de data.js (guardarPublicacionExtra, etc.)
 // ============================================================
 
-import { API_BASE, appUrl, LOCALIDADES } from "../core/config.js";
+import { API_BASE, appUrl, LOCALIDADES, LIMITES as L } from "../core/config.js";
 import { requerirSesion, obtenerUsuario, cabecerasAutenticadas, manejarNoAutorizado } from "../core/auth.js";
 import { esc } from "../core/html.js";
+import { estadoPublicacionDesdeConvivencia } from "../core/convivencia.js";
+import {
+  validarPrecio, validarHabitantes, validarTexto, validarTextoOpcional, validarTelefono, validarFecha,
+  normalizarTelefono, telefonoNacional, bloquearTeclasNoEnteras, leerRespuesta, erroresPorCampo, mensajeGeneral,
+} from "../core/validacion.js";
 
 // ---------- LOCALIDADES DE BOGOTÁ ----------
 // Vienen de la tabla `localidad` (window.APP.localidades); el backend valida
@@ -34,17 +39,22 @@ const MAX_FOTOS = 8;
 const FOTO_MAX_LADO = 900;
 const FOTO_CALIDAD = 0.82;
 const FOTO_MAX_PESO_ORIGINAL = 8 * 1024 * 1024;
+// PHP rechaza (413) cuerpos mayores a post_max_size (8 MB por defecto). Las fotos
+// viajan en base64 dentro del JSON; si todo junto pasa de este tope se avisa
+// ANTES de enviar, con un mensaje claro, en vez de recibir un error opaco.
+const MAX_CUERPO_BYTES = 6 * 1024 * 1024;
 
 const PASOS = ["basico", "caracteristicas", "reglas", "fotos", "resumen"];
 const PASO_LABELS = { basico: "Básico", caracteristicas: "Detalles", reglas: "Reglas", fotos: "Fotos", resumen: modoEdicion ? "Guardar" : "Publicar" };
 
-let pasoActual = (modoEdicion || tipoDesdeUrl === "espacio") ? 1 : 0;let estado = estadoVacio();
+let pasoActual = (modoEdicion || tipoDesdeUrl === "espacio") ? 1 : 0;// Al crear, se parte de lo que la persona ya llenó en "Información convivencial".
+let estado = { ...estadoVacio(), ...estadoPublicacionDesdeConvivencia(usuarioActual.preferenciasConvivencia) };
 
 function estadoVacio() {
   return {
     tipo_espacio: "", titulo: "", zona: "", ciudad: "Bogotá", direccion: "",
     precio: "", fecha_disponible: "", genero: "", descripcion: "",
-    numero_habitantes: "", telefono_contacto: usuarioActual.telefono || "",
+    numero_habitantes: "", telefono_contacto: telefonoNacional(usuarioActual.telefono || ""),
     ambiente_hogar: "", horario_entrada: "", horario_silencio: "",
     detalles_incluidos: "", distancia_transporte: "", tamano_habitacion: "", tipo_cama: "",
     amueblado: false, bano_privado: false, cocina_compartida: false, lavadora: false,
@@ -103,20 +113,20 @@ const cpPage = document.getElementById("cpPage");
 // ============================================================
 // HELPERS DE CAMPOS
 // ============================================================
-function campoTexto({ key, label, placeholder = "", tipo = "text", hint = "" }) {
+function campoTexto({ key, label, placeholder = "", tipo = "text", hint = "", attrs = "" }) {
   return `
     <div class="cp-field" data-field="${esc(key)}">
       <label for="cp_${esc(key)}">${esc(label)}</label>
-      <input id="cp_${esc(key)}" type="${esc(tipo)}" data-bind="${esc(key)}" placeholder="${esc(placeholder)}" value="${esc((estado[key] ?? "").toString())}"/>
+      <input id="cp_${esc(key)}" type="${esc(tipo)}" data-bind="${esc(key)}" placeholder="${esc(placeholder)}" value="${esc((estado[key] ?? "").toString())}" ${attrs}/>
       ${hint ? `<p class="cp-field-hint">${esc(hint)}</p>` : ""}
       <p class="cp-field-error" data-error></p>
     </div>`;
 }
-function campoTextarea({ key, label, placeholder = "" }) {
+function campoTextarea({ key, label, placeholder = "", attrs = "" }) {
   return `
     <div class="cp-field" data-field="${esc(key)}">
       <label for="cp_${esc(key)}">${esc(label)}</label>
-      <textarea id="cp_${esc(key)}" data-bind="${esc(key)}" placeholder="${esc(placeholder)}">${esc(estado[key] ?? "")}</textarea>
+      <textarea id="cp_${esc(key)}" data-bind="${esc(key)}" placeholder="${esc(placeholder)}" ${attrs}>${esc(estado[key] ?? "")}</textarea>
       <p class="cp-field-error" data-error></p>
     </div>`;
 }
@@ -166,11 +176,34 @@ function toggleRow(key, label) {
     </div>`;
 }
 
+// Validación en vivo: al SALIR de un campo ya escrito se muestra el problema
+// concreto ("El precio no puede superar..."), sin esperar a "Siguiente".
+const VALIDADORES_CAMPO = {
+  titulo: (v) => validarTexto(v, { sujeto: "El título", min: L.titulo_min, max: L.titulo_max }),
+  ciudad: (v) => validarTextoOpcional(v, { sujeto: "La ciudad", max: L.ciudad_max }),
+  direccion: (v) => validarTexto(v, { sujeto: "La dirección", min: L.direccion_min, max: L.direccion_max }),
+  precio: validarPrecio,
+  numero_habitantes: validarHabitantes,
+  telefono_contacto: validarTelefono,
+  descripcion: (v) => validarTexto(v, { sujeto: "La descripción", min: L.descripcion_min, max: L.descripcion_max }),
+  distancia_transporte: (v) => validarTextoOpcional(v, { sujeto: "La distancia al transporte", max: L.texto_corto_max }),
+  horario_entrada: (v) => validarTextoOpcional(v, { sujeto: "El horario de entrada", max: L.texto_corto_max }),
+  horario_silencio: (v) => validarTextoOpcional(v, { sujeto: "El horario de silencio", max: L.texto_corto_max }),
+  detalles_incluidos: (v) => validarTextoOpcional(v, { sujeto: "Los detalles adicionales", max: L.detalles_max }),
+};
+
 function enlazarCampos(cont) {
   cont.querySelectorAll("[data-bind]").forEach((el) => {
     el.addEventListener("input", () => { estado[el.dataset.bind] = el.value; limpiarError(el); });
     el.addEventListener("change", () => { estado[el.dataset.bind] = el.value; limpiarError(el); });
+    el.addEventListener("blur", () => {
+      const validar = VALIDADORES_CAMPO[el.dataset.bind];
+      if (!validar || el.value.trim() === "") return;
+      const mensaje = validar(el.value);
+      if (mensaje) marcarError(el.dataset.bind, mensaje);
+    });
   });
+  cont.querySelectorAll('input[type="number"]').forEach(bloquearTeclasNoEnteras);
   cont.querySelectorAll("[data-bind-toggle]").forEach((el) => {
     el.addEventListener("change", () => { estado[el.dataset.bindToggle] = el.checked; });
   });
@@ -329,27 +362,27 @@ function renderBasico() {
     <p class="cp-step-subtitle">Cuéntanos qué vas a publicar y dónde está</p>
 
     ${campoSelect({ key: "tipo_espacio", label: "Tipo de espacio", opciones: [["Habitación", "Habitación"], ["Apartamento", "Apartamento"], ["Casa", "Casa"], ["Estudio", "Estudio"]] })}
-    ${campoTexto({ key: "titulo", label: "Título de la publicación", placeholder: "Ej. Habitación amoblada en Chapinero" })}
+    ${campoTexto({ key: "titulo", label: "Título de la publicación", placeholder: "Ej. Habitación amoblada en Chapinero", attrs: `maxlength="${esc(L.titulo_max)}"` })}
 
     <div class="cp-field-row">
       ${campoSelect({ key: "zona", label: "Zona o localidad", opciones: LOCALIDADES_BOGOTA.map((loc) => [loc, loc]), placeholder: "Selecciona una localidad" })}
-      ${campoTexto({ key: "ciudad", label: "Ciudad", placeholder: "Ej. Bogotá" })}
+      ${campoTexto({ key: "ciudad", label: "Ciudad", placeholder: "Ej. Bogotá", attrs: `maxlength="${esc(L.ciudad_max)}"` })}
     </div>
-    ${campoTexto({ key: "direccion", label: "Dirección", placeholder: "Ej. Calle 60 #7-15" })}
+    ${campoTexto({ key: "direccion", label: "Dirección", placeholder: "Ej. Calle 60 #7-15", attrs: `maxlength="${esc(L.direccion_max)}"` })}
 
     <div class="cp-field-row">
-      ${campoTexto({ key: "precio", label: "Precio mensual (COP)", tipo: "number" })}
+      ${campoTexto({ key: "precio", label: "Precio mensual (COP)", tipo: "number", placeholder: "Ej. 800000", attrs: `min="${esc(L.precio_min)}" max="${esc(L.precio_max)}" step="1" inputmode="numeric"`, hint: `Entre $${L.precio_min.toLocaleString("es-CO")} y $${L.precio_max.toLocaleString("es-CO")} COP al mes, sin puntos ni comas.` })}
       ${campoTexto({ key: "fecha_disponible", label: "Disponible desde", tipo: "date" })}
     </div>
 
     <div class="cp-field-row">
       ${campoSelect({ key: "genero", label: "Género preferido", opciones: [["masculino", "Masculino"], ["femenino", "Femenino"], ["otro", "Cualquiera"]], placeholder: "Sin preferencia" })}
-      ${campoTexto({ key: "numero_habitantes", label: "N.º de habitantes actuales", tipo: "number" })}
+      ${campoTexto({ key: "numero_habitantes", label: "N.º de habitantes actuales", tipo: "number", attrs: `min="${esc(L.habitantes_min)}" max="${esc(L.habitantes_max)}" step="1" inputmode="numeric"` })}
     </div>
 
-    ${campoTexto({ key: "telefono_contacto", label: "Teléfono de contacto (WhatsApp)", tipo: "tel", placeholder: "Ej. 573001112233", hint: "Con indicativo de país, solo números. Es el número que verán los interesados al contactarte." })}
+    ${campoTexto({ key: "telefono_contacto", label: "Teléfono de contacto (WhatsApp)", tipo: "tel", placeholder: "Ej. 300 123 4567", attrs: 'inputmode="tel" autocomplete="tel-national"', hint: "Tu celular, sin indicativo (se guarda como +57). Es el número que verán los interesados al contactarte por WhatsApp." })}
 
-    ${campoTextarea({ key: "descripcion", label: "Descripción", placeholder: "Cuenta cómo es el espacio, el ambiente y a quién le puede interesar" })}
+    ${campoTextarea({ key: "descripcion", label: "Descripción", placeholder: "Cuenta cómo es el espacio, el ambiente y a quién le puede interesar", attrs: `maxlength="${esc(L.descripcion_max)}"` })}
 
     <div class="cp-nav">
       <a class="cp-btn cp-btn-ghost" href="${esc(appUrl(modoEdicion ? "/mis-publicaciones" : "/dashboard"))}">Cancelar</a>
@@ -366,20 +399,43 @@ function renderBasico() {
 
 function validarBasico() {
   let ok = true;
-  if (!estado.tipo_espacio) { marcarError("tipo_espacio", "Selecciona el tipo de espacio."); ok = false; }
-  if (!estado.titulo || estado.titulo.trim().length < 5) { marcarError("titulo", "Escribe un título de al menos 5 caracteres."); ok = false; }
-  if (!estado.zona || !LOCALIDADES_BOGOTA.includes(estado.zona)) { marcarError("zona", "Selecciona una localidad de la lista."); ok = false; }
-  if (!estado.direccion || estado.direccion.trim().length < 3) { marcarError("direccion", "Ingresa una dirección válida."); ok = false; }
-  if (!estado.precio || Number(estado.precio) <= 0) { marcarError("precio", "Ingresa un precio válido."); ok = false; }
-  if (!estado.fecha_disponible) { marcarError("fecha_disponible", "Selecciona una fecha de disponibilidad."); ok = false; }
-  const telefonoLimpio = limpiarTelefono(estado.telefono_contacto);
-  if (telefonoLimpio.length < 10) { marcarError("telefono_contacto", "Ingresa un número de WhatsApp válido, con indicativo de país (ej. 573001112233)."); ok = false; }
-  if (!estado.descripcion || estado.descripcion.trim().length < 15) { marcarError("descripcion", "Describe el espacio con al menos 15 caracteres."); ok = false; }
+  const revisar = (key, mensaje) => { if (mensaje) { marcarError(key, mensaje); ok = false; } };
+
+  if (!estado.tipo_espacio) revisar("tipo_espacio", "Selecciona el tipo de espacio.");
+  revisar("titulo", VALIDADORES_CAMPO.titulo(estado.titulo));
+  if (!estado.zona || !LOCALIDADES_BOGOTA.includes(estado.zona)) revisar("zona", "Selecciona una localidad de la lista.");
+  revisar("ciudad", VALIDADORES_CAMPO.ciudad(estado.ciudad));
+  revisar("direccion", VALIDADORES_CAMPO.direccion(estado.direccion));
+  revisar("precio", validarPrecio(estado.precio));
+  revisar("fecha_disponible", validarFecha(estado.fecha_disponible, { permitirPasado: modoEdicion }));
+  revisar("numero_habitantes", validarHabitantes(estado.numero_habitantes));
+  revisar("telefono_contacto", validarTelefono(estado.telefono_contacto));
+  revisar("descripcion", VALIDADORES_CAMPO.descripcion(estado.descripcion));
+
+  if (!ok) enfocarPrimerError();
   return ok;
 }
 
-function limpiarTelefono(str) {
-  return (str || "").replace(/\D/g, "");
+// Paso 2 (Detalles): solo hay un texto libre.
+function validarCaracteristicas() {
+  const mensaje = VALIDADORES_CAMPO.distancia_transporte(estado.distancia_transporte);
+  if (mensaje) { marcarError("distancia_transporte", mensaje); enfocarPrimerError(); return false; }
+  return true;
+}
+
+// Paso 3 (Reglas): tres textos libres.
+function validarReglas() {
+  let ok = true;
+  for (const key of ["horario_entrada", "horario_silencio", "detalles_incluidos"]) {
+    const mensaje = VALIDADORES_CAMPO[key](estado[key]);
+    if (mensaje) { marcarError(key, mensaje); ok = false; }
+  }
+  if (!ok) enfocarPrimerError();
+  return ok;
+}
+
+function enfocarPrimerError() {
+  cpPage.querySelector(".cp-field.has-error")?.scrollIntoView({ behavior: "smooth", block: "center" });
 }
 
 // ============================================================
@@ -443,7 +499,7 @@ function renderCaracteristicas() {
         ${toggleRow("cerca_supermercado", "Cerca a supermercado")}
         ${toggleRow("cerca_universidad", "Cerca a universidad")}
       </div>
-      ${campoTexto({ key: "distancia_transporte", label: "Distancia al transporte (opcional)", placeholder: "Ej. 250 metros" })}
+      ${campoTexto({ key: "distancia_transporte", label: "Distancia al transporte (opcional)", placeholder: "Ej. 250 metros", attrs: `maxlength="${esc(L.texto_corto_max)}"` })}
     </div>
 
     <div class="cp-nav">
@@ -453,7 +509,11 @@ function renderCaracteristicas() {
 
   enlazarCampos(cpPage);
   document.getElementById("cpBack").addEventListener("click", () => { pasoActual = 1; renderPasoActual(); });
-  document.getElementById("cpNext").addEventListener("click", () => { pasoActual = 3; renderPasoActual(); });
+  document.getElementById("cpNext").addEventListener("click", () => {
+    if (!validarCaracteristicas()) return;
+    pasoActual = 3;
+    renderPasoActual();
+  });
 }
 
 // ============================================================
@@ -469,8 +529,8 @@ function renderReglas() {
       <p class="cp-group-title">Ambiente del hogar</p>
       ${campoSelect({ key: "ambiente_hogar", label: "¿Qué ambiente predomina?", opciones: [["estudiantes", "Estudiantes"], ["profesionales", "Profesionales"], ["otro", "Otro / mixto"]] })}
       <div class="cp-field-row">
-        ${campoTexto({ key: "horario_entrada", label: "Horario de entrada", placeholder: "Ej. Hasta las 11:00pm" })}
-        ${campoTexto({ key: "horario_silencio", label: "Horario de silencio", placeholder: "Ej. 10:00pm - 7:00am" })}
+        ${campoTexto({ key: "horario_entrada", label: "Horario de entrada", placeholder: "Ej. Hasta las 11:00pm", attrs: `maxlength="${esc(L.texto_corto_max)}"` })}
+        ${campoTexto({ key: "horario_silencio", label: "Horario de silencio", placeholder: "Ej. 10:00pm - 7:00am", attrs: `maxlength="${esc(L.texto_corto_max)}"` })}
       </div>
       <div class="cp-toggle-grid">
         ${toggleRow("fumadores_en_casa", "Ya hay fumadores en casa")}
@@ -489,7 +549,7 @@ function renderReglas() {
       </div>
     </div>
 
-    ${campoTexto({ key: "detalles_incluidos", label: "Detalles adicionales sobre lo incluido (opcional)", placeholder: "Ej. Todos los servicios básicos están incluidos" })}
+    ${campoTexto({ key: "detalles_incluidos", label: "Detalles adicionales sobre lo incluido (opcional)", placeholder: "Ej. Todos los servicios básicos están incluidos", attrs: `maxlength="${esc(L.detalles_max)}"` })}
 
     <div class="cp-nav">
       <button type="button" class="cp-btn cp-btn-ghost" id="cpBack">Atrás</button>
@@ -498,7 +558,11 @@ function renderReglas() {
 
   enlazarCampos(cpPage);
   document.getElementById("cpBack").addEventListener("click", () => { pasoActual = 2; renderPasoActual(); });
-  document.getElementById("cpNext").addEventListener("click", () => { pasoActual = 4; renderPasoActual(); });
+  document.getElementById("cpNext").addEventListener("click", () => {
+    if (!validarReglas()) return;
+    pasoActual = 4;
+    renderPasoActual();
+  });
 }
 
 // ============================================================
@@ -663,6 +727,43 @@ function renderResumen() {
   document.getElementById("cpPublicar").addEventListener("click", publicar);
 }
 
+// Campo del servidor -> paso del wizard donde se edita. Si el servidor rechaza
+// algo, se vuelve a ESE paso y se marca el campo (antes solo salía un texto
+// genérico en el resumen, donde no hay ningún campo que corregir).
+const CAMPOS_POR_PASO = {
+  1: ["tipo_espacio", "titulo", "zona", "ciudad", "direccion", "precio", "fecha_disponible", "genero", "numero_habitantes", "telefono_contacto", "descripcion"],
+  2: ["tamano_habitacion", "tipo_cama", "distancia_transporte"],
+  3: ["ambiente_hogar", "horario_entrada", "horario_silencio", "detalles_incluidos"],
+  4: ["imagenes"],
+};
+
+function mostrarErroresServidor(porCampo) {
+  const campos = Object.keys(porCampo);
+  const paso = [1, 2, 3, 4].find((p) => campos.some((c) => CAMPOS_POR_PASO[p].includes(c)));
+  if (!paso) return false;
+
+  pasoActual = paso;
+  renderPasoActual();
+
+  for (const campo of campos.filter((c) => CAMPOS_POR_PASO[paso].includes(c))) {
+    if (campo === "imagenes") {
+      const el = document.getElementById("cpFotoError");
+      el.textContent = porCampo[campo];
+      el.classList.add("is-visible");
+    } else {
+      marcarError(campo, porCampo[campo]);
+    }
+  }
+
+  const aviso = document.createElement("p");
+  aviso.className = "cp-field-error is-visible";
+  aviso.style.textAlign = "center";
+  aviso.textContent = "No se pudo guardar: corrige lo marcado en rojo e intenta de nuevo.";
+  cpPage.prepend(aviso);
+  enfocarPrimerError();
+  return true;
+}
+
 async function publicar() {
   const btn = document.getElementById("cpPublicar");
   const errorGeneral = document.getElementById("cpErrorGeneral");
@@ -679,8 +780,7 @@ async function publicar() {
     precio: Number(estado.precio),
     fecha_disponible: estado.fecha_disponible,
     genero: estado.genero || null,
-    numero_habitantes: estado.numero_habitantes ? Number(estado.numero_habitantes) : null,
-    telefono_contacto: limpiarTelefono(estado.telefono_contacto),
+    telefono_contacto: normalizarTelefono(estado.telefono_contacto) ?? estado.telefono_contacto,
     descripcion: estado.descripcion.trim(),
     imagenes: estado.imagenes,
     caracteristicas: {
@@ -701,7 +801,8 @@ async function publicar() {
       ascensor: estado.ascensor, gimnasio: estado.gimnasio, zona_comun: estado.zona_comun,
       cerca_supermercado: estado.cerca_supermercado, cerca_universidad: estado.cerca_universidad,
       detalles_incluidos: estado.detalles_incluidos.trim() || null,
-      numero_habitantes: estado.numero_habitantes ? Number(estado.numero_habitantes) : null,
+      // "" -> null (sin dato); 0 es un valor válido y se conserva.
+      numero_habitantes: String(estado.numero_habitantes ?? "").trim() === "" ? null : Number(estado.numero_habitantes),
       horario_silencio: estado.horario_silencio.trim() || null,
       horario_entrada: estado.horario_entrada.trim() || null,
       distancia_transporte: estado.distancia_transporte.trim() || null,
@@ -710,28 +811,45 @@ async function publicar() {
 
   try {
     const url = modoEdicion ? `${API_BASE}/mis-publicaciones/${idPublicacionEditar}` : `${API_BASE}/mis-publicaciones`;
+    const cuerpo = JSON.stringify(payload);
+    if (cuerpo.length > MAX_CUERPO_BYTES) {
+      btn.disabled = false;
+      btn.textContent = modoEdicion ? "Guardar cambios" : "Publicar";
+      errorGeneral.textContent = "Las fotos pesan demasiado en conjunto. Quita alguna o usa imágenes más livianas.";
+      return;
+    }
+
     const respuesta = await fetch(url, {
       method: modoEdicion ? "PUT" : "POST",
       headers: cabecerasAutenticadas(),
-      body: JSON.stringify(payload),
+      body: cuerpo,
     });
 
     if (manejarNoAutorizado(respuesta)) return;
 
-    const datos = await respuesta.json();
+    const datos = await leerRespuesta(respuesta);
 
     if (!respuesta.ok) {
       // Perfil sin tipo_usuario/telefono: el backend no deja crear
       // nada nuevo hasta que se complete (ver perfil.completo).
-      if (respuesta.status === 409) {
-        errorGeneral.textContent = datos.mensaje || "Completa tu perfil antes de continuar.";
+      // Solo el middleware EnsurePerfilCompleto manda `mensaje` en un 409; un
+      // abort(409, "...") del controlador manda `message` y no es un perfil incompleto.
+      if (respuesta.status === 409 && datos.mensaje) {
+        errorGeneral.textContent = datos.mensaje;
         setTimeout(() => { window.location.href = appUrl("/onboarding"); }, 1500);
         return;
       }
 
       btn.disabled = false;
       btn.textContent = modoEdicion ? "Guardar cambios" : "Publicar";
-      errorGeneral.textContent = datos.mensaje || "No se pudo guardar la publicación. Revisa los datos e intenta de nuevo.";
+      if (respuesta.status === 422) {
+        const porCampo = erroresPorCampo(datos);
+        if (mostrarErroresServidor(porCampo)) return;
+        errorGeneral.textContent = Object.values(porCampo)[0] || datos.message || "No se pudo guardar la publicación. Revisa los datos e intenta de nuevo.";
+        return;
+      }
+
+      errorGeneral.textContent = mensajeGeneral(respuesta, datos, "No se pudo guardar la publicación. Revisa los datos e intenta de nuevo.");
       return;
     }
 

@@ -210,7 +210,8 @@ Route::middleware(['auth:sanctum', 'cuenta.activa'])->group(function () {
             ->middleware('can:ver-auditoria');
 
         Route::get('/usuarios', [AdminUsuarioController::class, 'index']);
-        Route::post('/administradores', [AdminUsuarioController::class, 'crearAdministrador']);
+        Route::post('/usuarios', [AdminUsuarioController::class, 'crearUsuario'])
+            ->middleware('can:gestionar-roles');
         Route::patch('/usuarios/{usuario}/bloquear', [AdminUsuarioController::class, 'bloquear']);
         Route::patch('/usuarios/{usuario}/desbloquear', [AdminUsuarioController::class, 'desbloquear']);
         Route::patch('/usuarios/{usuario}/promover-admin', [AdminUsuarioController::class, 'promoverAdmin']);

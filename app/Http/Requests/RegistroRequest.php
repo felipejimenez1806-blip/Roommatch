@@ -2,11 +2,20 @@
 
 namespace App\Http\Requests;
 
+use App\Support\Telefono;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rules\Password;
 
 class RegistroRequest extends FormRequest
 {
+    /** "300 111 2233" / "+57 300-111-2233" -> "+573001112233" antes de validar. */
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('telefono')) {
+            $this->merge(['telefono' => Telefono::normalizarOConservar($this->input('telefono'))]);
+        }
+    }
+
     public function authorize(): bool
     {
         return true; // el registro es público
@@ -30,7 +39,7 @@ class RegistroRequest extends FormRequest
         return [
             'nombre' => ['required', 'string', 'min:3', 'max:150'],
             'email' => ['required', 'email', 'max:150', 'unique:usuario,correo'],
-            'telefono' => ['required', 'string', 'regex:/^(\+57)?[0-9]{7,10}$/'],
+            'telefono' => ['required', 'string', 'regex:' . Telefono::REGEX],
             'direccion' => ['required', 'string', 'min:5', 'max:255'],
             'password' => [
                 'required',
@@ -79,7 +88,7 @@ class RegistroRequest extends FormRequest
             'email.email' => 'Ingresa un correo válido.',
             'email.unique' => 'Ya existe una cuenta con este correo.',
             'telefono.required' => 'Ingresa tu número de teléfono.',
-            'telefono.regex' => 'Ingresa un teléfono válido (10 dígitos).',
+            'telefono.regex' => Telefono::MENSAJE,
             'direccion.required' => 'Ingresa tu dirección.',
             'direccion.min' => 'Ingresa tu dirección.',
             'password.required' => 'Ingresa una contraseña.',

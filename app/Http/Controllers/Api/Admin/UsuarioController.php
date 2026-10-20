@@ -60,32 +60,40 @@ class UsuarioController extends Controller
     }
 
     /**
-     * POST /api/admin/administradores
+     * POST /api/admin/usuarios
      * Única vía (junto con AdminUsuarioSeeder) para crear una cuenta que
-     * nace con el rol 'admin' ya asignado — no existe ningún formulario
-     * público que lo permita. Por ser una acción que otorga privilegios
-     * elevados, tiene dos capas de rigor extra frente al registro normal:
+     * nace con un rol de equipo ya asignado ('admin' o 'moderador', según
+     * 'tipo_usuario') — no existe ningún formulario público que lo permita.
+     * Por ser una acción que otorga privilegios elevados, tiene dos capas
+     * de rigor extra frente al registro normal:
      *
      *   1. Pide 'area' y 'cargo' (obligatorios) — contexto organizacional
      *      que no aplica a un cliente y por eso no está en RegistroRequest.
      *   2. Exige que el admin que está creando la cuenta reingrese SU
      *      PROPIA contraseña actual ('password_actual'). Esto evita que
-     *      un token de sesión robado (sin conocer la contraseña real)
-     *      sea suficiente para mintar administradores nuevos.
+     *      una sesión robada (sin conocer la contraseña real) sea
+     *      suficiente para mintar cuentas con privilegios.
      *
-     * La contraseña del nuevo admin también es más exigente que la de un
+     * La contraseña de la cuenta nueva también es más exigente que la de un
      * registro normal: mínimo 10 caracteres (vs. 8) además de mayúscula,
      * minúscula, número y símbolo.
      *
-     * La cuenta nueva SOLO recibe el rol 'admin' (no 'cliente'): es una
-     * cuenta creada específicamente para administrar, igual que la
-     * sembrada por AdminUsuarioSeeder.
+     * La cuenta nueva SOLO recibe el rol elegido (no 'cliente'): es una
+     * cuenta creada específicamente para administrar o moderar, igual que
+     * la sembrada por AdminUsuarioSeeder. Si después necesita el sitio de
+     * cliente, usa "Usar también como cliente" (agregar-rol-cliente).
+     *
+     * Solo administradores: la ruta lleva 'es.admin' y 'can:gestionar-roles'
+     * (crear una cuenta con rol equivale a asignar ese rol).
      */
-    public function crearAdministrador(Request $request)
+    public function crearUsuario(Request $request)
     {
+        Gate::authorize('gestionar-roles');
+
         $admin = $request->user();
 
         $datos = $request->validate([
+            'tipo_usuario' => ['required', 'in:admin,moderador'],
             'nombre' => ['required', 'string', 'min:3', 'max:150'],
             'correo' => ['required', 'email', 'max:150', 'unique:usuario,correo'],
             'area' => ['required', 'string', 'min:2', 'max:100'],
@@ -93,6 +101,8 @@ class UsuarioController extends Controller
             'password' => ['required', 'string', 'confirmed', Password::min(10)->mixedCase()->numbers()->symbols()],
             'password_actual' => ['required', 'string'],
         ], [
+            'tipo_usuario.required' => 'Selecciona el tipo de usuario.',
+            'tipo_usuario.in' => 'Selecciona un tipo de usuario válido.',
             'nombre.required' => 'Ingresa el nombre completo.',
             'nombre.min' => 'Ingresa el nombre completo.',
             'correo.required' => 'Ingresa un correo.',
@@ -112,8 +122,10 @@ class UsuarioController extends Controller
             ], 422);
         }
 
-        $nuevoAdmin = DB::transaction(function () use ($datos, $admin) {
-            $nuevoAdmin = Usuario::create([
+        $nombreRol = $datos['tipo_usuario'];
+
+        $nuevoUsuario = DB::transaction(function () use ($datos, $admin, $nombreRol) {
+            $nuevoUsuario = Usuario::create([
                 'nombre_completo' => $datos['nombre'],
                 'correo' => $datos['correo'],
                 'area' => $datos['area'],
@@ -122,24 +134,31 @@ class UsuarioController extends Controller
                 'proveedor' => 'local',
             ]);
 
-            $rolAdmin = Rol::where('nombre', 'admin')->firstOrFail();
+            $rol = Rol::where('nombre', $nombreRol)->firstOrFail();
 
-            $nuevoAdmin->roles()->attach($rolAdmin->id_rol, [
+            $nuevoUsuario->roles()->attach($rol->id_rol, [
                 'fecha_asignacion' => now(),
                 'asignado_por' => $admin->id_usuario,
             ]);
 
-            return $nuevoAdmin;
+            return $nuevoUsuario;
         });
 
-        ModeracionAuditor::registrar('administrador_creado', 'usuario', $nuevoAdmin->id_usuario, $nuevoAdmin->nombre_completo, [
-            'area' => $datos['area'],
-            'cargo' => $datos['cargo'],
-        ]);
+        $esAdmin = $nombreRol === 'admin';
+
+        ModeracionAuditor::registrar(
+            $esAdmin ? 'administrador_creado' : 'moderador_creado',
+            'usuario',
+            $nuevoUsuario->id_usuario,
+            $nuevoUsuario->nombre_completo,
+            ['area' => $datos['area'], 'cargo' => $datos['cargo']]
+        );
+
+        $etiqueta = $esAdmin ? 'administrador' : 'moderador';
 
         return response()->json([
-            'mensaje' => "{$nuevoAdmin->nombre_completo} fue creado como administrador.",
-            'usuario' => $this->paraTablaAdmin($nuevoAdmin),
+            'mensaje' => "{$nuevoUsuario->nombre_completo} fue creado como {$etiqueta}.",
+            'usuario' => $this->paraTablaAdmin($nuevoUsuario),
         ], 201);
     }
 
@@ -148,7 +167,7 @@ class UsuarioController extends Controller
      * Asigna el rol 'admin' a un usuario ya existente (que puede seguir
      * teniendo 'cliente' a la vez — no se le quita). Exige reingresar la
      * contraseña del admin que autoriza, mismo criterio que
-     * crearAdministrador().
+     * crearUsuario().
      *
      * Las cuentas de login social sin contraseña local (proveedor
      * google/facebook, 'contrasena' NULL) no pueden promoverse: no hay
@@ -396,7 +415,7 @@ class UsuarioController extends Controller
     // ------------------- Helper privado -------------------
 
     /**
-     * Shape común para index()/crearAdministrador()/promoverAdmin()/
+     * Shape común para index()/crearUsuario()/promoverAdmin()/
      * revocarAdmin(). Incluye 'roles' (arreglo completo, para cuando
      * hagamos la Fase 4 de frontend) y además 'tipoUsuario' como shim
      * transicional: admin.js todavía pinta un solo badge y decide

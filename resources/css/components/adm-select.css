@@ -1,0 +1,105 @@
+/* ============================================================
+   SELECT PERSONALIZADO (panel de administración)
+   Mismo diseño que el dropdown de los wizards (.cp-select-*), pero
+   independiente de crear-publicacion.css para poder usarlo en el
+   panel y en la pantalla de crear usuario. Se importa desde
+   admin.css y crear-usuario.css.
+   ============================================================ */
+.adm-select { position: relative; }
+
+.adm-select-trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-family: inherit;
+  font-size: 14px;
+  padding: 11px 14px;
+  border: 1.5px solid #e3e7ec;
+  border-radius: 12px;
+  background: #fff;
+  color: #1c2126;
+  cursor: pointer;
+  box-sizing: border-box;
+  text-align: left;
+  transition: border-color .15s, box-shadow .15s;
+}
+.adm-select-trigger:hover { border-color: #bfe4f2; }
+.adm-select-trigger:focus-visible,
+.adm-select.is-open .adm-select-trigger {
+  outline: none;
+  border-color: #1a9ecf;
+  box-shadow: 0 0 0 3px rgba(26, 158, 207, .14);
+}
+
+.adm-select-value { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.adm-select-value.is-placeholder { color: #a7aeb6; font-weight: 500; }
+
+.adm-select-chevron {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  stroke: #999;
+  fill: none;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform .18s ease, stroke .15s;
+}
+.adm-select.is-open .adm-select-chevron { transform: rotate(180deg); stroke: #1a9ecf; }
+
+.adm-select-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  z-index: 40;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  max-height: 264px;
+  overflow-y: auto;
+  background: #fff;
+  border: 1.5px solid #ececec;
+  border-radius: 12px;
+  box-shadow: 0 14px 32px rgba(20, 20, 20, .14);
+  animation: admSelectPop .14s ease;
+}
+.adm-select-menu[hidden] { display: none; }
+@keyframes admSelectPop {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.adm-select-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #333;
+  cursor: pointer;
+  transition: background .12s, color .12s;
+}
+.adm-select-option:hover,
+.adm-select-option:focus-visible { background: #eaf6fc; color: #1a9ecf; outline: none; }
+.adm-select-option.is-selected { background: #eaf6fc; color: #1a9ecf; }
+
+.adm-select-check {
+  flex-shrink: 0;
+  width: 15px;
+  height: 15px;
+  stroke: #1a9ecf;
+  fill: none;
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  visibility: hidden;
+}
+.adm-select-option.is-selected .adm-select-check { visibility: visible; }
+
+.adm-select.has-error .adm-select-trigger { border-color: #e5484d; }

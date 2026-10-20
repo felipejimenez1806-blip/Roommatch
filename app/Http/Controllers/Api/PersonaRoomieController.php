@@ -368,12 +368,17 @@ class PersonaRoomieController extends Controller
      */
     private function guardarImagenBase64(string $dataUrl): string
     {
-        if (! preg_match('/^data:image\/(\w+);base64,/', $dataUrl, $tipo)) {
+        // Solo jpeg/png/webp: con \w+ se podía guardar "data:image/php;base64,..." como .php.
+        // El request ya valida con ImagenSubida; esto es la segunda barrera.
+        if (! preg_match('/^data:image\/(jpeg|png|webp);base64,/', $dataUrl, $tipo)) {
             throw new \InvalidArgumentException('Formato de imagen inválido.');
         }
 
         $extension = $tipo[1] === 'jpeg' ? 'jpg' : $tipo[1];
-        $contenido = base64_decode(substr($dataUrl, strpos($dataUrl, ',') + 1));
+        $contenido = base64_decode(substr($dataUrl, strpos($dataUrl, ',') + 1), true);
+        if ($contenido === false) {
+            throw new \InvalidArgumentException('Imagen base64 inválida.');
+        }
         $ruta = 'roomies/' . Str::uuid() . '.' . $extension;
 
         Storage::disk('public')->put($ruta, $contenido);

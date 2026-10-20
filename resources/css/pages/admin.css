@@ -1,4 +1,5 @@
 @import url("./perfil.css");
+@import url("../components/adm-select.css");
 
 /* ============================================================
    PANEL DE ADMINISTRACIÓN
@@ -23,7 +24,12 @@
    con total seguridad porque la cascada carga este archivo
    después del @import de arriba. */
 .prf-page {
-  max-width: 1360px;
+  /* 1560px (antes 1360px): la columna Tipo ahora muestra los roles en una
+     sola línea (Cliente / Moderador / Administrador) y la de acciones
+     lleva Promover + Revocar + Bloquear en fila; con 1360px la tabla no
+     cabía completa y se apretaba. En pantallas más angostas la tabla
+     sigue teniendo scroll horizontal dentro de su contenedor. */
+  max-width: 1560px;
   gap: 28px;
 }
 .prf-sidebar {
@@ -122,7 +128,7 @@
   overflow-x: auto;
 }
 
-.adm-table { width: 100%; border-collapse: collapse; min-width: 640px; }
+.adm-table { width: 100%; border-collapse: collapse; min-width: 1040px; }
 .adm-table th {
   text-align: left;
   font-size: 12px;
@@ -166,6 +172,24 @@
 .adm-tipo-badge.is-oferente { background: #eaf6fc; color: #1a9ecf; }
 .adm-tipo-badge.is-buscador { background: #f3ecfb; color: #7a3fc0; }
 .adm-tipo-badge.is-admin { background: #fff4e0; color: #b4780a; }
+
+/* Roles de una cuenta en una sola línea: Cliente / Moderador / Administrador */
+.adm-roles {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 6px;
+  white-space: nowrap;
+}
+.adm-roles-sep { color: #b5bcc4; font-weight: 700; font-size: 13px; }
+
+/* Acciones de la fila (Promover / Revocar / Bloquear) en una sola línea */
+.adm-row-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  flex-wrap: nowrap;
+}
 
 /* Extiende .prf-badge (definido en perfil.css) con los estados que
    usa este panel además de pendiente/aprobada/rechazada. */
@@ -306,6 +330,46 @@
 }
 .adm-modal-textarea:focus { outline: none; border-color: #1a9ecf; }
 
+/* Filtros de Auditoría: select personalizado con forma de píldora,
+   igual que el buscador y las fechas de la misma barra */
+.adm-audit-select { flex: 0 1 260px; min-width: 200px; }
+.adm-audit-select.is-rol { flex-basis: 190px; min-width: 170px; }
+.adm-audit-select .adm-select-trigger {
+  border-radius: 24px;
+  padding: 9px 14px;
+  font-size: 13.5px;
+}
+
+/* Campos de los modales de promover / revocar rol */
+.adm-modal-label {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #1c1c1c;
+  margin: 16px 0 6px;
+}
+.adm-modal-label:first-of-type { margin-top: 4px; }
+.adm-modal-input {
+  width: 100%;
+  box-sizing: border-box;
+  font-family: inherit;
+  font-size: 14px;
+  padding: 11px 14px;
+  border: 1.5px solid #e3e7ec;
+  border-radius: 12px;
+  color: #1c2126;
+  background: #fff;
+}
+.adm-modal-input:focus { outline: none; border-color: #1a9ecf; box-shadow: 0 0 0 3px rgba(26, 158, 207, .14); }
+.adm-modal-error {
+  min-height: 18px;
+  margin: 8px 0 14px;
+  font-size: 12.5px;
+  color: #c0261c;
+}
+/* Con el desplegable abierto el modal deja de recortarlo/scrollearlo */
+.adm-modal:has(.adm-select.is-open) { overflow: visible; }
+
 .adm-modal-buttons { display: flex; gap: 10px; justify-content: flex-end; }
 .adm-modal-buttons .adm-row-btn { padding: 9px 18px; font-size: 13.5px; }
 
@@ -356,6 +420,11 @@
     align-items: stretch;
   }
   .adm-search {
+    width: 100%;
+  }
+  .adm-audit-select,
+  .adm-audit-select.is-rol {
+    flex: 1 1 100%;
     width: 100%;
   }
 
@@ -448,6 +517,17 @@
   .adm-table td:last-child .adm-reporte-none {
     width: 100%;
     text-align: center;
+  }
+  /* Roles y acciones se acomodan a la tarjeta: los roles pueden saltar de
+     línea y cada botón ocupa su propia fila a ancho completo. */
+  .adm-roles {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    white-space: normal;
+  }
+  .adm-row-actions {
+    flex-wrap: wrap;
+    width: 100%;
   }
 
   /* ---------- REPORTES: columna en vez de fila ---------- */
