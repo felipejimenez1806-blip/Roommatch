@@ -15,6 +15,9 @@ class AdminUsuarioSeeder extends Seeder
      * y le asigna únicamente el rol 'admin' (sin 'cliente'): es la cuenta de
      * sistema "Administrador RoomMatch", sin selector "Ingresar como…".
      *
+     * Es SUPERADMIN (es_superadmin = true, correo @roommatch.com): solo otro
+     * superadmin puede bloquearla y no puede cambiar de rol.
+     *
      * Requiere que RolSeeder ya haya corrido (debe llamarse antes en
      * DatabaseSeeder).
      */
@@ -29,6 +32,13 @@ class AdminUsuarioSeeder extends Seeder
                 'telefono' => null,
             ]
         );
+
+        // es_superadmin no es fillable a propósito (nadie debe poder marcarlo
+        // por asignación masiva): se asigna explícitamente. Idempotente.
+        if (! $usuario->es_superadmin) {
+            $usuario->es_superadmin = true;
+            $usuario->save();
+        }
 
         $rolAdmin = Rol::where('nombre', 'admin')->firstOrFail();
 

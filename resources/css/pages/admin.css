@@ -172,6 +172,7 @@
 .adm-tipo-badge.is-oferente { background: #eaf6fc; color: #1a9ecf; }
 .adm-tipo-badge.is-buscador { background: #f3ecfb; color: #7a3fc0; }
 .adm-tipo-badge.is-admin { background: #fff4e0; color: #b4780a; }
+.adm-tipo-badge.is-superadmin { background: #1c2126; color: #ffd76a; }
 
 /* Roles de una cuenta en una sola línea: Cliente / Moderador / Administrador */
 .adm-roles {

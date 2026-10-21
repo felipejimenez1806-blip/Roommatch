@@ -48,6 +48,7 @@ class Usuario extends Authenticatable
     protected $casts = [
         'preferencias_convivencia' => 'array',
         'bloqueado' => 'boolean',
+        'es_superadmin' => 'boolean',
         'bloqueado_fecha' => 'datetime',
         'fecha_registro' => 'datetime',
         'terminos_aceptados_en' => 'datetime',
@@ -148,6 +149,27 @@ class Usuario extends Authenticatable
         return $this->tieneRol('moderador');
     }
 
+    /** Dominio de correo con el que una cuenta admin creada pasa a ser superadmin. */
+    public const DOMINIO_SUPERADMIN = 'roommatch.com';
+
+    public static function correoEsDeSuperadmin(?string $correo): bool
+    {
+        return $correo !== null
+            && str_ends_with(mb_strtolower(trim($correo)), '@'.self::DOMINIO_SUPERADMIN);
+    }
+
+    /**
+     * Superadmin: cuenta admin marcada con es_superadmin (solo el seeder o un
+     * superadmin al crear la cuenta la marcan; un promovido nunca lo es, aunque
+     * su correo sea @roommatch.com). Solo otros superadmin pueden bloquearla y
+     * su único rol es 'admin': no cambia de rol ni agrega 'cliente'. Se exige
+     * además el rol admin vigente, por si la marca quedara en una cuenta sin él.
+     */
+    public function esSuperadmin(): bool
+    {
+        return (bool) $this->es_superadmin && $this->esAdmin();
+    }
+
     /**
      * La tabla usuario no tiene columna remember_token. Sin esto, el guard de
      * sesión intentaría leerla/escribirla (Auth::logout() la rota si existe).
@@ -205,6 +227,7 @@ class Usuario extends Authenticatable
             'roles' => $this->roles->pluck('nombre')->values(),
             'area' => $this->area,
             'cargo' => $this->cargo,
+            'esSuperadmin' => $this->esSuperadmin(),
             'telefono' => $this->telefono,
             'direccion' => $this->direccion,
             'genero' => $this->genero,

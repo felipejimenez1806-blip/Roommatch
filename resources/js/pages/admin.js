@@ -32,6 +32,10 @@ import { selectHtml, enlazarSelects, valorSelect } from "../core/select-personal
 
 requerirSesion({ rol: "admin" });
 const usuarioActual = obtenerUsuario();
+// Superadmin (cuenta admin @roommatch.com creada por seeder o por otro superadmin):
+// único que puede bloquear/desbloquear administradores. Solo afecta qué botones se
+// muestran; el servidor valida cada acción.
+const soySuperadmin = Boolean(usuarioActual?.esSuperadmin);
 
 // En el panel admin un 403 (la cuenta perdió el rol) también expulsa al dashboard.
 function manejarNoAutorizado(respuesta) {
@@ -94,6 +98,8 @@ function textoError(res, porDefecto) {
 // y reusa el modal ya construido en nav.js vía window.RoommatchNav.
 // ============================================================
 function inicializarUsarComoClienteAdmin() {
+  // Un superadmin solo puede ejercer el rol de administrador.
+  if (soySuperadmin) return;
   const roles = usuarioActual.roles || [];
   const esSoloAdmin = roles.includes("admin") && !roles.includes("cliente");
   if (!esSoloAdmin) return;
@@ -105,7 +111,8 @@ function inicializarUsarComoClienteAdmin() {
   btn.type = "button";
   btn.id = "admUsarClienteBtn";
   btn.className = logoutBtn.className;
-  btn.textContent = "Usar también como cliente";
+  // Ícono de usuario con "+" (agregar el rol de cliente), mismo estilo que el resto del panel.
+  btn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6"/><path d="M22 11h-6"/></svg>Usar también como cliente`;
   btn.style.marginBottom = "8px";
 
   logoutBtn.insertAdjacentElement("beforebegin", btn);
@@ -126,7 +133,8 @@ function inicializarCambiarRolAdmin() {
   btn.type = "button";
   btn.id = "admCambiarRolBtn";
   btn.className = logoutBtn.className;
-  btn.textContent = "Cambiar de rol";
+  // Mismo ícono (flechas de intercambio) que el botón del panel de moderación.
+  btn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>Cambiar de rol`;
   btn.style.marginBottom = "8px";
 
   logoutBtn.insertAdjacentElement("beforebegin", btn);
@@ -231,13 +239,16 @@ async function renderUsuarios() {
     const avatar = u.fotoPerfil ? `<img src="${esc(u.fotoPerfil)}" alt="${esc(u.nombre)}"/>` : esc(inicial(u.nombre));
     const roles = u.roles || [];
     const esAdmin = roles.includes("admin");
+    const esSuperadminFila = Boolean(u.esSuperadmin);
     const nombreAttr = esc(u.nombre);
 
     // Una cuenta puede tener varios roles a la vez: se pintan en una sola
     // línea, de menor a mayor privilegio (Cliente / Moderador / Administrador).
     const badgesRol = ORDEN_ROLES
       .filter((r) => roles.includes(r))
-      .map((r) => `<span class="adm-tipo-badge is-${r}">${ETIQUETA_ROL[r]}</span>`)
+      .map((r) => (r === "admin" && esSuperadminFila
+        ? `<span class="adm-tipo-badge is-superadmin">Superadmin</span>`
+        : `<span class="adm-tipo-badge is-${r}">${ETIQUETA_ROL[r]}</span>`))
       .join(`<span class="adm-roles-sep" aria-hidden="true">/</span>`);
 
     // Un solo botón "Promover" y un solo "Revocar": el rol concreto se elige
@@ -245,8 +256,12 @@ async function renderUsuarios() {
     // equipo que la cuenta aún no tiene / que ya tiene). El servidor vuelve
     // a validar todo en cada ruta (can:gestionar-roles, cuenta de sistema,
     // auto-revocación).
-    const rolesPromovibles = ROLES_EQUIPO.filter((r) => !roles.includes(r));
-    const rolesRevocables = ROLES_EQUIPO.filter((r) => roles.includes(r));
+    // Sin Promover ni Revocar en la fila de un superadmin (sus roles no se
+    // modifican) ni en la propia (nadie cambia sus propios roles: lo hace otro
+    // administrador).
+    const sinCambioDeRoles = esSuperadminFila || u.id === usuarioActual.id;
+    const rolesPromovibles = sinCambioDeRoles ? [] : ROLES_EQUIPO.filter((r) => !roles.includes(r));
+    const rolesRevocables = sinCambioDeRoles ? [] : ROLES_EQUIPO.filter((r) => roles.includes(r));
 
     const botonPromover = rolesPromovibles.length
       ? `<button type="button" class="adm-row-btn" data-promover="${u.id}" data-roles="${rolesPromovibles.join(",")}" data-nombre="${nombreAttr}">Promover</button>`
@@ -254,9 +269,11 @@ async function renderUsuarios() {
     const botonRevocar = rolesRevocables.length
       ? `<button type="button" class="adm-row-btn is-danger" data-revocar="${u.id}" data-roles="${rolesRevocables.join(",")}" data-nombre="${nombreAttr}">Revocar</button>`
       : "";
-    // Bloquear/desbloquear no cambia: un admin nunca se puede bloquear
-    // (ver UsuarioController::bloquear), así que su fila no lo ofrece.
-    const botonBloqueo = esAdmin
+    // Bloquear/desbloquear una cuenta que no es admin: como siempre. Una cuenta
+    // admin (superadmin o no) solo la bloquea un superadmin, y nunca a sí mismo
+    // (ver UsuarioController::bloquear).
+    const puedeBloquear = !esAdmin || (soySuperadmin && u.id !== usuarioActual.id);
+    const botonBloqueo = !puedeBloquear
       ? ""
       : `<button type="button" class="adm-row-btn ${u.bloqueado ? "" : "is-danger"}" data-toggle-bloqueo="${u.id}" data-bloqueado="${u.bloqueado}" data-nombre="${nombreAttr}">
            ${u.bloqueado ? "Desbloquear" : "Bloquear"}
@@ -306,11 +323,12 @@ async function renderUsuarios() {
 }
 
 async function desbloquearUsuario(id, nombre) {
-  const respuesta = await fetch(`${API_BASE}/admin/usuarios/${id}/desbloquear`, { method: "PATCH", headers: cabecerasAutenticadas(false) });
-  if (manejarNoAutorizado(respuesta)) return;
-  mostrarToast(`${nombre} fue desbloqueado.`);
+  const res = await peticionAccion(`/admin/usuarios/${id}/desbloquear`);
+  if (!res) return;
+  mostrarToast(res.ok ? (res.datos.mensaje || `${nombre} fue desbloqueado.`) : textoError(res, "No se pudo desbloquear la cuenta."));
   renderUsuarios();
   renderResumen();
+  renderAuditoria();
 }
 
 function abrirModalBloqueo(id, nombre) {
@@ -318,6 +336,7 @@ function abrirModalBloqueo(id, nombre) {
     <button class="adm-modal-close" type="button" id="admModalCloseBtn">&times;</button>
     <p class="adm-modal-title">Bloquear a ${esc(nombre)}</p>
     <textarea class="adm-modal-textarea" id="admMotivoBloqueo" placeholder="Motivo del bloqueo (ej. incumplimiento de las normas de la comunidad)..."></textarea>
+    <p class="adm-modal-error" id="admBloqueoError"></p>
     <div class="adm-modal-buttons">
       <button type="button" class="adm-row-btn" id="admCancelarBloqueo">Cancelar</button>
       <button type="button" class="adm-row-btn is-danger" id="admConfirmarBloqueo">Bloquear usuario</button>
@@ -327,16 +346,18 @@ function abrirModalBloqueo(id, nombre) {
   document.getElementById("admCancelarBloqueo").addEventListener("click", cerrarModal);
   document.getElementById("admConfirmarBloqueo").addEventListener("click", async () => {
     const motivo = document.getElementById("admMotivoBloqueo").value.trim();
-    const respuesta = await fetch(`${API_BASE}/admin/usuarios/${id}/bloquear`, {
-      method: "PATCH",
-      headers: cabecerasAutenticadas(),
-      body: JSON.stringify({ motivo }),
-    });
-    if (manejarNoAutorizado(respuesta)) return;
+    const res = await peticionAccion(`/admin/usuarios/${id}/bloquear`, { cuerpo: { motivo } });
+    if (!res) return;
+    if (!res.ok) {
+      // Los resguardos del servidor (solo superadmin, no a sí mismo) se muestran en el modal.
+      document.getElementById("admBloqueoError").textContent = textoError(res, "No se pudo bloquear la cuenta.");
+      return;
+    }
     cerrarModal();
-    mostrarToast(`${nombre} fue bloqueado.`);
+    mostrarToast(res.datos.mensaje || `${nombre} fue bloqueado.`);
     renderUsuarios();
     renderResumen();
+    renderAuditoria();
   });
 }
 
