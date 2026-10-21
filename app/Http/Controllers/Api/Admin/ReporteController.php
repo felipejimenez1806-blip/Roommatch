@@ -122,13 +122,22 @@ class ReporteController extends Controller
         } elseif ($reporte->tipo === 'usuario' && $reporte->id_usuario_reportado) {
             $reportado = Usuario::find($reporte->id_usuario_reportado);
 
-            // Mismo resguardo que UsuarioController::bloquear(): una cuenta
-            // admin (incluida la de sistema) no se bloquea. Se corta ANTES de
-            // cambiar nada, así el reporte queda pendiente y el admin puede
-            // descartarlo o gestionarlo por otra vía.
-            if ($reportado?->esAdmin()) {
+            // Mismo resguardo que UsuarioController::bloquear(): bloquear una
+            // cuenta admin (superadmin o no) solo lo puede hacer un superadmin,
+            // y nadie puede bloquearse a sí mismo. Se corta ANTES de cambiar
+            // nada, así el reporte queda pendiente y se puede descartar o
+            // gestionar por otra vía.
+            $actor = $request->user();
+
+            if ($reportado && $reportado->id_usuario === $actor->id_usuario) {
                 return response()->json([
-                    'mensaje' => 'No se puede bloquear una cuenta de administrador. Descarta el reporte o gestiónalo por otra vía.',
+                    'mensaje' => 'No puedes bloquear tu propia cuenta. Descarta el reporte o gestiónalo por otra vía.',
+                ], 422);
+            }
+
+            if ($reportado?->esAdmin() && ! $actor->esSuperadmin()) {
+                return response()->json([
+                    'mensaje' => 'Solo un superadmin puede bloquear a un administrador. Descarta el reporte o gestiónalo por otra vía.',
                 ], 422);
             }
 

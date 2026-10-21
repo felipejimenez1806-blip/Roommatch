@@ -16,12 +16,6 @@ use Illuminate\Validation\Rules\Password;
 class UsuarioController extends Controller
 {
     /**
-     * Correo de la cuenta de sistema sembrada por AdminUsuarioSeeder.
-     * No se puede revocar su rol admin desde el panel.
-     */
-    private const CORREO_ADMIN_SISTEMA = 'roommatch.admin2026@gmail.com';
-
-    /**
      * GET /api/admin/usuarios?filtro=todos|cliente|moderador|admin|bloqueado&q=...
      * Reemplaza a usuariosFiltrados()/renderUsuarios() de admin.js, pero
      * filtrando en el servidor en vez de sobre el array completo.
@@ -123,9 +117,20 @@ class UsuarioController extends Controller
         }
 
         $nombreRol = $datos['tipo_usuario'];
+        $esAdmin = $nombreRol === 'admin';
 
-        $nuevoUsuario = DB::transaction(function () use ($datos, $admin, $nombreRol) {
-            $nuevoUsuario = Usuario::create([
+        // Un administrador con correo @roommatch.com nace como superadmin: solo
+        // otro superadmin puede crearlo (si no, cualquier admin fabricaría
+        // superadmins creando una cuenta con ese dominio).
+        $nuevoEsSuperadmin = $esAdmin && Usuario::correoEsDeSuperadmin($datos['correo']);
+        if ($nuevoEsSuperadmin && ! $admin->esSuperadmin()) {
+            $mensaje = 'Solo un superadmin puede crear administradores con correo @'.Usuario::DOMINIO_SUPERADMIN.'.';
+
+            return response()->json(['mensaje' => $mensaje, 'errors' => ['correo' => [$mensaje]]], 422);
+        }
+
+        $nuevoUsuario = DB::transaction(function () use ($datos, $admin, $nombreRol, $nuevoEsSuperadmin) {
+            $nuevoUsuario = new Usuario([
                 'nombre_completo' => $datos['nombre'],
                 'correo' => $datos['correo'],
                 'area' => $datos['area'],
@@ -133,6 +138,9 @@ class UsuarioController extends Controller
                 'contrasena' => Hash::make($datos['password']),
                 'proveedor' => 'local',
             ]);
+            // Fuera de $fillable a propósito: solo este flujo (y el seeder) lo marcan.
+            $nuevoUsuario->es_superadmin = $nuevoEsSuperadmin;
+            $nuevoUsuario->save();
 
             $rol = Rol::where('nombre', $nombreRol)->firstOrFail();
 
@@ -144,17 +152,15 @@ class UsuarioController extends Controller
             return $nuevoUsuario;
         });
 
-        $esAdmin = $nombreRol === 'admin';
-
         ModeracionAuditor::registrar(
             $esAdmin ? 'administrador_creado' : 'moderador_creado',
             'usuario',
             $nuevoUsuario->id_usuario,
             $nuevoUsuario->nombre_completo,
-            ['area' => $datos['area'], 'cargo' => $datos['cargo']]
+            ['area' => $datos['area'], 'cargo' => $datos['cargo']] + ($nuevoEsSuperadmin ? ['superadmin' => 'sí'] : [])
         );
 
-        $etiqueta = $esAdmin ? 'administrador' : 'moderador';
+        $etiqueta = $nuevoEsSuperadmin ? 'superadmin' : ($esAdmin ? 'administrador' : 'moderador');
 
         return response()->json([
             'mensaje' => "{$nuevoUsuario->nombre_completo} fue creado como {$etiqueta}.",
@@ -177,6 +183,14 @@ class UsuarioController extends Controller
     public function promoverAdmin(Request $request, Usuario $usuario)
     {
         Gate::authorize('gestionar-roles');
+
+        if ($respuesta = $this->rechazarSiSuperadmin($usuario)) {
+            return $respuesta;
+        }
+
+        if ($respuesta = $this->rechazarSiEsUnoMismo($request->user(), $usuario)) {
+            return $respuesta;
+        }
 
         $admin = $request->user();
 
@@ -230,24 +244,22 @@ class UsuarioController extends Controller
      * pide contraseña al ir HACIA admin, no al salir).
      *
      * Dos resguardos:
-     *   - Un admin no puede revocarse el rol a sí mismo (evita quedar
-     *     bloqueado fuera del panel por accidente).
-     *   - No se puede revocar el rol de la cuenta de sistema sembrada
-     *     ("Administrador RoomMatch"): siempre debe quedar al menos un
-     *     admin garantizado.
+     *   - Nadie cambia sus propios roles (rechazarSiEsUnoMismo): evita que
+     *     la plataforma se quede sin administradores por accidente.
+     *   - Los roles de un superadmin (incluida la cuenta de sistema
+     *     "Administrador RoomMatch") no se pueden modificar: ver
+     *     rechazarSiSuperadmin().
      */
     public function revocarAdmin(Request $request, Usuario $usuario)
     {
         Gate::authorize('gestionar-roles');
 
-        $admin = $request->user();
-
-        if ($usuario->id_usuario === $admin->id_usuario) {
-            abort(422, 'No puedes revocarte el rol de administrador a ti mismo.');
+        if ($respuesta = $this->rechazarSiSuperadmin($usuario)) {
+            return $respuesta;
         }
 
-        if ($usuario->correo === self::CORREO_ADMIN_SISTEMA) {
-            abort(422, 'No se puede revocar el rol de la cuenta de sistema "Administrador RoomMatch".');
+        if ($respuesta = $this->rechazarSiEsUnoMismo($request->user(), $usuario)) {
+            return $respuesta;
         }
 
         if (! $usuario->esAdmin()) {
@@ -279,6 +291,14 @@ class UsuarioController extends Controller
     public function promoverModerador(Request $request, Usuario $usuario)
     {
         Gate::authorize('gestionar-roles');
+
+        if ($respuesta = $this->rechazarSiSuperadmin($usuario)) {
+            return $respuesta;
+        }
+
+        if ($respuesta = $this->rechazarSiEsUnoMismo($request->user(), $usuario)) {
+            return $respuesta;
+        }
 
         $admin = $request->user();
 
@@ -342,6 +362,14 @@ class UsuarioController extends Controller
     {
         Gate::authorize('gestionar-roles');
 
+        if ($respuesta = $this->rechazarSiSuperadmin($usuario)) {
+            return $respuesta;
+        }
+
+        if ($respuesta = $this->rechazarSiEsUnoMismo($request->user(), $usuario)) {
+            return $respuesta;
+        }
+
         if (! $usuario->esModerador()) {
             return response()->json([
                 'mensaje' => "{$usuario->nombre_completo} no tiene el rol de moderador.",
@@ -366,8 +394,8 @@ class UsuarioController extends Controller
     {
         Gate::authorize('bloquear-usuarios');
 
-        if ($usuario->esAdmin()) {
-            abort(422, 'No se puede bloquear una cuenta de administrador.');
+        if ($respuesta = $this->rechazarSiNoPuedeGestionarCuenta($request->user(), $usuario)) {
+            return $respuesta;
         }
 
         $datos = $request->validate([
@@ -397,9 +425,13 @@ class UsuarioController extends Controller
     /**
      * PATCH /api/admin/usuarios/{usuario}/desbloquear
      */
-    public function desbloquear(Usuario $usuario)
+    public function desbloquear(Request $request, Usuario $usuario)
     {
         Gate::authorize('bloquear-usuarios');
+
+        if ($respuesta = $this->rechazarSiNoPuedeGestionarCuenta($request->user(), $usuario, true)) {
+            return $respuesta;
+        }
 
         $usuario->update([
             'bloqueado' => false,
@@ -410,6 +442,60 @@ class UsuarioController extends Controller
         ModeracionAuditor::registrar('usuario_desbloqueado', 'usuario', $usuario->id_usuario, $usuario->nombre_completo);
 
         return response()->json(['mensaje' => "{$usuario->nombre_completo} fue desbloqueado."]);
+    }
+
+    // ------------------- Reglas de superadmin -------------------
+
+    /**
+     * Los roles de un superadmin no se tocan: su único rol es 'admin' y
+     * quitárselo (o sumarle moderador) rompería esa regla.
+     */
+    private function rechazarSiSuperadmin(Usuario $usuario)
+    {
+        if ($usuario->esSuperadmin()) {
+            return response()->json([
+                'mensaje' => 'Los roles de una cuenta superadmin no se pueden modificar.',
+            ], 403);
+        }
+
+        return null;
+    }
+
+    /**
+     * Nadie cambia sus propios roles (ni promover ni revocar): lo hace otro
+     * administrador. Así cada cambio de permisos de una cuenta lo aprueba una
+     * segunda persona, no quien lo recibe, y la auditoría siempre muestra a
+     * dos personas distintas. Es el mismo criterio de "no bloquearse a sí mismo".
+     */
+    private function rechazarSiEsUnoMismo(Usuario $actor, Usuario $objetivo)
+    {
+        if ($objetivo->id_usuario === $actor->id_usuario) {
+            return response()->json([
+                'mensaje' => 'No puedes cambiar tus propios roles. Pídele a otro administrador que lo haga.',
+            ], 422);
+        }
+
+        return null;
+    }
+
+    /**
+     * Bloquear / desbloquear una cuenta de administrador (superadmin o no) solo
+     * lo puede hacer un superadmin, y nunca sobre sí mismo. Las cuentas que no
+     * son admin las gestiona cualquier admin, como antes.
+     */
+    private function rechazarSiNoPuedeGestionarCuenta(Usuario $actor, Usuario $objetivo, bool $desbloqueo = false)
+    {
+        if (! $desbloqueo && $objetivo->id_usuario === $actor->id_usuario) {
+            return response()->json(['mensaje' => 'No puedes bloquear tu propia cuenta.'], 422);
+        }
+
+        if ($objetivo->esAdmin() && ! $actor->esSuperadmin()) {
+            return response()->json([
+                'mensaje' => 'Solo un superadmin puede bloquear o desbloquear a un administrador.',
+            ], 403);
+        }
+
+        return null;
     }
 
     // ------------------- Helper privado -------------------
@@ -434,6 +520,7 @@ class UsuarioController extends Controller
             'email' => $usuario->correo,
             'roles' => $usuario->roles->pluck('nombre')->values(),
             'esModerador' => $usuario->esModerador(),
+            'esSuperadmin' => $usuario->esSuperadmin(),
             'tipoUsuario' => $esAdmin ? 'admin' : 'cliente',
             'telefono' => $usuario->telefono,
             'fotoPerfil' => $usuario->foto_perfil,

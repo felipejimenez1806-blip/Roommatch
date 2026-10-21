@@ -19,6 +19,8 @@ return new class extends Migration
                 ->comment('Área/departamento del administrador. NULL para cuentas sin rol admin.');
             $table->string('cargo', 100)->nullable()
                 ->comment('Cargo del administrador. NULL para cuentas sin rol admin.');
+            $table->boolean('es_superadmin')->default(false)
+                ->comment('Cuenta admin protegida. Solo la marcan el seeder o un superadmin al crear un administrador con correo @roommatch.com (nunca registro ni promoción). Solo otros superadmin pueden bloquearla; no puede cambiar de rol.');
             $table->string('nombre_completo', 150);
             $table->string('correo', 150);
             $table->string('contrasena')->nullable()

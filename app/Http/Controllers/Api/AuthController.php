@@ -13,6 +13,7 @@ use App\Services\SesionUsuario;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\RateLimiter;
 
 class AuthController extends Controller
 {
@@ -89,6 +90,23 @@ class AuthController extends Controller
     {
         $usuario = Usuario::where('correo', $request->email)->first();
 
+        // Superadmin: NO se bloquea automáticamente. Solo otro superadmin puede
+        // bloquear esa cuenta; con el bloqueo automático cualquiera podría
+        // dejarla fuera escribiendo 5 contraseñas erróneas (y, si es la única,
+        // nadie podría desbloquearla). En su lugar: límite temporal de intentos
+        // por correo + IP (así quien ataca solo se limita a sí mismo).
+        $claveSuperadmin = null;
+        if ($usuario && $usuario->esSuperadmin()) {
+            $claveSuperadmin = 'login-superadmin:'.mb_strtolower($usuario->correo).'|'.$request->ip();
+            if (RateLimiter::tooManyAttempts($claveSuperadmin, self::MAX_INTENTOS_LOGIN)) {
+                $minutos = (int) ceil(RateLimiter::availableIn($claveSuperadmin) / 60);
+
+                return response()->json([
+                    'mensaje' => "Demasiados intentos fallidos. Intenta de nuevo en {$minutos} minuto(s).",
+                ], 429);
+            }
+        }
+
         $credencialesValidas = $usuario
             && $usuario->contrasena
             && Hash::check($request->password, $usuario->contrasena);
@@ -97,7 +115,9 @@ class AuthController extends Controller
             // Solo contamos el intento fallido si es una cuenta local real
             // y todavía no está bloqueada (para no seguir incrementando
             // de más una vez ya bloqueada).
-            if ($usuario && $usuario->contrasena && ! $usuario->bloqueado) {
+            if ($claveSuperadmin) {
+                RateLimiter::hit($claveSuperadmin, 900);
+            } elseif ($usuario && $usuario->contrasena && ! $usuario->bloqueado) {
                 $usuario->increment('intentos_fallidos');
 
                 if ($usuario->intentos_fallidos >= self::MAX_INTENTOS_LOGIN) {
@@ -120,6 +140,10 @@ class AuthController extends Controller
                     ? "Tu cuenta fue bloqueada: {$usuario->bloqueado_motivo}"
                     : 'Tu cuenta ha sido bloqueada. Contacta al soporte.',
             ], 403);
+        }
+
+        if ($claveSuperadmin) {
+            RateLimiter::clear($claveSuperadmin);
         }
 
         // Login correcto: reiniciamos el contador si venía con intentos previos.
@@ -178,6 +202,10 @@ class AuthController extends Controller
         $usuario = $request->user();
         $rolDestino = $request->validated('rol');
 
+        if ($usuario->esSuperadmin()) {
+            abort(403, 'Una cuenta superadmin solo puede ejercer el rol de administrador.');
+        }
+
         if (! $usuario->tieneRol($rolDestino)) {
             abort(403, 'No tienes asignado ese rol.');
         }
@@ -218,6 +246,10 @@ class AuthController extends Controller
     public function agregarRolCliente(Request $request)
     {
         $usuario = $request->user();
+
+        if ($usuario->esSuperadmin()) {
+            abort(403, 'Una cuenta superadmin solo puede ejercer el rol de administrador.');
+        }
 
         if ($usuario->tieneRol('cliente')) {
             return response()->json([
