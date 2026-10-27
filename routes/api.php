@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\Admin\AuditoriaController as AdminAuditoriaControll
 use App\Http\Controllers\Api\Admin\MensajeContactoController as AdminMensajeContactoController;
 use App\Http\Controllers\Api\Admin\PersonaRoomieController as AdminPersonaRoomieController;
 use App\Http\Controllers\Api\Admin\PublicacionController as AdminPublicacionController;
+use App\Http\Controllers\Api\Admin\ExportarReportesController;
 use App\Http\Controllers\Api\Admin\ReporteController as AdminReporteController;
 use App\Http\Controllers\Api\Admin\UsuarioController as AdminUsuarioController;
 use App\Http\Controllers\OnboardingController;
@@ -222,5 +223,10 @@ Route::middleware(['auth:sanctum', 'cuenta.activa'])->group(function () {
             ->middleware('can:gestionar-roles');
 
         Route::get('/reportes/grafica', [AdminReporteController::class, 'grafica']);
+
+        // Exportar reportes a Excel/PDF: Laravel manda los reportes y los criterios a
+        // Java (X-Service-Key) y devuelve el archivo que Java genera.
+        Route::post('/reportes/exportar', ExportarReportesController::class)
+            ->middleware('throttle:10,1');
     });
 });
