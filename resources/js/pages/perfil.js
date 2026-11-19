@@ -9,6 +9,7 @@
 //   - Reservas -> GET /api/mis-reservas + calificar/reportar
 //   - Mis citas -> GET /api/mis-citas + calificar/reportar
 //   - Notificaciones -> GET /api/notificaciones + marcar-leidas
+//   - Mi agenda -> GET /api/agenda/pase (pase firmado) + marco con la pantalla de Java
 // El navbar (avatar/nombre/badge) ya lo maneja nav.js, compartido en
 // todas las páginas — este archivo ya NO lo toca directamente.
 // Favoritos->Roomies queda con estado vacío: pendiente de migrar.
@@ -162,6 +163,10 @@ document.querySelectorAll(".prf-nav-item[data-panel]").forEach((btn) => {
 
     if (btn.dataset.panel === "panelNotificaciones") {
       marcarNotificacionesLeidas();
+    }
+
+    if (btn.dataset.panel === "panelAgenda") {
+      abrirAgenda();
     }
   });
 });
@@ -902,10 +907,13 @@ const NOTIF_ICONOS = {
   reserva_nueva: { icono: "🏠", clase: "is-info" },
   reserva_aceptada: { icono: "✓", clase: "is-resuelto" },
   reserva_rechazada: { icono: "✕", clase: "is-descartado" },
+  reserva_cancelada: { icono: "✕", clase: "is-descartado" },
   cita_nueva: { icono: "🤝", clase: "is-info" },
   cita_aceptada: { icono: "✓", clase: "is-resuelto" },
   cita_rechazada: { icono: "✕", clase: "is-descartado" },
+  cita_cancelada: { icono: "✕", clase: "is-descartado" },
   mensaje_contacto_nuevo: { icono: "✉️", clase: "is-info" },
+  agenda_nota: { icono: "📝", clase: "is-info" },
 };
 
 async function renderNotificaciones() {
@@ -948,6 +956,92 @@ async function marcarNotificacionesLeidas() {
   await renderNotificaciones();
   window.RoommatchNav.actualizarBadgeNotificaciones();
 }
+
+// ============================================================
+// 7) MI AGENDA (pantalla de Java dentro de un marco)
+// ============================================================
+// 1) Se le pide a Laravel un pase de entrada (dura 60 s y se usa una sola vez).
+// 2) Se comprueba que Java responde desde el navegador, para poder avisar con claridad si no.
+// 3) Se carga la dirección del pase en un marco: Java abre la sesión y muestra la agenda.
+// Se abre solo la primera vez (o con "Recargar agenda"): así no se pierde lo que la persona
+// estaba viendo cada vez que cambia de pestaña del perfil.
+const agendaContenedor = document.getElementById("agendaContenedor");
+let agendaAbierta = false;
+let agendaAbriendo = false;
+
+function mostrarEstadoAgenda(mensaje, { error = false } = {}) {
+  agendaContenedor.innerHTML = `
+    <div class="prf-empty prf-agenda-estado ${error ? "is-error" : ""}">
+      <p>${esc(mensaje)}</p>
+      ${error ? '<button type="button" class="prf-photo-btn" id="agendaReintentarBtn">Intentar de nuevo</button>' : ""}
+    </div>`;
+  document.getElementById("agendaReintentarBtn")?.addEventListener("click", () => abrirAgenda({ forzar: true }));
+}
+
+// Con mode:"no-cors" el navegador no deja leer la respuesta, pero la promesa solo falla si no
+// hay conexión con el servidor (apagado, dirección mal escrita, bloqueado...). Eso es justo lo
+// que queremos saber. Se llama a /agenda/entrar sin pase: Java responde "pase inválido" y no
+// se gasta ningún pase.
+async function javaResponde(urlDelPase) {
+  const control = new AbortController();
+  const temporizador = setTimeout(() => control.abort(), 4000);
+  try {
+    await fetch(new URL(urlDelPase).origin + "/agenda/entrar", {
+      mode: "no-cors",
+      cache: "no-store",
+      credentials: "omit",
+      signal: control.signal,
+    });
+    return true;
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(temporizador);
+  }
+}
+
+async function abrirAgenda({ forzar = false } = {}) {
+  if (agendaAbriendo || (agendaAbierta && !forzar)) return;
+  agendaAbriendo = true;
+  agendaAbierta = false;
+  mostrarEstadoAgenda("Abriendo tu agenda…");
+
+  try {
+    const respuesta = await fetch(`${API_BASE}/agenda/pase`, { headers: cabecerasAutenticadas(false) });
+    if (manejarNoAutorizado(respuesta)) return;
+    const datos = await leerRespuesta(respuesta);
+
+    if (!respuesta.ok || !datos.url) {
+      mostrarEstadoAgenda(
+        mensajeGeneral(respuesta, datos, "No pudimos abrir tu agenda. Intenta de nuevo en unos minutos."),
+        { error: true }
+      );
+      return;
+    }
+
+    if (!(await javaResponde(datos.url))) {
+      mostrarEstadoAgenda(
+        "El servicio de agenda no responde en este momento. Tus reservas y citas están a salvo; intenta de nuevo en unos minutos.",
+        { error: true }
+      );
+      return;
+    }
+
+    const marco = document.createElement("iframe");
+    marco.className = "prf-agenda-frame";
+    marco.title = "Mi agenda";
+    marco.referrerPolicy = "no-referrer";
+    marco.src = datos.url;
+    agendaContenedor.replaceChildren(marco);
+    agendaAbierta = true;
+  } catch {
+    mostrarEstadoAgenda("No pudimos conectar. Revisa tu conexión a internet e intenta de nuevo.", { error: true });
+  } finally {
+    agendaAbriendo = false;
+  }
+}
+
+document.getElementById("agendaRecargarBtn").addEventListener("click", () => abrirAgenda({ forzar: true }));
 
 // ---------- INICIALIZACIÓN ----------
 renderDatosPersonales();

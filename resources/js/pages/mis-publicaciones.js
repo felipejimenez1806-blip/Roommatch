@@ -236,19 +236,28 @@ function manejarCambioEstado(pub, nuevoEstado, selectEl) {
 }
 
 // ---------- ACTUALIZAR ESTADO DE UNA RESERVA (aceptar / rechazar) ----------
+const reservasEnCurso = new Set();
+
 async function actualizarEstadoReserva(reservaId, nuevoEstado) {
-  const respuesta = await fetch(`${API_BASE}/reservas/${reservaId}/estado`, {
-    method: "PATCH",
-    headers: cabecerasAutenticadas(),
-    body: JSON.stringify({ estado: nuevoEstado }),
-  });
-  if (manejarNoAutorizado(respuesta)) return;
-  if (!respuesta.ok) {
-    alert("No se pudo actualizar la solicitud. Intenta de nuevo.");
-    return;
+  // Evita el doble clic: mientras una petición sigue en curso no se manda otra igual.
+  if (reservasEnCurso.has(reservaId)) return;
+  reservasEnCurso.add(reservaId);
+  try {
+    const respuesta = await fetch(`${API_BASE}/reservas/${reservaId}/estado`, {
+      method: "PATCH",
+      headers: cabecerasAutenticadas(),
+      body: JSON.stringify({ estado: nuevoEstado }),
+    });
+    if (manejarNoAutorizado(respuesta)) return;
+    if (!respuesta.ok) {
+      alert("No se pudo actualizar la solicitud. Intenta de nuevo.");
+      return;
+    }
+    misPublicaciones = await cargarMisPublicaciones();
+    render();
+  } finally {
+    reservasEnCurso.delete(reservaId);
   }
-  misPublicaciones = await cargarMisPublicaciones();
-  render();
 }
 
 // ---------- ELIMINAR PUBLICACIÓN (con modal de confirmación) ----------
@@ -457,19 +466,28 @@ function confirmarEliminarPerfilRoomie(cantidadCitas) {
 }
 
 // ---------- ACTUALIZAR ESTADO DE UNA CITA (aceptar / rechazar) ----------
+const citasEnCurso = new Set();
+
 async function actualizarEstadoCita(citaId, nuevoEstado) {
-  const respuesta = await fetch(`${API_BASE}/citas/${citaId}/estado`, {
-    method: "PATCH",
-    headers: cabecerasAutenticadas(),
-    body: JSON.stringify({ estado: nuevoEstado }),
-  });
-  if (manejarNoAutorizado(respuesta)) return;
-  if (!respuesta.ok) {
-    alert("No se pudo actualizar la cita. Intenta de nuevo.");
-    return;
+  // Evita el doble clic: mientras una petición sigue en curso no se manda otra igual.
+  if (citasEnCurso.has(citaId)) return;
+  citasEnCurso.add(citaId);
+  try {
+    const respuesta = await fetch(`${API_BASE}/citas/${citaId}/estado`, {
+      method: "PATCH",
+      headers: cabecerasAutenticadas(),
+      body: JSON.stringify({ estado: nuevoEstado }),
+    });
+    if (manejarNoAutorizado(respuesta)) return;
+    if (!respuesta.ok) {
+      alert("No se pudo actualizar la cita. Intenta de nuevo.");
+      return;
+    }
+    citasRecibidas = await cargarCitasRecibidas();
+    renderRoomie();
+  } finally {
+    citasEnCurso.delete(citaId);
   }
-  citasRecibidas = await cargarCitasRecibidas();
-  renderRoomie();
 }
 
 // ============================================================

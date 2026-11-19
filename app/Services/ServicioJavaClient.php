@@ -34,17 +34,45 @@ class ServicioJavaClient
         return $this->enviar('/api/reportes/exportar', $cuerpo);
     }
 
-    private function enviar(string $ruta, string $cuerpoJson): Response
+    /**
+     * Avisa al servicio de agenda que una reserva o cita fue aceptada o cancelada.
+     * Espera corta y un solo intento: el reintento lo hace AgendaService (cola + comando).
+     *
+     * @param  array<string, mixed>  $evento
+     *
+     * @throws ServicioJavaNoDisponibleException si no se pudo hablar con Java
+     */
+    public function enviarEventoAgenda(array $evento): Response
     {
+        $cuerpo = json_encode($evento, JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
+
+        return $this->enviar(
+            '/api/agenda/eventos',
+            $cuerpo,
+            intentos: 1,
+            esperaMaxima: (int) config('servicios.timeout_agenda', 3),
+            esperaConexion: (int) config('servicios.conexion_agenda', 2),
+            servicio: 'de agenda'
+        );
+    }
+
+    private function enviar(
+        string $ruta,
+        string $cuerpoJson,
+        ?int $intentos = null,
+        ?int $esperaMaxima = null,
+        ?int $esperaConexion = null,
+        string $servicio = 'de exportación'
+    ): Response {
         $clave = config('servicios.clave');
         if (blank($clave)) {
             Log::error('ServicioJavaClient: falta ROOMMATCH_SERVICE_KEY en el .env de Laravel.');
             throw new ServicioJavaNoDisponibleException(
-                'El servicio de exportación no está configurado. Avisa al equipo técnico.'
+                "El servicio {$servicio} no está configurado. Avisa al equipo técnico."
             );
         }
 
-        $intentos = max(1, (int) config('servicios.intentos', 2));
+        $intentos = max(1, $intentos ?? (int) config('servicios.intentos', 2));
         $espera = max(0, (int) config('servicios.espera_ms', 400));
         $ultimoError = null;
 
@@ -55,8 +83,8 @@ class ServicioJavaClient
                 return Http::baseUrl(config('servicios.url'))
                     ->withHeaders(['X-Service-Key' => $clave])
                     ->accept('*/*')
-                    ->timeout((int) config('servicios.timeout_exportacion', 30))
-                    ->connectTimeout((int) config('servicios.timeout', 5))
+                    ->timeout($esperaMaxima ?? (int) config('servicios.timeout_exportacion', 30))
+                    ->connectTimeout($esperaConexion ?? (int) config('servicios.timeout', 5))
                     ->withBody($cuerpoJson, 'application/json')
                     ->post($ruta);
             } catch (ConnectionException $e) {
@@ -71,7 +99,7 @@ class ServicioJavaClient
         }
 
         throw new ServicioJavaNoDisponibleException(
-            'El servicio de exportación no está disponible en este momento. Inténtalo de nuevo en unos minutos.',
+            "El servicio {$servicio} no está disponible en este momento. Inténtalo de nuevo en unos minutos.",
             0,
             $ultimoError
         );

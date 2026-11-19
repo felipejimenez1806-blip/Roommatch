@@ -113,6 +113,12 @@ footer {
   margin-bottom: 16px;
 }
 
+/* Solicitud rechazada: mismo círculo, en rojo suave (cita reutiliza este archivo con @import). */
+.conf-icon.is-rechazada {
+  background: #fdeceb;
+  color: #e03;
+}
+
 .conf-title {
   font-size: 20px;
   font-weight: 800;
