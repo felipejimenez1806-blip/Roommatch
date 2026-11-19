@@ -147,6 +147,49 @@ class Notificacion extends Model
     }
 
     /**
+     * Mi agenda: alguien agregó, cambió o quitó su nota en una reserva o cita y se avisa a la OTRA persona
+     * (lo manda el servicio de Java por ServicioNotificacionController). La nota en sí no viaja en el aviso:
+     * se lee en Mi agenda.
+     *
+     * Si el aviso anterior de ese mismo evento todavía no se leyó, se actualiza en vez de crear otro:
+     * así editar una nota varias veces no llena la campanita.
+     *
+     * @param  string  $accion  AGREGADA | MODIFICADA | ELIMINADA
+     */
+    public static function notificarNotaAgenda(int $idUsuario, string $autor, string $evento, string $accion): void
+    {
+        $mensaje = match ($accion) {
+            'AGREGADA' => "{$autor} dejó una nota en «{$evento}».",
+            'MODIFICADA' => "{$autor} actualizó su nota en «{$evento}».",
+            'ELIMINADA' => "{$autor} eliminó su nota en «{$evento}».",
+        };
+        $mensaje = Str::limit($mensaje, 495);
+
+        $pendiente = static::where('id_usuario', $idUsuario)
+            ->where('tipo', 'agenda_nota')
+            ->where('leida', false)
+            ->where('objetivo_titulo', $evento)
+            ->first();
+
+        if ($pendiente) {
+            $pendiente->mensaje = $mensaje;
+            $pendiente->fecha = now();
+            $pendiente->save();
+
+            return;
+        }
+
+        static::create([
+            'id_usuario' => $idUsuario,
+            'tipo' => 'agenda_nota',
+            'mensaje' => $mensaje,
+            'objetivo_titulo' => $evento,
+            'link' => '/perfil#panelAgenda',
+            'leida' => false,
+        ]);
+    }
+
+    /**
      * Crea una notificación por persona. Quien tenga el rol admin recibe el
      * enlace al panel de administración; quien solo sea moderador, el del
      * panel de moderación (cada panel tiene sus propios ids de sección).

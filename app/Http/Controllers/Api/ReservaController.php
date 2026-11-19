@@ -9,6 +9,7 @@ use App\Models\Notificacion;
 use App\Models\Publicacion;
 use App\Models\Reporte;
 use App\Models\Reserva;
+use App\Services\AgendaService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -165,7 +166,7 @@ class ReservaController extends Controller
      * PATCH /api/reservas/{reserva}/estado
      * Lado oferente: aceptar/rechazar una solicitud sobre su publicación.
      */
-    public function actualizarEstado(Request $request, Reserva $reserva)
+    public function actualizarEstado(Request $request, Reserva $reserva, AgendaService $agenda)
     {
         $request->validate([
             'estado' => 'required|in:aceptada,rechazada',
@@ -175,6 +176,15 @@ class ReservaController extends Controller
 
         if ($reserva->publicacion->id_usuario !== $request->user()->id_usuario) {
             abort(403, 'No puedes gestionar solicitudes de una publicación que no es tuya.');
+        }
+
+        if ($reserva->estado_reserva === 'cancelada') {
+            abort(422, 'El solicitante canceló esta solicitud.');
+        }
+
+        // Doble clic o petición repetida: ya está en ese estado, no se duplica la notificación.
+        if ($reserva->estado_reserva === $request->estado) {
+            return response()->json(['mensaje' => 'Estado actualizado.']);
         }
 
         $reserva->update([
@@ -193,27 +203,55 @@ class ReservaController extends Controller
             'leida' => false,
         ]);
 
+        // Aceptada entra a la agenda de las dos personas; rechazada la saca si ya estaba.
+        $agenda->avisarReserva($reserva);
+
         return response()->json(['mensaje' => 'Estado actualizado.']);
     }
 
     /**
      * PATCH /api/reservas/{reserva}/cancelar
-     * Lado solicitante: cancela su propia solicitud (solo si sigue pendiente).
+     * Lado solicitante: cancela su propia solicitud, pendiente o ya aceptada.
+     * Si estaba aceptada, avisa al anfitrión y la saca de las dos agendas.
      */
-    public function cancelar(Request $request, Reserva $reserva)
+    public function cancelar(Request $request, Reserva $reserva, AgendaService $agenda)
     {
         if ($reserva->id_usuario !== $request->user()->id_usuario) {
             abort(403, 'No puedes cancelar una solicitud que no es tuya.');
         }
 
-        if ($reserva->estado_reserva !== 'pendiente') {
+        if (! in_array($reserva->estado_reserva, ['pendiente', 'aceptada'], true)) {
             abort(422, 'Esta solicitud ya no se puede cancelar.');
         }
+
+        $estabaAceptada = $reserva->estado_reserva === 'aceptada';
 
         $reserva->update([
             'estado_reserva' => 'cancelada',
             'fecha_respuesta' => now(),
         ]);
+
+        if ($estabaAceptada) {
+            $reserva->loadMissing('publicacion');
+            $publicacion = $reserva->publicacion;
+
+            if ($publicacion) {
+                $quien = $reserva->contacto_nombre ?: $request->user()->nombre_completo;
+                $cuando = $reserva->fecha_visita->format('d/m/Y')
+                    .($reserva->hora_visita ? ' a las '.substr($reserva->hora_visita, 0, 5) : '');
+
+                Notificacion::create([
+                    'id_usuario' => $publicacion->id_usuario,
+                    'tipo' => 'reserva_cancelada',
+                    'mensaje' => "{$quien} canceló la visita a \"{$publicacion->titulo}\" del {$cuando}.",
+                    'objetivo_titulo' => $publicacion->titulo,
+                    'link' => '/mis-publicaciones',
+                    'leida' => false,
+                ]);
+            }
+
+            $agenda->avisarReserva($reserva);
+        }
 
         return response()->json(['mensaje' => 'Solicitud cancelada.']);
     }

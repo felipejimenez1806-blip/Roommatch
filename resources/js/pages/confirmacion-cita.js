@@ -85,11 +85,44 @@ function mostrarNoEncontrada(contenedor) {
     </div>`;
 }
 
+// ---------- TEXTOS SEGÚN EL ESTADO DE LA CITA ----------
+// pendiente: esperando al roomie · aceptada: confirmada (se puede cancelar) · rechazada: sin acciones.
+function vistaSegunEstado(cita, primerNombre) {
+  const fecha = formatFechaCorta(cita.fecha_cita);
+
+  if (cita.estado === "aceptada") {
+    return {
+      icono: "✓", clase: "is-aceptada",
+      titulo: "¡Tu cita fue aceptada!",
+      lead: `${primerNombre} confirmó el encuentro. Si ya no puedes asistir, cancélala desde aquí para que le avisemos.`,
+      encabezado: `Su encuentro está confirmado para el ${fecha}`,
+      puedeCancelar: true, textoCancelar: "Cancelar cita",
+    };
+  }
+  if (cita.estado === "rechazada") {
+    return {
+      icono: "✕", clase: "is-rechazada",
+      titulo: "No se pudo concretar la cita",
+      lead: `${primerNombre} no aceptó esta vez. Puedes seguir buscando a tu compañero/a ideal.`,
+      encabezado: `Encuentro solicitado para el ${fecha}`,
+      puedeCancelar: false, textoCancelar: "",
+    };
+  }
+  return {
+    icono: "✓", clase: "",
+    titulo: "Tu solicitud de cita fue enviada",
+    lead: `Le avisamos a ${primerNombre} sobre tu interés en conocerse. Te contactaremos por correo en cuanto confirme o proponga otro horario.`,
+    encabezado: `Su encuentro queda propuesto para el ${fecha}`,
+    puedeCancelar: true, textoCancelar: "Cancelar cita",
+  };
+}
+
 // ---------- RENDER PRINCIPAL ----------
 function renderConfirmacion(cita) {
   const contenedor = document.getElementById("confPage");
   const item = cita.persona;
   const primerNombre = item.nombre.split(" ")[0];
+  const vista = vistaSegunEstado(cita, primerNombre);
 
   contenedor.innerHTML = `
     <div class="conf-body">
@@ -107,13 +140,11 @@ function renderConfirmacion(cita) {
       </div>
 
       <div class="conf-right">
-        <div class="conf-icon">✓</div>
-        <div class="conf-title">Tu solicitud de cita fue enviada</div>
-        <p class="conf-lead">
-          Le avisamos a ${esc(primerNombre)} sobre tu interés en conocerse. Te contactaremos por correo en cuanto confirme o proponga otro horario.
-        </p>
+        <div class="conf-icon ${esc(vista.clase)}">${esc(vista.icono)}</div>
+        <div class="conf-title">${esc(vista.titulo)}</div>
+        <p class="conf-lead">${esc(vista.lead)}</p>
 
-        <div class="conf-trip-heading">Su encuentro queda propuesto para el ${esc(formatFechaCorta(cita.fecha_cita))}</div>
+        <div class="conf-trip-heading">${esc(vista.encabezado)}</div>
 
         <div class="conf-detail">
           <span class="conf-detail-icon">📅</span>
@@ -133,14 +164,20 @@ function renderConfirmacion(cita) {
         <div class="conf-info-row"><span>Presupuesto declarado</span><span>${esc(formatCOP(item.presupuesto))}</span></div>
 
         <div class="conf-buttons">
+          ${vista.puedeCancelar ? `
           <button type="button" class="conf-btn-solid" id="contactarBtn">💬 Contactar a ${esc(primerNombre)}</button>
-          <button type="button" class="conf-btn-outline" id="cancelarCitaBtn">Cancelar cita</button>
+          <button type="button" class="conf-btn-outline" id="cancelarCitaBtn">${esc(vista.textoCancelar)}</button>` : `
+          <button type="button" class="conf-btn-solid" id="buscarOtrosBtn">Buscar otros roomies</button>`}
         </div>
       </div>
     </div>`;
 
-  document.getElementById("contactarBtn").addEventListener("click", () => contactarRoomie(item));
-  document.getElementById("cancelarCitaBtn").addEventListener("click", () => confirmarCancelacion(item, cita));
+  if (vista.puedeCancelar) {
+    document.getElementById("contactarBtn").addEventListener("click", () => contactarRoomie(item));
+    document.getElementById("cancelarCitaBtn").addEventListener("click", () => confirmarCancelacion(item, cita));
+  } else {
+    document.getElementById("buscarOtrosBtn").addEventListener("click", () => { window.location.href = appUrl("/roomies"); });
+  }
 }
 
 // ---------- CONTACTAR AL ROOMIE POR WHATSAPP ----------
@@ -182,13 +219,37 @@ function confirmarCancelacion(item, cita) {
         method: "PATCH",
         headers: cabecerasAutenticadas(false),
       });
-      if (!resp.ok) throw new Error("No se pudo cancelar la cita");
+      if (!resp.ok) {
+        // Laravel explica el motivo (ej. "Esta cita ya no se puede cancelar.").
+        const datos = await resp.json().catch(() => ({}));
+        throw new Error(datos.message || datos.mensaje || "No se pudo cancelar la cita");
+      }
       mostrarAvisoCancelacion();
     } catch (err) {
       console.error(err);
-      alert("No pudimos cancelar tu cita. Intenta de nuevo.");
+      mostrarErrorCancelacion(err.message || "No pudimos cancelar tu cita. Intenta de nuevo.");
     }
   });
+}
+
+// ---------- ERROR AL CANCELAR (modal propio, sin alert()) ----------
+function mostrarErrorCancelacion(mensaje) {
+  const overlay = document.createElement("div");
+  overlay.className = "cc-overlay";
+  overlay.innerHTML = `
+    <div class="cc-modal">
+      <div class="cc-modal-icon is-warning">!</div>
+      <div class="cc-modal-title">No pudimos cancelar</div>
+      <p class="cc-modal-text">${esc(mensaje)}</p>
+      <div class="cc-modal-buttons">
+        <button type="button" class="cc-modal-btn-outline" id="ccEntendidoBtn">Entendido</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+
+  const cerrar = () => { overlay.remove(); window.location.reload(); };
+  overlay.addEventListener("click", (e) => { if (e.target === overlay) cerrar(); });
+  document.getElementById("ccEntendidoBtn").addEventListener("click", cerrar);
 }
 
 // ---------- AVISO DE CITA CANCELADA (redirige solo a Roomies) ----------

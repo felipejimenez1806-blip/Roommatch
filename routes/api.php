@@ -5,8 +5,10 @@ use App\Http\Controllers\Api\Admin\AuditoriaController as AdminAuditoriaControll
 use App\Http\Controllers\Api\Admin\MensajeContactoController as AdminMensajeContactoController;
 use App\Http\Controllers\Api\Admin\PersonaRoomieController as AdminPersonaRoomieController;
 use App\Http\Controllers\Api\Admin\PublicacionController as AdminPublicacionController;
+use App\Http\Controllers\Api\Admin\ExportarReportesController;
 use App\Http\Controllers\Api\Admin\ReporteController as AdminReporteController;
 use App\Http\Controllers\Api\Admin\UsuarioController as AdminUsuarioController;
+use App\Http\Controllers\Api\AgendaController;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CitaController;
@@ -17,8 +19,10 @@ use App\Http\Controllers\Api\NotificacionController;
 use App\Http\Controllers\Api\PersonaRoomieController;
 use App\Http\Controllers\Api\PublicacionController;
 use App\Http\Controllers\Api\ReservaController;
+use App\Http\Controllers\Api\ServicioNotificacionController;
 use App\Http\Controllers\Api\UsuarioController;
 use App\Http\Controllers\PasswordResetController;
+use App\Http\Middleware\VerificarServiceKey;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -66,6 +70,12 @@ Route::post('/password/enviar-codigo', [PasswordResetController::class, 'enviarC
     ->middleware('throttle:5,1');
 Route::post('/password/verificar-codigo', [PasswordResetController::class, 'verificarCodigo'])
     ->middleware('throttle:10,1');
+
+// ---------- Avisos desde el servicio de Java (no los llama el navegador) ----------
+// Sin sesión: se protegen con la clave compartida X-Service-Key (ROOMMATCH_SERVICE_KEY).
+// Mi agenda: alguien agregó, cambió o quitó su nota en una reserva o cita -> notificación a la otra persona.
+Route::post('/servicio/notificaciones/agenda-nota', [ServicioNotificacionController::class, 'agendaNota'])
+    ->middleware([VerificarServiceKey::class, 'throttle:120,1']);
 Route::post('/password/restablecer', [PasswordResetController::class, 'restablecer'])
     ->middleware('throttle:5,1');
 
@@ -150,6 +160,12 @@ Route::middleware(['auth:sanctum', 'cuenta.activa'])->group(function () {
     Route::get('/notificaciones', [NotificacionController::class, 'index']);
     Route::post('/notificaciones/marcar-leidas', [NotificacionController::class, 'marcarLeidas']);
 
+    // ---------- Mi agenda ----------
+    // Pase de entrada para la pantalla de agenda de Java (se muestra en un marco del perfil).
+    // Dura 60 s y se usa una sola vez; solo se entrega con el rol activo de cliente.
+    Route::get('/agenda/pase', [AgendaController::class, 'pase'])
+        ->middleware('throttle:30,1');
+
     // ---------- Acciones que exigen perfil completo ----------
     // Crear/publicar algo nuevo no tiene sentido con el perfil a medias
     // (telefono vacío) — ver Usuario::perfilCompleto().
@@ -222,5 +238,10 @@ Route::middleware(['auth:sanctum', 'cuenta.activa'])->group(function () {
             ->middleware('can:gestionar-roles');
 
         Route::get('/reportes/grafica', [AdminReporteController::class, 'grafica']);
+
+        // Exportar reportes a Excel/PDF: Laravel manda los reportes y los criterios a
+        // Java (X-Service-Key) y devuelve el archivo que Java genera.
+        Route::post('/reportes/exportar', ExportarReportesController::class)
+            ->middleware('throttle:10,1');
     });
 });

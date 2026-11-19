@@ -108,6 +108,40 @@
     <button class="prf-subtab" data-filtro="todos" type="button">Todos</button>
   </div>
 
+  <!-- Exportar reportes a Excel o PDF: los filtros los aplica el servicio de Java -->
+  <div class="adm-export" id="admExportarReportes">
+    <p class="adm-export-title">Exportar reportes</p>
+    <p class="adm-export-sub">Elige el formato y, si quieres, filtra qué reportes incluir. Se exportan sin importar la pestaña de arriba.</p>
+    <div class="adm-export-filtros">
+      <div class="adm-export-campo">
+        <span class="adm-export-label">Formato</span>
+        <div class="adm-audit-select is-formato" id="admExpFormatoHost"></div>
+      </div>
+      <div class="adm-export-campo">
+        <span class="adm-export-label">Estado</span>
+        <div class="adm-audit-select is-corto" id="admExpEstadoHost"></div>
+      </div>
+      <div class="adm-export-campo">
+        <span class="adm-export-label">Tipo</span>
+        <div class="adm-audit-select is-corto" id="admExpTipoHost"></div>
+      </div>
+      <div class="adm-export-campo is-motivo">
+        <span class="adm-export-label">Motivo</span>
+        <div class="adm-audit-select is-motivo" id="admExpMotivoHost"></div>
+      </div>
+      <label class="adm-export-campo">
+        <span class="adm-export-label">Desde</span>
+        <input class="adm-search" id="admExpDesde" type="date"/>
+      </label>
+      <label class="adm-export-campo">
+        <span class="adm-export-label">Hasta</span>
+        <input class="adm-search" id="admExpHasta" type="date"/>
+      </label>
+      <button class="adm-row-btn is-primary adm-export-btn" id="admExpBoton" type="button">Exportar</button>
+    </div>
+    <p class="adm-export-error" id="admExpError" role="alert" hidden></p>
+  </div>
+
   <div class="adm-reportes-list" id="admReportesList"></div>
   <div class="prf-empty" id="admReportesEmpty" hidden>No hay reportes en esta categoría.</div>
 </section>

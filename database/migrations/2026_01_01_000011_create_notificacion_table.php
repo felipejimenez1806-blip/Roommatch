@@ -15,9 +15,11 @@ return new class extends Migration
                 'reserva_nueva',
                 'reserva_aceptada',
                 'reserva_rechazada',
+                'reserva_cancelada',
                 'cita_nueva',
                 'cita_aceptada',
                 'cita_rechazada',
+                'cita_cancelada',
                 'reporte_nuevo',
                 'reporte_resuelto',
                 'reporte_descartado',
@@ -26,6 +28,7 @@ return new class extends Migration
                 'reporte_devuelto',
                 'publicacion_bajada',
                 'persona_bajada',
+                'agenda_nota',
             ]);
             $table->string('mensaje', 500);
             $table->string('objetivo_titulo', 255)->nullable();

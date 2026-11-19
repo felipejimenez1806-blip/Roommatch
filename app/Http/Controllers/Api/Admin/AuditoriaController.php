@@ -18,6 +18,7 @@ class AuditoriaController extends Controller
         'reporte_descartado' => 'Descartó un reporte',
         'reporte_escalado' => 'Escaló un reporte',
         'reporte_devuelto' => 'Devolvió un reporte a moderación',
+        'reportes_exportados' => 'Exportó reportes',
         'publicacion_bajada' => 'Bajó una publicación',
         'publicacion_restaurada' => 'Restauró una publicación',
         'persona_bajada' => 'Bajó un perfil de roomie',

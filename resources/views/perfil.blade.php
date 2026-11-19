@@ -43,6 +43,10 @@
         <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>
         Mis citas
       </button>
+      <button class="prf-nav-item" data-panel="panelAgenda">
+        <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M9 16l2 2 4-4"/></svg>
+        Mi agenda
+      </button>
     </div>
 
     <a class="prf-nav-item" href="{{ route('mis-publicaciones') }}">
@@ -123,6 +127,18 @@
       <h1 class="prf-title">Mis citas</h1>
       <p class="prf-subtitle">Encuentros agendados con roomies para conocerse</p>
       <div class="prf-list" id="citasList"></div>
+    </section>
+
+    <!-- MI AGENDA (pantalla del servicio de Java dentro de un marco) -->
+    <section class="prf-panel" id="panelAgenda">
+      <div class="prf-agenda-head">
+        <div>
+          <h1 class="prf-title">Mi agenda</h1>
+          <p class="prf-subtitle">Tus reservas y citas aceptadas, en un solo lugar</p>
+        </div>
+        <button type="button" class="prf-photo-btn" id="agendaRecargarBtn">Recargar agenda</button>
+      </div>
+      <div id="agendaContenedor" class="prf-agenda-contenedor" aria-live="polite"></div>
     </section>
 
   </main>

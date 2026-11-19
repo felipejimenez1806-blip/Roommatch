@@ -1016,6 +1016,117 @@ function abrirModalDevolverReporte(r) {
   });
 }
 
+// ---------- Exportar reportes (Excel / PDF) ----------
+// Laravel manda los reportes a Java, Java aplica los filtros y arma el archivo.
+const MOTIVOS_EXPORTACION = [
+  "El lugar no correspondía a lo publicado",
+  "El oferente no se presentó a la visita",
+  "Comportamiento inapropiado durante la visita",
+  "Cobro de valores no acordados",
+  "No se presentó a la cita",
+  "Comportamiento inapropiado durante el encuentro",
+  "El perfil no correspondía a la persona real",
+  "Mensajes ofensivos o acoso",
+  "Otro",
+];
+
+function mostrarErrorExportacion(mensaje) {
+  const el = document.getElementById("admExpError");
+  el.textContent = mensaje || "";
+  el.hidden = !mensaje;
+}
+
+function nombreArchivoDeRespuesta(respuesta, formato) {
+  const cd = respuesta.headers.get("Content-Disposition") || "";
+  const m = cd.match(/filename\*?=(?:UTF-8'')?"?([^";]+)"?/i);
+  if (m) {
+    try { return decodeURIComponent(m[1]); } catch { return m[1]; }
+  }
+  return `reportes.${formato}`;
+}
+
+async function exportarReportes() {
+  const boton = document.getElementById("admExpBoton");
+  const formato = valorSelect(document.getElementById("admExpFormato"));
+  const estado = valorSelect(document.getElementById("admExpEstado"));
+  const tipo = valorSelect(document.getElementById("admExpTipo"));
+  const motivo = valorSelect(document.getElementById("admExpMotivo"));
+  const desde = document.getElementById("admExpDesde").value;
+  const hasta = document.getElementById("admExpHasta").value;
+
+  mostrarErrorExportacion("");
+  if (!formato) { mostrarErrorExportacion("Elige el formato de exportación: Excel o PDF."); return; }
+  if (desde && hasta && desde > hasta) {
+    mostrarErrorExportacion("La fecha \"desde\" no puede ser posterior a la fecha \"hasta\".");
+    return;
+  }
+
+  const cuerpo = { formato };
+  if (estado) cuerpo.estado = estado;
+  if (tipo) cuerpo.tipo = tipo;
+  if (motivo) cuerpo.motivo = motivo;
+  if (desde) cuerpo.desde = desde;
+  if (hasta) cuerpo.hasta = hasta;
+
+  const textoOriginal = boton.textContent;
+  boton.disabled = true;
+  boton.textContent = "Generando…";
+  try {
+    const respuesta = await fetch(`${API_BASE}/admin/reportes/exportar`, {
+      method: "POST",
+      credentials: "same-origin",
+      headers: cabecerasAutenticadas(true),
+      body: JSON.stringify(cuerpo),
+    });
+    if (manejarSesionInvalida(respuesta)) return;
+
+    if (!respuesta.ok) {
+      const datos = await respuesta.json().catch(() => ({}));
+      mostrarErrorExportacion(textoError({ datos }, "No se pudo exportar los reportes. Inténtalo de nuevo."));
+      return;
+    }
+
+    const blob = await respuesta.blob();
+    const url = URL.createObjectURL(blob);
+    const enlace = document.createElement("a");
+    enlace.href = url;
+    enlace.download = nombreArchivoDeRespuesta(respuesta, formato);
+    document.body.appendChild(enlace);
+    enlace.click();
+    enlace.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+
+    const total = Number(respuesta.headers.get("X-Total-Reportes")) || 0;
+    mostrarToast(total ? `Exportación lista: ${total} ${total === 1 ? "reporte" : "reportes"}.` : "Exportación lista.");
+
+    // La exportación queda en la Auditoría: se recarga la tabla para que aparezca al instante.
+    paginaAuditoria = 1;
+    renderAuditoria();
+  } catch {
+    mostrarErrorExportacion("No se pudo conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.");
+  } finally {
+    boton.disabled = false;
+    boton.textContent = textoOriginal;
+  }
+}
+
+function inicializarExportacionReportes() {
+  if (!document.getElementById("admExportarReportes")) return;
+
+  const pintar = (hostId, id, opciones, valor) => {
+    const host = document.getElementById(hostId);
+    host.innerHTML = selectHtml({ id, opciones, valor });
+    enlazarSelects(host);
+  };
+
+  pintar("admExpFormatoHost", "admExpFormato", [["xlsx", "Excel (.xlsx)"], ["pdf", "PDF"]], "xlsx");
+  pintar("admExpEstadoHost", "admExpEstado", [["", "Todos"], ...Object.entries(ETIQUETAS_ESTADO_REPORTE)], "");
+  pintar("admExpTipoHost", "admExpTipo", [["", "Todos"], ...Object.entries(ETIQUETAS_TIPO_REPORTE)], "");
+  pintar("admExpMotivoHost", "admExpMotivo", [["", "Todos los motivos"], ...MOTIVOS_EXPORTACION.map((m) => [m, m])], "");
+
+  document.getElementById("admExpBoton").addEventListener("click", exportarReportes);
+}
+
 function inicializarReportes() {
   document.querySelectorAll("#admReportesFiltros .prf-subtab").forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -1025,6 +1136,7 @@ function inicializarReportes() {
       renderReportes();
     });
   });
+  inicializarExportacionReportes();
   renderReportes();
 }
 

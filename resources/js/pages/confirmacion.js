@@ -84,12 +84,45 @@ function mostrarNoEncontrada(contenedor) {
     </div>`;
 }
 
+// ---------- TEXTOS SEGÚN EL ESTADO DE LA RESERVA ----------
+// pendiente: esperando al anfitrión · aceptada: confirmada (se puede cancelar) · rechazada: sin acciones.
+function vistaSegunEstado(reserva) {
+  const cuando = `${formatFechaCorta(reserva.fecha_visita)}${reserva.hora_visita ? ` a las ${formatHora12(reserva.hora_visita)}` : ""}`;
+
+  if (reserva.estado === "aceptada") {
+    return {
+      icono: "✓", clase: "is-aceptada",
+      titulo: "¡Tu reserva fue aceptada!",
+      lead: "El anfitrión confirmó tu visita. Si ya no puedes asistir, cancélala desde aquí para que le avisemos.",
+      encabezado: `Tu visita está confirmada para el ${cuando}`,
+      puedeCancelar: true, textoCancelar: "Cancelar visita",
+    };
+  }
+  if (reserva.estado === "rechazada") {
+    return {
+      icono: "✕", clase: "is-rechazada",
+      titulo: "El anfitrión no aceptó tu solicitud",
+      lead: "Esta vez no fue posible. Puedes seguir buscando otras habitaciones disponibles.",
+      encabezado: `Visita solicitada para el ${cuando}`,
+      puedeCancelar: false, textoCancelar: "",
+    };
+  }
+  return {
+    icono: "✓", clase: "",
+    titulo: "Tu solicitud fue enviada",
+    lead: "Le avisamos al anfitrión sobre tu interés. Te contactaremos por correo en cuanto la confirme o la rechace.",
+    encabezado: `Tu visita queda programada para el ${cuando}`,
+    puedeCancelar: true, textoCancelar: "Cancelar solicitud",
+  };
+}
+
 // ---------- RENDER PRINCIPAL ----------
 function renderConfirmacion(reserva) {
   const contenedor = document.getElementById("confPage");
   const item = reserva.publicacion;
   const imagenPrincipal = (item.imagenes && item.imagenes[0]) || "";
   const nombreAnfitrion = item.propietario?.nombre || "Anfitrión no especificado";
+  const vista = vistaSegunEstado(reserva);
 
   contenedor.innerHTML = `
     <div class="conf-body">
@@ -108,13 +141,11 @@ function renderConfirmacion(reserva) {
       </div>
 
       <div class="conf-right">
-        <div class="conf-icon">✓</div>
-        <div class="conf-title">Tu solicitud fue enviada</div>
-        <p class="conf-lead">
-          Le avisamos al anfitrión sobre tu interés. Te contactaremos por correo en cuanto la confirme o la rechace.
-        </p>
+        <div class="conf-icon ${esc(vista.clase)}">${esc(vista.icono)}</div>
+        <div class="conf-title">${esc(vista.titulo)}</div>
+        <p class="conf-lead">${esc(vista.lead)}</p>
 
-        <div class="conf-trip-heading">Tu visita queda programada para el ${esc(formatFechaCorta(reserva.fecha_visita))}${esc(reserva.hora_visita ? ` a las ${formatHora12(reserva.hora_visita)}` : "")}</div>
+        <div class="conf-trip-heading">${esc(vista.encabezado)}</div>
 
         <div class="conf-detail">
           <span class="conf-detail-icon">📅</span>
@@ -131,14 +162,20 @@ function renderConfirmacion(reserva) {
         <div class="conf-price-row"><span>Costo mensual estimado</span><span>${esc(formatCOP(item.precio))}</span></div>
 
         <div class="conf-buttons">
+          ${vista.puedeCancelar ? `
           <button type="button" class="conf-btn-solid" id="contactarBtn">Contactar al propietario</button>
-          <button type="button" class="conf-btn-outline" id="cancelarBtn">Cancelar solicitud</button>
+          <button type="button" class="conf-btn-outline" id="cancelarBtn">${esc(vista.textoCancelar)}</button>` : `
+          <button type="button" class="conf-btn-solid" id="buscarOtrasBtn">Buscar otras habitaciones</button>`}
         </div>
       </div>
     </div>`;
 
-  document.getElementById("contactarBtn").addEventListener("click", () => contactarPropietario(item));
-  document.getElementById("cancelarBtn").addEventListener("click", () => cancelarSolicitud(reserva));
+  if (vista.puedeCancelar) {
+    document.getElementById("contactarBtn").addEventListener("click", () => contactarPropietario(item));
+    document.getElementById("cancelarBtn").addEventListener("click", () => cancelarSolicitud(reserva));
+  } else {
+    document.getElementById("buscarOtrasBtn").addEventListener("click", () => { window.location.href = appUrl("/habitaciones"); });
+  }
 }
 
 // ---------- CONTACTAR AL PROPIETARIO POR WHATSAPP ----------
@@ -155,13 +192,20 @@ function contactarPropietario(item) {
 
 // ---------- CANCELAR LA SOLICITUD (modal propio, sin confirm() ni alert()) ----------
 function cancelarSolicitud(reserva) {
+  const estabaAceptada = reserva.estado === "aceptada";
+  const cuando = `${formatFechaCorta(reserva.fecha_visita)}${reserva.hora_visita ? ` a las ${formatHora12(reserva.hora_visita)}` : ""}`;
+  const pregunta = estabaAceptada ? "¿Cancelar esta visita?" : "¿Cancelar esta solicitud?";
+  const aviso = estabaAceptada
+    ? `Le avisaremos al anfitrión que ya no podrás asistir a la visita del ${cuando}.`
+    : `Le avisaremos al anfitrión que ya no te interesa la visita del ${cuando}.`;
+
   const overlay = document.createElement("div");
   overlay.className = "cc-overlay";
   overlay.innerHTML = `
     <div class="cc-modal">
       <div class="cc-modal-icon is-warning">❓</div>
-      <div class="cc-modal-title">¿Cancelar esta solicitud?</div>
-      <p class="cc-modal-text">Le avisaremos al anfitrión que ya no te interesa la visita del ${esc(formatFechaCorta(reserva.fecha_visita))}${esc(reserva.hora_visita ? ` a las ${formatHora12(reserva.hora_visita)}` : "")}.</p>
+      <div class="cc-modal-title">${esc(pregunta)}</div>
+      <p class="cc-modal-text">${esc(aviso)}</p>
       <div class="cc-modal-buttons">
         <button type="button" class="cc-modal-btn-outline" id="ccMantenerBtn">No, mantener</button>
         <button type="button" class="cc-modal-btn-danger" id="ccConfirmarBtn">Sí, cancelar</button>
@@ -179,23 +223,47 @@ function cancelarSolicitud(reserva) {
         method: "PATCH",
         headers: cabecerasAutenticadas(false),
       });
-      if (!resp.ok) throw new Error("No se pudo cancelar la solicitud");
-      mostrarAvisoCancelacion();
+      if (!resp.ok) {
+        // Laravel explica el motivo (ej. "Esta solicitud ya no se puede cancelar.").
+        const datos = await resp.json().catch(() => ({}));
+        throw new Error(datos.message || datos.mensaje || "No se pudo cancelar la solicitud");
+      }
+      mostrarAvisoCancelacion(estabaAceptada ? "Visita cancelada" : "Solicitud cancelada");
     } catch (err) {
       console.error(err);
-      alert("No pudimos cancelar tu solicitud. Intenta de nuevo.");
+      mostrarErrorCancelacion(err.message || "No pudimos cancelar tu solicitud. Intenta de nuevo.");
     }
   });
 }
 
+// ---------- ERROR AL CANCELAR (modal propio, sin alert()) ----------
+function mostrarErrorCancelacion(mensaje) {
+  const overlay = document.createElement("div");
+  overlay.className = "cc-overlay";
+  overlay.innerHTML = `
+    <div class="cc-modal">
+      <div class="cc-modal-icon is-warning">!</div>
+      <div class="cc-modal-title">No pudimos cancelar</div>
+      <p class="cc-modal-text">${esc(mensaje)}</p>
+      <div class="cc-modal-buttons">
+        <button type="button" class="cc-modal-btn-outline" id="ccEntendidoBtn">Entendido</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+
+  const cerrar = () => { overlay.remove(); window.location.reload(); };
+  overlay.addEventListener("click", (e) => { if (e.target === overlay) cerrar(); });
+  document.getElementById("ccEntendidoBtn").addEventListener("click", cerrar);
+}
+
 // ---------- AVISO DE SOLICITUD CANCELADA (redirige a Habitaciones) ----------
-function mostrarAvisoCancelacion() {
+function mostrarAvisoCancelacion(titulo) {
   const overlay = document.createElement("div");
   overlay.className = "cc-overlay";
   overlay.innerHTML = `
     <div class="cc-modal">
       <div class="cc-modal-icon is-success">✓</div>
-      <div class="cc-modal-title">Solicitud cancelada</div>
+      <div class="cc-modal-title">${esc(titulo)}</div>
       <p class="cc-modal-text">Te llevamos de vuelta a Habitaciones para que sigas buscando tu próximo espacio.</p>
       <div class="cc-toast-progress"><span></span></div>
     </div>`;

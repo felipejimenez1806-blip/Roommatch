@@ -9,6 +9,7 @@ use App\Models\Cita;
 use App\Models\Notificacion;
 use App\Models\PersonaRoomie;
 use App\Models\Reporte;
+use App\Services\AgendaService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -128,22 +129,47 @@ class CitaController extends Controller
      * PATCH /api/citas/{cita}/cancelar
      * Reemplaza a confirmarCancelacion() de confirmacion-cita.js. La
      * ejecuta el SOLICITANTE (quien pidió la cita), igual que
-     * ReservaController::cancelar().
+     * ReservaController::cancelar(): pendiente o ya aceptada. Si estaba
+     * aceptada, avisa al roomie y la saca de las dos agendas.
      */
-    public function cancelar(Request $request, Cita $cita)
+    public function cancelar(Request $request, Cita $cita, AgendaService $agenda)
     {
         if ($cita->id_usuario !== $request->user()->id_usuario) {
             abort(403, 'No puedes cancelar una cita que no es tuya.');
         }
 
-        if ($cita->estado_cita !== 'pendiente') {
+        if (! in_array($cita->estado_cita, ['pendiente', 'aceptada'], true)) {
             abort(422, 'Esta cita ya no se puede cancelar.');
         }
+
+        $estabaAceptada = $cita->estado_cita === 'aceptada';
 
         $cita->update([
             'estado_cita' => 'cancelada',
             'fecha_respuesta' => now(),
         ]);
+
+        if ($estabaAceptada) {
+            $cita->loadMissing('persona');
+            $persona = $cita->persona;
+
+            if ($persona) {
+                $quien = $cita->contacto_nombre ?: $request->user()->nombre_completo;
+                $cuando = $cita->fecha_cita->format('d/m/Y')
+                    .($cita->hora_cita ? ' a las '.substr($cita->hora_cita, 0, 5) : '');
+
+                Notificacion::create([
+                    'id_usuario' => $persona->id_usuario,
+                    'tipo' => 'cita_cancelada',
+                    'mensaje' => "{$quien} canceló la cita del {$cuando}.",
+                    'objetivo_titulo' => $quien,
+                    'link' => '/mis-publicaciones',
+                    'leida' => false,
+                ]);
+            }
+
+            $agenda->avisarCita($cita);
+        }
 
         return response()->json(['mensaje' => 'Cita cancelada.']);
     }
@@ -266,7 +292,7 @@ class CitaController extends Controller
      * Sin este método, ninguna cita podía llegar nunca a 'aceptada', así
      * que calificar/reportar quedaban bloqueados en la práctica.
      */
-    public function actualizarEstado(Request $request, Cita $cita)
+    public function actualizarEstado(Request $request, Cita $cita, AgendaService $agenda)
     {
         $request->validate([
             'estado' => 'required|in:aceptada,rechazada',
@@ -276,6 +302,15 @@ class CitaController extends Controller
 
         if ($cita->persona->id_usuario !== $request->user()->id_usuario) {
             abort(403, 'No puedes gestionar citas de un perfil de roomie que no es tuyo.');
+        }
+
+        if ($cita->estado_cita === 'cancelada') {
+            abort(422, 'El solicitante canceló esta cita.');
+        }
+
+        // Doble clic o petición repetida: ya está en ese estado, no se duplica la notificación.
+        if ($cita->estado_cita === $request->estado) {
+            return response()->json(['mensaje' => 'Estado actualizado.']);
         }
 
         $cita->update([
@@ -295,6 +330,9 @@ class CitaController extends Controller
             'link' => '/perfil#panelCitas',
             'leida' => false,
         ]);
+
+        // Aceptada entra a la agenda de las dos personas; rechazada la saca si ya estaba.
+        $agenda->avisarCita($cita);
 
         return response()->json(['mensaje' => 'Estado actualizado.']);
     }
