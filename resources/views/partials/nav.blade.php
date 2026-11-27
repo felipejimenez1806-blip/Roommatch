@@ -50,7 +50,7 @@
         <span class="user-name" id="userName">{{ $primerNombreNav }}</span>
       </a>
     @else
-      <a class="btn-outline" href="{{ route('login') }}">Iniciar sesión</a>
+      <a class="btn-outline" href="http://localhost:8080/login">Iniciar sesión</a>
       <a class="btn-solid" href="{{ route('signup') }}">Registrarse</a>
     @endauth
   </div>

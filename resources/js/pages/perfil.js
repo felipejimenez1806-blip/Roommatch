@@ -9,7 +9,7 @@
 //   - Reservas -> GET /api/mis-reservas + calificar/reportar
 //   - Mis citas -> GET /api/mis-citas + calificar/reportar
 //   - Notificaciones -> GET /api/notificaciones + marcar-leidas
-//   - Mi agenda -> GET /api/agenda/pase (pase firmado) + marco con la pantalla de Java
+//   - Mi agenda -> marco con la pantalla de agenda de Java (igual que el Chat)
 // El navbar (avatar/nombre/badge) ya lo maneja nav.js, compartido en
 // todas las páginas — este archivo ya NO lo toca directamente.
 // Favoritos->Roomies queda con estado vacío: pendiente de migrar.
@@ -24,7 +24,7 @@
 // disponibles para todo cliente sin importar su rol.
 // ============================================================
 
-import { API_BASE, appUrl, LIMITES as L } from "../core/config.js";
+import { API_BASE, appUrl, JAVA_URL, urlAgenda, urlChat, urlChats, LIMITES as L } from "../core/config.js";
 import { requerirSesion, obtenerUsuario, actualizarUsuario, cabecerasAutenticadas, manejarNoAutorizado } from "../core/auth.js";
 import { esc } from "../core/html.js";
 import { OPCIONES_AMBIENTE } from "../core/convivencia.js";
@@ -167,6 +167,10 @@ document.querySelectorAll(".prf-nav-item[data-panel]").forEach((btn) => {
 
     if (btn.dataset.panel === "panelAgenda") {
       abrirAgenda();
+    }
+
+    if (btn.dataset.panel === "panelChat") {
+      abrirChat();
     }
   });
 });
@@ -914,6 +918,7 @@ const NOTIF_ICONOS = {
   cita_cancelada: { icono: "✕", clase: "is-descartado" },
   mensaje_contacto_nuevo: { icono: "✉️", clase: "is-info" },
   agenda_nota: { icono: "📝", clase: "is-info" },
+  chat_mensaje: { icono: "💬", clase: "is-info" },
 };
 
 async function renderNotificaciones() {
@@ -960,11 +965,10 @@ async function marcarNotificacionesLeidas() {
 // ============================================================
 // 7) MI AGENDA (pantalla de Java dentro de un marco)
 // ============================================================
-// 1) Se le pide a Laravel un pase de entrada (dura 60 s y se usa una sola vez).
-// 2) Se comprueba que Java responde desde el navegador, para poder avisar con claridad si no.
-// 3) Se carga la dirección del pase en un marco: Java abre la sesión y muestra la agenda.
-// Se abre solo la primera vez (o con "Recargar agenda"): así no se pierde lo que la persona
-// estaba viendo cada vez que cambia de pestaña del perfil.
+// Mismo esquema que el Chat: sin pase ni sesión aparte. Java necesita saber quién soy (idUsuario)
+// y muestra mis reservas y citas aceptadas. Se abre solo la primera vez que se entra al panel
+// (o con "Recargar agenda"): así no se pierde lo que la persona estaba viendo cada vez que
+// cambia de pestaña del perfil.
 const agendaContenedor = document.getElementById("agendaContenedor");
 let agendaAbierta = false;
 let agendaAbriendo = false;
@@ -978,20 +982,13 @@ function mostrarEstadoAgenda(mensaje, { error = false } = {}) {
   document.getElementById("agendaReintentarBtn")?.addEventListener("click", () => abrirAgenda({ forzar: true }));
 }
 
-// Con mode:"no-cors" el navegador no deja leer la respuesta, pero la promesa solo falla si no
-// hay conexión con el servidor (apagado, dirección mal escrita, bloqueado...). Eso es justo lo
-// que queremos saber. Se llama a /agenda/entrar sin pase: Java responde "pase inválido" y no
-// se gasta ningún pase.
-async function javaResponde(urlDelPase) {
+// Comprueba que Java responde (pide un archivo estático suyo, sin efectos). Con mode:"no-cors" no se
+// puede leer la respuesta, pero la promesa solo falla si no hay conexión: justo lo que queremos saber.
+async function javaResponde() {
   const control = new AbortController();
   const temporizador = setTimeout(() => control.abort(), 4000);
   try {
-    await fetch(new URL(urlDelPase).origin + "/agenda/entrar", {
-      mode: "no-cors",
-      cache: "no-store",
-      credentials: "omit",
-      signal: control.signal,
-    });
+    await fetch(`${JAVA_URL}/css/agenda.css`, { mode: "no-cors", cache: "no-store", credentials: "omit", signal: control.signal });
     return true;
   } catch {
     return false;
@@ -1002,46 +999,103 @@ async function javaResponde(urlDelPase) {
 
 async function abrirAgenda({ forzar = false } = {}) {
   if (agendaAbriendo || (agendaAbierta && !forzar)) return;
+  const yo = obtenerUsuario();
+  if (!yo || !JAVA_URL) {
+    mostrarEstadoAgenda("La agenda no está configurada. Avisa al equipo técnico.", { error: true });
+    return;
+  }
   agendaAbriendo = true;
   agendaAbierta = false;
   mostrarEstadoAgenda("Abriendo tu agenda…");
 
   try {
-    const respuesta = await fetch(`${API_BASE}/agenda/pase`, { headers: cabecerasAutenticadas(false) });
-    if (manejarNoAutorizado(respuesta)) return;
-    const datos = await leerRespuesta(respuesta);
-
-    if (!respuesta.ok || !datos.url) {
-      mostrarEstadoAgenda(
-        mensajeGeneral(respuesta, datos, "No pudimos abrir tu agenda. Intenta de nuevo en unos minutos."),
-        { error: true }
-      );
-      return;
-    }
-
-    if (!(await javaResponde(datos.url))) {
+    if (!(await javaResponde())) {
       mostrarEstadoAgenda(
         "El servicio de agenda no responde en este momento. Tus reservas y citas están a salvo; intenta de nuevo en unos minutos.",
         { error: true }
       );
       return;
     }
-
     const marco = document.createElement("iframe");
     marco.className = "prf-agenda-frame";
     marco.title = "Mi agenda";
     marco.referrerPolicy = "no-referrer";
-    marco.src = datos.url;
+    marco.src = urlAgenda(yo.id);
     agendaContenedor.replaceChildren(marco);
     agendaAbierta = true;
-  } catch {
-    mostrarEstadoAgenda("No pudimos conectar. Revisa tu conexión a internet e intenta de nuevo.", { error: true });
   } finally {
     agendaAbriendo = false;
   }
 }
 
 document.getElementById("agendaRecargarBtn").addEventListener("click", () => abrirAgenda({ forzar: true }));
+
+// ============================================================
+// 8) CHAT (pantalla del chat de Java dentro de un marco)
+// ============================================================
+// Mismo esquema que Mi agenda: se abre la primera vez que se entra al panel (o con "Recargar chat").
+// Si se llegó desde un botón "Contactar" (?chat=id_usuario), se abre directo esa conversación;
+// si no, se ve la lista de chats. Los dos usuarios (quien pidió y quien recibió) ven lo mismo.
+const chatContenedor = document.getElementById("chatContenedor");
+let chatAbierto = false;
+let chatAbriendo = false;
+let chatIdContacto = new URLSearchParams(window.location.search).get("chat");
+
+function mostrarEstadoChat(mensaje, { error = false } = {}) {
+  chatContenedor.innerHTML = `
+    <div class="prf-empty prf-agenda-estado ${error ? "is-error" : ""}">
+      <p>${esc(mensaje)}</p>
+      ${error ? '<button type="button" class="prf-photo-btn" id="chatReintentarBtn">Intentar de nuevo</button>' : ""}
+    </div>`;
+  document.getElementById("chatReintentarBtn")?.addEventListener("click", () => abrirChat({ forzar: true }));
+}
+
+// Comprueba que Java responde (pide un archivo estático suyo, sin efectos). Con mode:"no-cors" no se
+// puede leer la respuesta, pero la promesa solo falla si no hay conexión: justo lo que queremos saber.
+async function chatJavaResponde() {
+  const control = new AbortController();
+  const temporizador = setTimeout(() => control.abort(), 4000);
+  try {
+    await fetch(`${JAVA_URL}/css/chat.css`, { mode: "no-cors", cache: "no-store", credentials: "omit", signal: control.signal });
+    return true;
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(temporizador);
+  }
+}
+
+async function abrirChat({ forzar = false } = {}) {
+  if (chatAbriendo || (chatAbierto && !forzar)) return;
+  const yo = obtenerUsuario();
+  if (!yo || !JAVA_URL) {
+    mostrarEstadoChat("El chat no está configurado. Avisa al equipo técnico.", { error: true });
+    return;
+  }
+  chatAbriendo = true;
+  chatAbierto = false;
+  mostrarEstadoChat("Abriendo tus chats…");
+
+  try {
+    if (!(await chatJavaResponde())) {
+      mostrarEstadoChat("El servicio de chat no responde en este momento. Intenta de nuevo en unos minutos.", { error: true });
+      return;
+    }
+    const marco = document.createElement("iframe");
+    marco.className = "prf-chat-frame";
+    marco.title = "Chat";
+    marco.referrerPolicy = "no-referrer";
+    marco.src = chatIdContacto ? urlChat(yo.id, chatIdContacto) : urlChats(yo.id);
+    chatContenedor.replaceChildren(marco);
+    chatAbierto = true;
+    // La conversación pedida solo se abre la primera vez; al recargar se ve la lista completa.
+    chatIdContacto = null;
+  } finally {
+    chatAbriendo = false;
+  }
+}
+
+document.getElementById("chatRecargarBtn").addEventListener("click", () => abrirChat({ forzar: true }));
 
 // ---------- INICIALIZACIÓN ----------
 renderDatosPersonales();

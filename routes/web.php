@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AuthJavaController;
 use App\Http\Controllers\SocialAuthController;
 
 /*
@@ -45,6 +46,12 @@ Route::get('/auth/{proveedor}/redirect', [SocialAuthController::class, 'redirect
     ->name('auth.social.redirect');
 Route::get('/auth/{proveedor}/callback', [SocialAuthController::class, 'callback'])
     ->name('auth.social.callback');
+
+// Entrada de los clientes que inician sesión en Java (Spring): llegan con un pase firmado de un solo uso
+// (ver PaseJavaService). Abre la sesión de Laravel y manda al dashboard. Límite de peticiones por IP.
+Route::get('/auth/java/entrar', [AuthJavaController::class, 'entrar'])
+    ->middleware('throttle:20,1')
+    ->name('auth.java.entrar');
 
 // Onboarding: exige sesión pero NO pasa por zona.cliente (esa zona manda aquí
 // a quien tiene el perfil incompleto; pasar por ella sería un bucle).

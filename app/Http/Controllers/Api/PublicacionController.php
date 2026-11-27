@@ -427,15 +427,15 @@ class PublicacionController extends Controller
             $resultado[$campo] = (bool) ($c[$campo] ?? false);
         }
 
-        $resultado['ambiente_hogar'] = $c['ambiente_hogar'] ?: null;
-        $resultado['tamano_habitacion'] = $c['tamano_habitacion'] ?: null;
-        $resultado['tipo_cama'] = $c['tipo_cama'] ?: null;
-        $resultado['detalles_incluidos'] = $c['detalles_incluidos'] ?: null;
+        $resultado['ambiente_hogar'] = ($c['ambiente_hogar'] ?? null) ?: null;
+        $resultado['tamano_habitacion'] = ($c['tamano_habitacion'] ?? null) ?: null;
+        $resultado['tipo_cama'] = ($c['tipo_cama'] ?? null) ?: null;
+        $resultado['detalles_incluidos'] = ($c['detalles_incluidos'] ?? null) ?: null;
         // ?? y no ?: — con ?: el 0 (válido: espacio sin otros habitantes) se guardaba como NULL.
         $resultado['numero_habitantes'] = $c['numero_habitantes'] ?? null;
-        $resultado['horario_silencio'] = $c['horario_silencio'] ?: null;
-        $resultado['horario_entrada'] = $c['horario_entrada'] ?: null;
-        $resultado['distancia_transporte'] = $c['distancia_transporte'] ?: null;
+        $resultado['horario_silencio'] = ($c['horario_silencio'] ?? null) ?: null;
+        $resultado['horario_entrada'] = ($c['horario_entrada'] ?? null) ?: null;
+        $resultado['distancia_transporte'] = ($c['distancia_transporte'] ?? null) ?: null;
 
         return $resultado;
     }

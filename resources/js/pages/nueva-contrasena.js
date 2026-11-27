@@ -114,7 +114,7 @@ form.addEventListener("submit", async (evento) => {
     formMessage.textContent = "¡Contraseña actualizada! Redirigiendo al login...";
     mostrarToast("Contraseña actualizada");
     setTimeout(() => {
-      window.location.href = appUrl("/login");
+      window.location.href = "http://localhost:8080/";
     }, 1000);
   } catch (error) {
     setCargando(false);

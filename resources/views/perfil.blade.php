@@ -47,6 +47,10 @@
         <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M9 16l2 2 4-4"/></svg>
         Mi agenda
       </button>
+      <button class="prf-nav-item" data-panel="panelChat">
+        <svg viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg>
+        Chat
+      </button>
     </div>
 
     <a class="prf-nav-item" href="{{ route('mis-publicaciones') }}">
@@ -139,6 +143,18 @@
         <button type="button" class="prf-photo-btn" id="agendaRecargarBtn">Recargar agenda</button>
       </div>
       <div id="agendaContenedor" class="prf-agenda-contenedor" aria-live="polite"></div>
+    </section>
+
+    <!-- CHAT (pantalla del chat de Java dentro de un marco) -->
+    <section class="prf-panel" id="panelChat">
+      <div class="prf-agenda-head">
+        <div>
+          <h1 class="prf-title">Chat</h1>
+          <p class="prf-subtitle">Conversaciones con quienes tienes una reserva o una cita</p>
+        </div>
+        <button type="button" class="prf-photo-btn" id="chatRecargarBtn">Recargar chat</button>
+      </div>
+      <div id="chatContenedor" class="prf-agenda-contenedor" aria-live="polite"></div>
     </section>
 
   </main>
