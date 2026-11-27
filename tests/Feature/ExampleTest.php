@@ -2,18 +2,19 @@
 
 namespace Tests\Feature;
 
-// use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
+use Tests\FeatureTestCase;
 
-class ExampleTest extends TestCase
+/**
+ * Prueba de humo: la página de inicio carga para un visitante sin sesión.
+ * (Antes fallaba con error 500 porque la base de pruebas estaba vacía.)
+ */
+class ExampleTest extends FeatureTestCase
 {
-    /**
-     * A basic test example.
-     */
-    public function test_the_application_returns_a_successful_response(): void
+    public function test_la_pagina_de_inicio_responde_correctamente(): void
     {
-        $response = $this->get('/');
+        // Los estilos y scripts compilados con Vite no existen en el entorno de pruebas.
+        $this->withoutVite();
 
-        $response->assertStatus(200);
+        $this->get('/')->assertOk();
     }
 }

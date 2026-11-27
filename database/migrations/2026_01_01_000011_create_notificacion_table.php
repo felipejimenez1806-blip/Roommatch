@@ -29,6 +29,7 @@ return new class extends Migration
                 'publicacion_bajada',
                 'persona_bajada',
                 'agenda_nota',
+                'chat_mensaje',
             ]);
             $table->string('mensaje', 500);
             $table->string('objetivo_titulo', 255)->nullable();

@@ -180,17 +180,13 @@ function renderConfirmacion(cita) {
   }
 }
 
-// ---------- CONTACTAR AL ROOMIE POR WHATSAPP ----------
+// ---------- CONTACTAR AL ROOMIE POR EL CHAT ----------
+// Este botón solo existe en esta pantalla, que solo se ve cuando la cita ya fue solicitada
+// (y desaparece si se cancela o se rechaza). Lleva a la pestaña Chat del perfil
+// con la conversación del roomie ya abierta (?chat=id_usuario del roomie).
 function contactarRoomie(item) {
-  if (!item.telefono) {
-    alert("Este roomie todavía no tiene un número de contacto registrado.");
-    return;
-  }
-  const mensaje = encodeURIComponent(
-    `Hola ${item.nombre.split(" ")[0]}, vi tu perfil en RoomMatch y me gustaría que nos conozcamos para visitar juntos el lugar que compartiríamos.`
-  );
-  // Solo dígitos en la ruta: el teléfono viene de otro usuario y no debe poder alterar la URL.
-  window.open(`https://wa.me/${String(item.telefono).replace(/\D/g, "")}?text=${mensaje}`, "_blank", "noopener");
+  if (!item.id_usuario) return;
+  window.location.href = appUrl(`/perfil?chat=${encodeURIComponent(item.id_usuario)}#panelChat`);
 }
 
 // ---------- CANCELAR LA CITA (modal propio, sin confirm() ni alert()) ----------

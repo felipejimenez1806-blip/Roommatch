@@ -363,6 +363,7 @@ class ReservaController extends Controller
                 'rating' => $p->promedio_calificacion,
                 'imagenes' => $imagenes ?: array_filter([$p->img]),
                 'propietario' => $p->propietario ? [
+                    'id' => $p->propietario->id_usuario,
                     'nombre' => $p->propietario->nombre_completo,
                     'telefono' => $p->propietario->telefono,
                 ] : null,

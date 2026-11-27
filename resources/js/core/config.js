@@ -41,6 +41,27 @@ export const LOCALIDADES = APP.localidades ?? [];
  */
 export const LIMITES = APP.limites ?? {};
 
+/** Dirección pública del servicio de Java (Spring Boot), sin barra final. Ej: http://localhost:8080 */
+export const JAVA_URL = APP.javaUrl ?? "";
+
+/**
+ * Dirección del chat de Java entre dos usuarios (los dos son id_usuario).
+ * El chat de Java necesita saber quién soy (idUsuario) y con quién hablo (idContacto).
+ */
+export function urlChat(idUsuario, idContacto) {
+  return `${JAVA_URL}/chat?idUsuario=${encodeURIComponent(idUsuario)}&idContacto=${encodeURIComponent(idContacto)}`;
+}
+
+/** Dirección de la lista de chats de Java de un usuario (id_usuario), sin ninguna conversación abierta. */
+export function urlChats(idUsuario) {
+  return `${JAVA_URL}/chats?idUsuario=${encodeURIComponent(idUsuario)}`;
+}
+
+/** Dirección de la agenda de Java de un usuario (id_usuario): sus reservas y citas aceptadas en un calendario. */
+export function urlAgenda(idUsuario) {
+  return `${JAVA_URL}/agenda?idUsuario=${encodeURIComponent(idUsuario)}`;
+}
+
 /** Parte de ruta del subdirectorio, sin barra final. "" si vive en la raíz. */
 export const BASE_PATH = APP.basePath;
 

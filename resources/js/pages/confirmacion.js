@@ -178,16 +178,13 @@ function renderConfirmacion(reserva) {
   }
 }
 
-// ---------- CONTACTAR AL PROPIETARIO POR WHATSAPP ----------
+// ---------- CONTACTAR AL PROPIETARIO POR EL CHAT ----------
+// Este botón solo existe en esta pantalla, que solo se ve cuando la solicitud ya fue enviada
+// (y desaparece si la solicitud se cancela o se rechaza). Lleva a la pestaña Chat del perfil
+// con la conversación del anfitrión ya abierta (?chat=id_usuario del anfitrión).
 function contactarPropietario(item) {
-  const telefono = item.propietario?.telefono;
-  if (!telefono) {
-    alert("Este anfitrión todavía no tiene un número de contacto registrado.");
-    return;
-  }
-  const mensaje = encodeURIComponent(`Hola, vi tu publicación "${item.titulo}" en RoomMatch y quisiera más información.`);
-  // Solo dígitos en la ruta: el teléfono viene de otro usuario y no debe poder alterar la URL.
-  window.open(`https://wa.me/${String(telefono).replace(/\D/g, "")}?text=${mensaje}`, "_blank", "noopener");
+  if (!item.propietario?.id) return;
+  window.location.href = appUrl(`/perfil?chat=${encodeURIComponent(item.propietario.id)}#panelChat`);
 }
 
 // ---------- CANCELAR LA SOLICITUD (modal propio, sin confirm() ni alert()) ----------

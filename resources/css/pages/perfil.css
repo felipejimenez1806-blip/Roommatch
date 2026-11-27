@@ -763,9 +763,31 @@ a.prf-notif-card:hover {
 }
 /* Mi agenda: el panel usa más ancho y el marco más alto (solo cuando ese panel está abierto) */
 
-.prf-page:has(#panelAgenda.active) { max-width: 1480px; }
-.prf-page:has(#panelAgenda.active) .prf-content { flex: 1; min-width: 0; }
+.prf-page:has(#panelAgenda.active),
+.prf-page:has(#panelChat.active) { max-width: 1480px; }
+.prf-page:has(#panelAgenda.active) .prf-content,
+.prf-page:has(#panelChat.active) .prf-content { flex: 1; min-width: 0; }
 
 @media (min-width: 601px) {
   .prf-agenda-frame { height: calc(100vh - 150px); min-height: 680px; }
+}
+
+/* Chat: marco más compacto, calculado para que la página completa quepa en la pantalla (sin barra
+   de desplazamiento propia). Se resta lo que ocupan la barra superior, el título del panel, el
+   espacio de la página y el pie de página. La barra de desplazamiento queda solo dentro del chat
+   (lista de contactos y mensajes), que es donde hace falta cuando hay muchos. */
+.prf-chat-frame {
+  display: block;
+  width: 100%;
+  height: calc(100vh - 350px);
+  min-height: 380px;
+  border: 1.5px solid #ececec;
+  border-radius: 14px;
+  background: #fff;
+}
+/* Menos espacio vacío debajo del chat para que el pie de página no empuje la página hacia abajo */
+.prf-page:has(#panelChat.active) { padding-bottom: 24px; }
+
+@media (max-width: 600px) {
+  .prf-chat-frame { height: 70vh; min-height: 420px; }
 }

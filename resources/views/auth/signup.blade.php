@@ -103,7 +103,7 @@
         </button>
 
         <p class="small-note" id="loginNote">¿Ya tienes una cuenta?</p>
-        <a href="{{ route('login') }}" id="loginLink" class="btn-secondary">Inicia sesión</a>
+        <a href="http://localhost:8080/login" id="loginLink" class="btn-secondary">Inicia sesión</a>
 
         <div class="divider"><span>o regístrate con</span></div>
 

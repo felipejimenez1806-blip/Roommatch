@@ -383,6 +383,7 @@ class CitaController extends Controller
             'mensaje' => $c->mensaje,
             'persona' => [
                 'id' => $p->id_persona,
+                'id_usuario' => $p->id_usuario,
                 'nombre' => $p->usuario->nombre_completo ?? 'Usuario',
                 'zona' => $p->zona,
                 'ciudad' => $p->ciudad,

@@ -42,7 +42,7 @@
           <span class="spinner" hidden></span>
         </button>
 
-        <a href="{{ route('login') }}" class="forgot-link">Volver a iniciar sesión</a>
+        <a href="http://localhost:8080/login" class="forgot-link">Volver a iniciar sesión</a>
       </form>
     </div>
   </main>

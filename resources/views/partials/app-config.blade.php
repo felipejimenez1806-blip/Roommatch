@@ -38,6 +38,7 @@
     baseUrl: {{ \Illuminate\Support\Js::from(rtrim(url('/'), '/')) }},
     apiBase: {{ \Illuminate\Support\Js::from(url('/api')) }},
     basePath: {{ \Illuminate\Support\Js::from(rtrim(parse_url(url('/'), PHP_URL_PATH) ?? '', '/')) }},
+    javaUrl: {{ \Illuminate\Support\Js::from(rtrim((string) config('servicios.url_publica'), '/')) }},
     user: {{ \Illuminate\Support\Js::from($usuarioSesion ? $usuarioSesion->paraFrontend() : null) }},
     rolActivo: {{ \Illuminate\Support\Js::from($usuarioSesion ? session(\App\Services\SesionUsuario::ROL_ACTIVO) : null) }},
     permisos: {{ \Illuminate\Support\Js::from($usuarioSesion ? \App\Support\Permisos::delRolActivo() : []) }},
