@@ -1,0 +1,112 @@
+﻿C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\Admin\ExportarReportesController.php:55:Relation 'administrador' is not found in App\Models\Reporte model.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\Admin\ExportarReportesController.php:55:Relation 'autor' is not found in App\Models\Reporte model.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\Admin\ExportarReportesController.php:55:Relation 'escaladoPor' is not found in App\Models\Reporte model.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\Admin\PersonaRoomieController.php:42:Relation 'calificaciones' is not found in App\Models\PersonaRoomie model.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\Admin\PersonaRoomieController.php:42:Relation 'usuario' is not found in App\Models\PersonaRoomie model.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\Admin\PersonaRoomieController.php:47:Relation 'usuario' is not found in App\Models\PersonaRoomie model.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\Admin\PersonaRoomieController.php:101:Relation 'usuario' is not found in App\Models\PersonaRoomie model.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\Admin\PersonaRoomieController.php:145:Relation 'usuario' is not found in App\Models\PersonaRoomie model.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\Admin\PublicacionController.php:40:Relation 'calificaciones' is not found in App\Models\Publicacion model.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\Admin\PublicacionController.php:40:Relation 'propietario' is not found in App\Models\Publicacion model.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\Admin\PublicacionController.php:45:Relation 'propietario' is not found in App\Models\Publicacion model.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\Admin\ReporteController.php:35:Relation 'administrador' is not found in App\Models\Reporte model.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\Admin\ReporteController.php:35:Relation 'autor' is not found in App\Models\Reporte model.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\Admin\ReporteController.php:35:Relation 'escaladoPor' is not found in App\Models\Reporte model.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\Admin\ReporteController.php:170:Access to an undefined property App\Models\Reporte::$escaladoPor.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\Admin\ReporteController.php:304:Relation 'usuario' is not found in App\Models\PersonaRoomie model.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\Admin\UsuarioController.php:29:Relation 'roles' is not found in App\Models\Usuario model.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\Admin\UsuarioController.php:514:Relation 'roles' is not found in App\Models\Usuario model.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\Admin\UsuarioController.php:521:Access to an undefined property App\Models\Usuario::$roles.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\AuthController.php:64:Relation 'roles' is not found in App\Models\Usuario model.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\AuthController.php:154:Relation 'roles' is not found in App\Models\Usuario model.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\CitaController.php:123:Relation 'persona' is not found in App\Models\Cita model.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\CitaController.php:153:Relation 'persona' is not found in App\Models\Cita model.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\CitaController.php:154:Access to an undefined property App\Models\Cita::$persona.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\CitaController.php:197:Relation 'persona' is not found in App\Models\Cita model.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\CitaController.php:223:Relation 'persona' is not found in App\Models\Cita model.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\CitaController.php:228:Access to an undefined property App\Models\Cita::$persona.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\CitaController.php:266:Relation 'persona' is not found in App\Models\Cita model.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\CitaController.php:266:Relation 'solicitante' is not found in App\Models\Cita model.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\CitaController.php:301:Relation 'persona' is not found in App\Models\Cita model.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\CitaController.php:303:Access to an undefined property App\Models\Cita::$persona.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\CitaController.php:374:Access to an undefined property App\Models\Cita::$persona.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\FavoritoController.php:36:Access to an undefined property App\Models\Favorito::$publicacion.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\FavoritoController.php:38:Access to an undefined property App\Models\Favorito::$publicacion.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\FavoritoController.php:39:Access to an undefined property App\Models\Favorito::$publicacion.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\FavoritoController.php:40:Access to an undefined property App\Models\Favorito::$publicacion.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\FavoritoController.php:41:Access to an undefined property App\Models\Favorito::$publicacion.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\FavoritoController.php:42:Access to an undefined property App\Models\Favorito::$publicacion.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\FavoritoController.php:87:Access to an undefined property App\Models\Favorito::$persona.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\FavoritoController.php:89:Access to an undefined property App\Models\Favorito::$persona.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\FavoritoController.php:91:Access to an undefined property App\Models\Favorito::$persona.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\FavoritoController.php:92:Access to an undefined property App\Models\Favorito::$persona.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\FavoritoController.php:93:Access to an undefined property App\Models\Favorito::$persona.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\FavoritoController.php:94:Access to an undefined property App\Models\Favorito::$persona.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\PersonaRoomieController.php:25:Relation 'calificaciones' is not found in App\Models\PersonaRoomie model.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\PersonaRoomieController.php:25:Relation 'caracteristicas' is not found in App\Models\PersonaRoomie model.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\PersonaRoomieController.php:25:Relation 'usuario' is not found in App\Models\PersonaRoomie model.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\PersonaRoomieController.php:70:Relation 'caracteristicas' is not found in App\Models\PersonaRoomie model.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\PersonaRoomieController.php:138:Relation 'calificaciones' is not found in App\Models\PersonaRoomie model.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\PersonaRoomieController.php:138:Relation 'caracteristicas' is not found in App\Models\PersonaRoomie model.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\PersonaRoomieController.php:138:Relation 'usuario' is not found in App\Models\PersonaRoomie model.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\PersonaRoomieController.php:159:Relation 'caracteristicas' is not found in App\Models\PersonaRoomie model.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\PersonaRoomieController.php:425:Access to an undefined property App\Models\PersonaRoomie::$caracteristicas.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\PersonaRoomieController.php:450:Access to an undefined property App\Models\PersonaRoomie::$caracteristicas.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\PersonaRoomieController.php:476:Access to an undefined property App\Models\PersonaRoomie::$caracteristicas.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\PersonaRoomieController.php:477:Access to an undefined property App\Models\PersonaRoomie::$usuario.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\PersonaRoomieController.php:481:Access to an undefined property App\Models\PersonaRoomie::$calificaciones.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\PublicacionController.php:25:Relation 'calificaciones' is not found in App\Models\Publicacion model.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\PublicacionController.php:25:Relation 'caracteristicas' is not found in App\Models\Publicacion model.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\PublicacionController.php:65:Relation 'caracteristicas' is not found in App\Models\Publicacion model.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\PublicacionController.php:132:Relation 'calificaciones' is not found in App\Models\Publicacion model.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\PublicacionController.php:132:Relation 'caracteristicas' is not found in App\Models\Publicacion model.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\PublicacionController.php:162:Relation 'calificaciones' is not found in App\Models\Publicacion model.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\PublicacionController.php:162:Relation 'caracteristicas' is not found in App\Models\Publicacion model.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\PublicacionController.php:162:Relation 'propietario' is not found in App\Models\Publicacion model.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\PublicacionController.php:175:Relation 'reservas' is not found in App\Models\Publicacion model.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\PublicacionController.php:192:Relation 'caracteristicas' is not found in App\Models\Publicacion model.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\PublicacionController.php:453:Access to an undefined property App\Models\Publicacion::$caracteristicas.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\PublicacionController.php:510:Access to an undefined property App\Models\Publicacion::$caracteristicas.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\PublicacionController.php:511:Access to an undefined property App\Models\Publicacion::$propietario.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\PublicacionController.php:516:Access to an undefined property App\Models\Publicacion::$calificaciones.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\PublicacionController.php:554:Access to an undefined property App\Models\Publicacion::$reservas.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\ReservaController.php:117:Relation 'publicacion' is not found in App\Models\Reserva model.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\ReservaController.php:131:Relation 'publicacion' is not found in App\Models\Reserva model.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\ReservaController.php:136:Access to an undefined property App\Models\Reserva::$publicacion.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\ReservaController.php:175:Relation 'publicacion' is not found in App\Models\Reserva model.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\ReservaController.php:177:Access to an undefined property App\Models\Reserva::$publicacion.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\ReservaController.php:199:Access to an undefined property App\Models\Reserva::$publicacion.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\ReservaController.php:200:Access to an undefined property App\Models\Reserva::$publicacion.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\ReservaController.php:201:Access to an undefined property App\Models\Reserva::$publicacion.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\ReservaController.php:235:Relation 'publicacion' is not found in App\Models\Reserva model.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\ReservaController.php:236:Access to an undefined property App\Models\Reserva::$publicacion.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\ReservaController.php:347:Access to an undefined property App\Models\Reserva::$publicacion.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\UsuarioController.php:180:Relation 'roles' is not found in App\Models\Usuario model.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\Api\UsuarioController.php:186:Access to an undefined property App\Models\Usuario::$roles.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\AuthJavaController.php:33:Relation 'roles' is not found in App\Models\Usuario model.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\SocialAuthController.php:76:Relation 'roles' is not found in App\Models\Usuario model.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\SocialAuthController.php:85:Access to an undefined property App\Models\Usuario::$roles.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Controllers\SocialAuthController.php:93:Relation 'roles' is not found in App\Models\Usuario model.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Http\Requests\RegistroRequest.php:68:Offset 0 on non-empty-list<string> on left side of ?? always exists and is not nullable.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Models\Notificacion.php:44:Unsafe call to private method App\Models\Notificacion::avisarAlEquipo() through static::.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Models\Notificacion.php:45:Relation 'roles' is not found in App\Models\Usuario model.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Models\Notificacion.php:60:Unsafe call to private method App\Models\Notificacion::avisarAlEquipo() through static::.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Models\Notificacion.php:61:Relation 'roles' is not found in App\Models\Usuario model.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Models\Notificacion.php:75:Unsafe call to private method App\Models\Notificacion::avisarAlEquipo() through static::.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Models\Notificacion.php:76:Relation 'roles' is not found in App\Models\Usuario model.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Models\Notificacion.php:161:Match expression does not handle remaining value: string
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Models\Usuario.php:134:Access to an undefined property App\Models\Usuario::$roles.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Models\Usuario.php:227:Access to an undefined property App\Models\Usuario::$roles.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Services\AgendaService.php:33:Relation 'publicacion' is not found in App\Models\Reserva model.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Services\AgendaService.php:33:Relation 'solicitante' is not found in App\Models\Reserva model.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Services\AgendaService.php:34:Access to an undefined property App\Models\Reserva::$publicacion.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Services\AgendaService.php:75:Relation 'persona' is not found in App\Models\Cita model.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Services\AgendaService.php:75:Relation 'solicitante' is not found in App\Models\Cita model.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Services\AgendaService.php:76:Access to an undefined property App\Models\Cita::$persona.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Services\PaseJavaService.php:110:Method App\Services\PaseJavaService::rechazar() never returns int so it can be removed from the return type.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Services\SesionUsuario.php:50:Relation 'roles' is not found in App\Models\Usuario model.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Services\SesionUsuario.php:51:Access to an undefined property App\Models\Usuario::$roles.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Services\SesionUsuario.php:127:Relation 'roles' is not found in App\Models\Usuario model.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Services\SesionUsuario.php:143:Access to an undefined property App\Models\Usuario::$roles.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Services\SesionUsuario.php:175:Relation 'roles' is not found in App\Models\Usuario model.
+C:\Users\User\Documents\roommatch\roommatch-laravel\app\Services\SesionUsuario.php:179:Access to an undefined property App\Models\Usuario::$roles.

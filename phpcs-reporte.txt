@@ -1,0 +1,457 @@
+﻿
+FILE: ...h\roommatch-laravel\app\Http\Controllers\Api\Admin\AuditoriaController.php
+--------------------------------------------------------------------------------
+FOUND 4 ERRORS AND 1 WARNING AFFECTING 3 LINES
+--------------------------------------------------------------------------------
+ 55 | WARNING | [ ] Line exceeds 120 characters; contains 133 characters
+ 64 | ERROR   | [x] Expected at least 1 space before "."; 0 found
+ 64 | ERROR   | [x] Expected at least 1 space after "."; 0 found
+ 67 | ERROR   | [x] Expected at least 1 space before "."; 0 found
+ 67 | ERROR   | [x] Expected at least 1 space after "."; 0 found
+--------------------------------------------------------------------------------
+PHPCBF CAN FIX THE 4 MARKED SNIFF VIOLATIONS AUTOMATICALLY
+--------------------------------------------------------------------------------
+
+
+FILE: ...atch-laravel\app\Http\Controllers\Api\Admin\ExportarReportesController.php
+--------------------------------------------------------------------------------
+FOUND 4 ERRORS AND 3 WARNINGS AFFECTING 3 LINES
+--------------------------------------------------------------------------------
+  35 | WARNING | [ ] Line exceeds 120 characters; contains 122 characters
+  85 | ERROR   | [x] Expected at least 1 space before "."; 0 found
+  85 | ERROR   | [x] Expected at least 1 space after "."; 0 found
+  85 | ERROR   | [x] Expected at least 1 space before "."; 0 found
+  85 | ERROR   | [x] Expected at least 1 space after "."; 0 found
+  85 | WARNING | [ ] Line exceeds 120 characters; contains 138 characters
+ 101 | WARNING | [ ] Line exceeds 120 characters; contains 134 characters
+--------------------------------------------------------------------------------
+PHPCBF CAN FIX THE 4 MARKED SNIFF VIOLATIONS AUTOMATICALLY
+--------------------------------------------------------------------------------
+
+
+FILE: ...match-laravel\app\Http\Controllers\Api\Admin\MensajeContactoController.php
+--------------------------------------------------------------------------------
+FOUND 8 ERRORS AND 1 WARNING AFFECTING 3 LINES
+--------------------------------------------------------------------------------
+  68 | ERROR   | [x] Expected at least 1 space before "."; 0 found
+  68 | ERROR   | [x] Expected at least 1 space after "."; 0 found
+  68 | ERROR   | [x] Expected at least 1 space before "."; 0 found
+  68 | ERROR   | [x] Expected at least 1 space after "."; 0 found
+ 124 | WARNING | [ ] Line exceeds 120 characters; contains 139 characters
+ 139 | ERROR   | [x] Expected at least 1 space before "."; 0 found
+ 139 | ERROR   | [x] Expected at least 1 space after "."; 0 found
+ 139 | ERROR   | [x] Expected at least 1 space before "."; 0 found
+ 139 | ERROR   | [x] Expected at least 1 space after "."; 0 found
+--------------------------------------------------------------------------------
+PHPCBF CAN FIX THE 8 MARKED SNIFF VIOLATIONS AUTOMATICALLY
+--------------------------------------------------------------------------------
+
+
+FILE: ...ommatch-laravel\app\Http\Controllers\Api\Admin\PersonaRoomieController.php
+--------------------------------------------------------------------------------
+FOUND 0 ERRORS AND 4 WARNINGS AFFECTING 4 LINES
+--------------------------------------------------------------------------------
+ 111 | WARNING | Line exceeds 120 characters; contains 159 characters
+ 122 | WARNING | Line exceeds 120 characters; contains 133 characters
+ 156 | WARNING | Line exceeds 120 characters; contains 142 characters
+ 162 | WARNING | Line exceeds 120 characters; contains 137 characters
+--------------------------------------------------------------------------------
+
+
+FILE: ...roommatch-laravel\app\Http\Controllers\Api\Admin\PublicacionController.php
+--------------------------------------------------------------------------------
+FOUND 0 ERRORS AND 3 WARNINGS AFFECTING 3 LINES
+--------------------------------------------------------------------------------
+ 108 | WARNING | Line exceeds 120 characters; contains 167 characters
+ 119 | WARNING | Line exceeds 120 characters; contains 127 characters
+ 149 | WARNING | Line exceeds 120 characters; contains 130 characters
+--------------------------------------------------------------------------------
+
+
+FILE: ...tch\roommatch-laravel\app\Http\Controllers\Api\Admin\ReporteController.php
+--------------------------------------------------------------------------------
+FOUND 0 ERRORS AND 6 WARNINGS AFFECTING 6 LINES
+--------------------------------------------------------------------------------
+  95 | WARNING | Line exceeds 120 characters; contains 188 characters
+ 140 | WARNING | Line exceeds 120 characters; contains 136 characters
+ 156 | WARNING | Line exceeds 120 characters; contains 124 characters
+ 176 | WARNING | Line exceeds 120 characters; contains 160 characters
+ 283 | WARNING | Line exceeds 120 characters; contains 160 characters
+ 318 | WARNING | Line exceeds 120 characters; contains 152 characters
+--------------------------------------------------------------------------------
+
+
+FILE: ...tch\roommatch-laravel\app\Http\Controllers\Api\Admin\UsuarioController.php
+--------------------------------------------------------------------------------
+FOUND 4 ERRORS AND 5 WARNINGS AFFECTING 6 LINES
+--------------------------------------------------------------------------------
+ 127 | ERROR   | [x] Expected at least 1 space before "."; 0 found
+ 127 | ERROR   | [x] Expected at least 1 space after "."; 0 found
+ 127 | ERROR   | [x] Expected at least 1 space before "."; 0 found
+ 127 | ERROR   | [x] Expected at least 1 space after "."; 0 found
+ 231 | WARNING | [ ] Line exceeds 120 characters; contains 134 characters
+ 274 | WARNING | [ ] Line exceeds 120 characters; contains 133 characters
+ 345 | WARNING | [ ] Line exceeds 120 characters; contains 138 characters
+ 382 | WARNING | [ ] Line exceeds 120 characters; contains 137 characters
+ 442 | WARNING | [ ] Line exceeds 120 characters; contains 121 characters
+--------------------------------------------------------------------------------
+PHPCBF CAN FIX THE 4 MARKED SNIFF VIOLATIONS AUTOMATICALLY
+--------------------------------------------------------------------------------
+
+
+FILE: ...ts\roommatch\roommatch-laravel\app\Http\Controllers\Api\AuthController.php
+--------------------------------------------------------------------------------
+FOUND 6 ERRORS AND 1 WARNING AFFECTING 2 LINES
+--------------------------------------------------------------------------------
+ 100 | ERROR   | [x] Expected at least 1 space before "."; 0 found
+ 100 | ERROR   | [x] Expected at least 1 space after "."; 0 found
+ 100 | ERROR   | [x] Expected at least 1 space before "."; 0 found
+ 100 | ERROR   | [x] Expected at least 1 space after "."; 0 found
+ 100 | ERROR   | [x] Expected at least 1 space before "."; 0 found
+ 100 | ERROR   | [x] Expected at least 1 space after "."; 0 found
+ 126 | WARNING | [ ] Line exceeds 120 characters; contains 121 characters
+--------------------------------------------------------------------------------
+PHPCBF CAN FIX THE 6 MARKED SNIFF VIOLATIONS AUTOMATICALLY
+--------------------------------------------------------------------------------
+
+
+FILE: ...ts\roommatch\roommatch-laravel\app\Http\Controllers\Api\CitaController.php
+--------------------------------------------------------------------------------
+FOUND 3 ERRORS AND 1 WARNING AFFECTING 2 LINES
+--------------------------------------------------------------------------------
+  80 | WARNING | [ ] Line exceeds 120 characters; contains 139 characters
+ 159 | ERROR   | [x] Expected at least 1 space after "."; 0 found
+ 159 | ERROR   | [x] Expected at least 1 space before "."; 0 found
+ 159 | ERROR   | [x] Expected at least 1 space after "."; 0 found
+--------------------------------------------------------------------------------
+PHPCBF CAN FIX THE 3 MARKED SNIFF VIOLATIONS AUTOMATICALLY
+--------------------------------------------------------------------------------
+
+
+FILE: ...tch\roommatch-laravel\app\Http\Controllers\Api\PersonaRoomieController.php
+--------------------------------------------------------------------------------
+FOUND 6 ERRORS AND 2 WARNINGS AFFECTING 8 LINES
+--------------------------------------------------------------------------------
+ 298 | WARNING | [ ] Line exceeds 120 characters; contains 128 characters
+ 343 | WARNING | [ ] Line exceeds 120 characters; contains 128 characters
+ 495 | ERROR   | [x] Inline control structures are not allowed
+ 496 | ERROR   | [x] Inline control structures are not allowed
+ 497 | ERROR   | [x] Inline control structures are not allowed
+ 498 | ERROR   | [x] Inline control structures are not allowed
+ 499 | ERROR   | [x] Inline control structures are not allowed
+ 500 | ERROR   | [x] Inline control structures are not allowed
+--------------------------------------------------------------------------------
+PHPCBF CAN FIX THE 6 MARKED SNIFF VIOLATIONS AUTOMATICALLY
+--------------------------------------------------------------------------------
+
+
+FILE: ...match\roommatch-laravel\app\Http\Controllers\Api\PublicacionController.php
+--------------------------------------------------------------------------------
+FOUND 7 ERRORS AND 2 WARNINGS AFFECTING 9 LINES
+--------------------------------------------------------------------------------
+ 314 | WARNING | [ ] Line exceeds 120 characters; contains 148 characters
+ 356 | WARNING | [ ] Line exceeds 120 characters; contains 136 characters
+ 532 | ERROR   | [x] Inline control structures are not allowed
+ 533 | ERROR   | [x] Inline control structures are not allowed
+ 534 | ERROR   | [x] Inline control structures are not allowed
+ 535 | ERROR   | [x] Inline control structures are not allowed
+ 536 | ERROR   | [x] Inline control structures are not allowed
+ 537 | ERROR   | [x] Inline control structures are not allowed
+ 538 | ERROR   | [x] Inline control structures are not allowed
+--------------------------------------------------------------------------------
+PHPCBF CAN FIX THE 7 MARKED SNIFF VIOLATIONS AUTOMATICALLY
+--------------------------------------------------------------------------------
+
+
+FILE: ...roommatch\roommatch-laravel\app\Http\Controllers\Api\ReservaController.php
+--------------------------------------------------------------------------------
+FOUND 3 ERRORS AND 3 WARNINGS AFFECTING 4 LINES
+--------------------------------------------------------------------------------
+  76 | WARNING | [ ] Line exceeds 120 characters; contains 162 characters
+ 156 | WARNING | [ ] Line exceeds 120 characters; contains 134 characters
+ 199 | WARNING | [ ] Line exceeds 120 characters; contains 137 characters
+ 241 | ERROR   | [x] Expected at least 1 space after "."; 0 found
+ 241 | ERROR   | [x] Expected at least 1 space before "."; 0 found
+ 241 | ERROR   | [x] Expected at least 1 space after "."; 0 found
+--------------------------------------------------------------------------------
+PHPCBF CAN FIX THE 3 MARKED SNIFF VIOLATIONS AUTOMATICALLY
+--------------------------------------------------------------------------------
+
+
+FILE: ...roommatch\roommatch-laravel\app\Http\Controllers\Api\UsuarioController.php
+--------------------------------------------------------------------------------
+FOUND 0 ERRORS AND 5 WARNINGS AFFECTING 5 LINES
+--------------------------------------------------------------------------------
+  38 | WARNING | Line exceeds 120 characters; contains 135 characters
+  89 | WARNING | Line exceeds 120 characters; contains 144 characters
+  95 | WARNING | Line exceeds 120 characters; contains 147 characters
+ 147 | WARNING | Line exceeds 120 characters; contains 126 characters
+ 149 | WARNING | Line exceeds 120 characters; contains 148 characters
+--------------------------------------------------------------------------------
+
+
+FILE: ...\roommatch\roommatch-laravel\app\Http\Controllers\SocialAuthController.php
+--------------------------------------------------------------------------------
+FOUND 0 ERRORS AND 1 WARNING AFFECTING 1 LINE
+--------------------------------------------------------------------------------
+ 67 | WARNING | Line exceeds 120 characters; contains 126 characters
+--------------------------------------------------------------------------------
+
+
+FILE: ...nts\roommatch\roommatch-laravel\app\Http\Requests\PersonaRoomieRequest.php
+--------------------------------------------------------------------------------
+FOUND 0 ERRORS AND 2 WARNINGS AFFECTING 2 LINES
+--------------------------------------------------------------------------------
+ 104 | WARNING | Line exceeds 120 characters; contains 122 characters
+ 106 | WARNING | Line exceeds 120 characters; contains 144 characters
+--------------------------------------------------------------------------------
+
+
+FILE: ...ments\roommatch\roommatch-laravel\app\Http\Requests\PublicacionRequest.php
+--------------------------------------------------------------------------------
+FOUND 0 ERRORS AND 7 WARNINGS AFFECTING 7 LINES
+--------------------------------------------------------------------------------
+  84 | WARNING | Line exceeds 120 characters; contains 135 characters
+ 125 | WARNING | Line exceeds 120 characters; contains 129 characters
+ 148 | WARNING | Line exceeds 120 characters; contains 126 characters
+ 153 | WARNING | Line exceeds 120 characters; contains 132 characters
+ 154 | WARNING | Line exceeds 120 characters; contains 130 characters
+ 155 | WARNING | Line exceeds 120 characters; contains 140 characters
+ 156 | WARNING | Line exceeds 120 characters; contains 134 characters
+--------------------------------------------------------------------------------
+
+
+FILE: ...\Documents\roommatch\roommatch-laravel\app\Mail\CodigoRecuperacionMail.php
+--------------------------------------------------------------------------------
+FOUND 1 ERROR AFFECTING 1 LINE
+--------------------------------------------------------------------------------
+ 11 | ERROR | [x] Each imported trait must have its own "use" import statement
+--------------------------------------------------------------------------------
+PHPCBF CAN FIX THE 1 MARKED SNIFF VIOLATIONS AUTOMATICALLY
+--------------------------------------------------------------------------------
+
+
+FILE: ...er\Documents\roommatch\roommatch-laravel\app\Mail\ConfirmacionContacto.php
+--------------------------------------------------------------------------------
+FOUND 1 ERROR AFFECTING 1 LINE
+--------------------------------------------------------------------------------
+ 11 | ERROR | [x] Each imported trait must have its own "use" import statement
+--------------------------------------------------------------------------------
+PHPCBF CAN FIX THE 1 MARKED SNIFF VIOLATIONS AUTOMATICALLY
+--------------------------------------------------------------------------------
+
+
+FILE: ...rs\User\Documents\roommatch\roommatch-laravel\app\Mail\MensajeContacto.php
+--------------------------------------------------------------------------------
+FOUND 1 ERROR AFFECTING 1 LINE
+--------------------------------------------------------------------------------
+ 11 | ERROR | [x] Each imported trait must have its own "use" import statement
+--------------------------------------------------------------------------------
+PHPCBF CAN FIX THE 1 MARKED SNIFF VIOLATIONS AUTOMATICALLY
+--------------------------------------------------------------------------------
+
+
+FILE: ...\User\Documents\roommatch\roommatch-laravel\app\Mail\RespuestaContacto.php
+--------------------------------------------------------------------------------
+FOUND 1 ERROR AFFECTING 1 LINE
+--------------------------------------------------------------------------------
+ 15 | ERROR | [x] Each imported trait must have its own "use" import statement
+--------------------------------------------------------------------------------
+PHPCBF CAN FIX THE 1 MARKED SNIFF VIOLATIONS AUTOMATICALLY
+--------------------------------------------------------------------------------
+
+
+FILE: C:\Users\User\Documents\roommatch\roommatch-laravel\app\Models\Agenda.php
+--------------------------------------------------------------------------------
+FOUND 0 ERRORS AND 2 WARNINGS AFFECTING 2 LINES
+--------------------------------------------------------------------------------
+ 12 | WARNING | Visibility must be declared on all constants if your project
+    |         | supports PHP 7.1 or later
+ 13 | WARNING | Visibility must be declared on all constants if your project
+    |         | supports PHP 7.1 or later
+--------------------------------------------------------------------------------
+
+
+FILE: ...ers\User\Documents\roommatch\roommatch-laravel\app\Models\Calificacion.php
+--------------------------------------------------------------------------------
+FOUND 0 ERRORS AND 1 WARNING AFFECTING 1 LINE
+--------------------------------------------------------------------------------
+ 16 | WARNING | Visibility must be declared on all constants if your project
+    |         | supports PHP 7.1 or later
+--------------------------------------------------------------------------------
+
+
+FILE: C:\Users\User\Documents\roommatch\roommatch-laravel\app\Models\Cita.php
+--------------------------------------------------------------------------------
+FOUND 0 ERRORS AND 1 WARNING AFFECTING 1 LINE
+--------------------------------------------------------------------------------
+ 16 | WARNING | Visibility must be declared on all constants if your project
+    |         | supports PHP 7.1 or later
+--------------------------------------------------------------------------------
+
+
+FILE: ...:\Users\User\Documents\roommatch\roommatch-laravel\app\Models\Favorito.php
+--------------------------------------------------------------------------------
+FOUND 0 ERRORS AND 1 WARNING AFFECTING 1 LINE
+--------------------------------------------------------------------------------
+ 13 | WARNING | Visibility must be declared on all constants if your project
+    |         | supports PHP 7.1 or later
+--------------------------------------------------------------------------------
+
+
+FILE: ...ers\User\Documents\roommatch\roommatch-laravel\app\Models\Notificacion.php
+--------------------------------------------------------------------------------
+FOUND 0 ERRORS AND 3 WARNINGS AFFECTING 3 LINES
+--------------------------------------------------------------------------------
+  15 | WARNING | Visibility must be declared on all constants if your project
+     |         | supports PHP 7.1 or later
+  78 | WARNING | Line exceeds 120 characters; contains 123 characters
+ 207 | WARNING | Line exceeds 120 characters; contains 125 characters
+--------------------------------------------------------------------------------
+
+
+FILE: ...rs\User\Documents\roommatch\roommatch-laravel\app\Models\PersonaRoomie.php
+--------------------------------------------------------------------------------
+FOUND 1 ERROR AFFECTING 1 LINE
+--------------------------------------------------------------------------------
+ 11 | ERROR | [x] Each imported trait must have its own "use" import statement
+--------------------------------------------------------------------------------
+PHPCBF CAN FIX THE 1 MARKED SNIFF VIOLATIONS AUTOMATICALLY
+--------------------------------------------------------------------------------
+
+
+FILE: ...sers\User\Documents\roommatch\roommatch-laravel\app\Models\Publicacion.php
+--------------------------------------------------------------------------------
+FOUND 1 ERROR AFFECTING 1 LINE
+--------------------------------------------------------------------------------
+ 11 | ERROR | [x] Each imported trait must have its own "use" import statement
+--------------------------------------------------------------------------------
+PHPCBF CAN FIX THE 1 MARKED SNIFF VIOLATIONS AUTOMATICALLY
+--------------------------------------------------------------------------------
+
+
+FILE: C:\Users\User\Documents\roommatch\roommatch-laravel\app\Models\Reporte.php
+--------------------------------------------------------------------------------
+FOUND 0 ERRORS AND 1 WARNING AFFECTING 1 LINE
+--------------------------------------------------------------------------------
+ 16 | WARNING | Visibility must be declared on all constants if your project
+    |         | supports PHP 7.1 or later
+--------------------------------------------------------------------------------
+
+
+FILE: C:\Users\User\Documents\roommatch\roommatch-laravel\app\Models\Reserva.php
+--------------------------------------------------------------------------------
+FOUND 0 ERRORS AND 1 WARNING AFFECTING 1 LINE
+--------------------------------------------------------------------------------
+ 16 | WARNING | Visibility must be declared on all constants if your project
+    |         | supports PHP 7.1 or later
+--------------------------------------------------------------------------------
+
+
+FILE: C:\Users\User\Documents\roommatch\roommatch-laravel\app\Models\User.php
+-------------------------------------------------------------------------------
+FOUND 1 ERROR AFFECTING 1 LINE
+-------------------------------------------------------------------------------
+ 18 | ERROR | [x] Each imported trait must have its own "use" import statement
+-------------------------------------------------------------------------------
+PHPCBF CAN FIX THE 1 MARKED SNIFF VIOLATIONS AUTOMATICALLY
+-------------------------------------------------------------------------------
+
+
+FILE: C:\Users\User\Documents\roommatch\roommatch-laravel\app\Models\Usuario.php
+--------------------------------------------------------------------------------
+FOUND 3 ERRORS AND 1 WARNING AFFECTING 3 LINES
+--------------------------------------------------------------------------------
+  15 | ERROR   | [x] Each imported trait must have its own "use" import
+     |         |     statement
+  21 | WARNING | [ ] Visibility must be declared on all constants if your
+     |         |     project supports PHP 7.1 or later
+ 158 | ERROR   | [x] Expected at least 1 space before "."; 0 found
+ 158 | ERROR   | [x] Expected at least 1 space after "."; 0 found
+--------------------------------------------------------------------------------
+PHPCBF CAN FIX THE 3 MARKED SNIFF VIOLATIONS AUTOMATICALLY
+--------------------------------------------------------------------------------
+
+
+FILE: ...\User\Documents\roommatch\roommatch-laravel\app\Policies\ReportePolicy.php
+--------------------------------------------------------------------------------
+FOUND 0 ERRORS AND 1 WARNING AFFECTING 1 LINE
+--------------------------------------------------------------------------------
+ 33 | WARNING | Line exceeds 120 characters; contains 124 characters
+--------------------------------------------------------------------------------
+
+
+FILE: ...sers\User\Documents\roommatch\roommatch-laravel\app\Rules\ImagenSubida.php
+--------------------------------------------------------------------------------
+FOUND 2 ERRORS AFFECTING 1 LINE
+--------------------------------------------------------------------------------
+ 19 | ERROR | [x] Opening brace should be on a new line
+ 19 | ERROR | [x] Closing brace must be on a line by itself
+--------------------------------------------------------------------------------
+PHPCBF CAN FIX THE 2 MARKED SNIFF VIOLATIONS AUTOMATICALLY
+--------------------------------------------------------------------------------
+
+
+FILE: ...\User\Documents\roommatch\roommatch-laravel\app\Services\AgendaService.php
+--------------------------------------------------------------------------------
+FOUND 0 ERRORS AND 2 WARNINGS AFFECTING 2 LINES
+--------------------------------------------------------------------------------
+  44 | WARNING | Line exceeds 120 characters; contains 144 characters
+ 132 | WARNING | Line exceeds 120 characters; contains 134 characters
+--------------------------------------------------------------------------------
+
+
+FILE: ...r\Documents\roommatch\roommatch-laravel\app\Services\ModeracionAuditor.php
+--------------------------------------------------------------------------------
+FOUND 0 ERRORS AND 1 WARNING AFFECTING 1 LINE
+--------------------------------------------------------------------------------
+ 13 | WARNING | Line exceeds 120 characters; contains 126 characters
+--------------------------------------------------------------------------------
+
+
+FILE: ...r\Documents\roommatch\roommatch-laravel\app\Services\PaseAgendaService.php
+--------------------------------------------------------------------------------
+FOUND 8 ERRORS AFFECTING 1 LINE
+--------------------------------------------------------------------------------
+ 66 | ERROR | [x] Expected at least 1 space before "."; 0 found
+ 66 | ERROR | [x] Expected at least 1 space after "."; 0 found
+ 66 | ERROR | [x] Expected at least 1 space before "."; 0 found
+ 66 | ERROR | [x] Expected at least 1 space after "."; 0 found
+ 66 | ERROR | [x] Expected at least 1 space before "."; 0 found
+ 66 | ERROR | [x] Expected at least 1 space after "."; 0 found
+ 66 | ERROR | [x] Expected at least 1 space before "."; 0 found
+ 66 | ERROR | [x] Expected at least 1 space after "."; 0 found
+--------------------------------------------------------------------------------
+PHPCBF CAN FIX THE 8 MARKED SNIFF VIOLATIONS AUTOMATICALLY
+--------------------------------------------------------------------------------
+
+
+FILE: ...ser\Documents\roommatch\roommatch-laravel\app\Services\PaseJavaService.php
+--------------------------------------------------------------------------------
+FOUND 4 ERRORS AND 1 WARNING AFFECTING 3 LINES
+--------------------------------------------------------------------------------
+  83 | WARNING | [ ] Line exceeds 120 characters; contains 128 characters
+ 103 | ERROR   | [x] Expected at least 1 space before "."; 0 found
+ 103 | ERROR   | [x] Expected at least 1 space after "."; 0 found
+ 112 | ERROR   | [x] Expected at least 1 space before "."; 0 found
+ 112 | ERROR   | [x] Expected at least 1 space after "."; 0 found
+--------------------------------------------------------------------------------
+PHPCBF CAN FIX THE 4 MARKED SNIFF VIOLATIONS AUTOMATICALLY
+--------------------------------------------------------------------------------
+
+
+FILE: ...\Documents\roommatch\roommatch-laravel\app\Services\ServicioJavaClient.php
+--------------------------------------------------------------------------------
+FOUND 0 ERRORS AND 1 WARNING AFFECTING 1 LINE
+--------------------------------------------------------------------------------
+ 94 | WARNING | Line exceeds 120 characters; contains 121 characters
+--------------------------------------------------------------------------------
+
+
+FILE: ...\Users\User\Documents\roommatch\roommatch-laravel\app\Support\Telefono.php
+--------------------------------------------------------------------------------
+FOUND 0 ERRORS AND 1 WARNING AFFECTING 1 LINE
+--------------------------------------------------------------------------------
+ 26 | WARNING | Line exceeds 120 characters; contains 142 characters
+--------------------------------------------------------------------------------
+
